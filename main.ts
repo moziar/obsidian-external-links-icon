@@ -2,27 +2,21 @@ import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Set
 
 // Remember to rename these classes and interfaces!
 
-interface MyPluginSettings {
+interface ExternalLinksIconSettings {
 	mySetting: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
+const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
 	mySetting: 'default'
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class ExternalLinksIcon extends Plugin {
+	settings: ExternalLinksIconSettings;
 
 	async onload() {
-		await this.loadSettings();
+		console.log('loading plugin External Links Icon');
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+		await this.loadSettings();
 
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
 		const statusBarItemEl = this.addStatusBarItem();
@@ -79,7 +73,7 @@ export default class MyPlugin extends Plugin {
 	}
 
 	onunload() {
-
+		console.log('unloading plugin External Links Icon');
 	}
 
 	async loadSettings() {
@@ -108,9 +102,9 @@ class SampleModal extends Modal {
 }
 
 class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: ExternalLinksIcon;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: ExternalLinksIcon) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
