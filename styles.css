@@ -167,13 +167,25 @@ Web Page Link
     background-color: #00DE6D;
 }
 
+/* 小宇宙FM SVG 图标 */
+.external-link[href^="https://www.xiaoyuzhoufm.com"]::after {
+    background: no-repeat url('data:image/svg+xml;base64,PHN2ZyBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjxsaW5lYXJHcmFkaWVudCBpZD0iYSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMjViNGUxIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZTVkNWJlIi8+PC9saW5lYXJHcmFkaWVudD48bGluZWFyR3JhZGllbnQgaWQ9ImIiIGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMzYuNDM2OCAtMjUwLjg2NyAyNTAuODY3IDM2LjQzNjggNDguNzg2OSAxNDYuMjMpIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAiIHgyPSIxIiB4bGluazpocmVmPSIjYSIgeTE9IjAiIHkyPSIwIi8+PGxpbmVhckdyYWRpZW50IGlkPSJjIiBncmFkaWVudFRyYW5zZm9ybT0ibWF0cml4KDE3Ny4zOTYgMTgxLjA4NyAtMTgxLjA4NyAxNzcuMzk2IDkuMDAwMDggMTkuOTM5NSkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCIgeDI9IjEiIHhsaW5rOmhyZWY9IiNhIiB5MT0iMCIgeTI9IjAiLz48Y2xpcFBhdGggaWQ9ImQiPjxwYXRoIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0ibTAgMGgxMjh2MTI4aC0xMjh6Ii8+PC9jbGlwUGF0aD48ZyBjbGlwLXBhdGg9InVybCgjZCkiPjxwYXRoIGQ9Im0xMS45MjkgOTkuMjI0Yy01LjgxMi03LjQxMyAxMi4wMzctMzEuMTI2IDM5LjgzNC01Mi45MjEgMjcuNzk2LTIxLjc5NSA1NS4wODItMzMuNDcyIDYwLjg5NC0yNi4wNiA1LjgxMiA3LjQxMy0xMi4wMzYgMzEuMTI1LTM5LjgzMyA1Mi45MjEtMjcuNzk3IDIxLjc5NS01NS4wODMgMzMuNDcyLTYwLjg5NSAyNi4wNnoiIGZpbGw9Im5vbmUiIHN0cm9rZT0idXJsKCNiKSIgc3Ryb2tlLXdpZHRoPSI4LjUzIi8+PHBhdGggZD0ibTc4LjE3NSA4MC4zNjVjLTExLjEwMyA4Ljg1NS0yMi4wMDkgMTYuNDctMzEuNTc1IDIyLjIzMSA2LjEyOSAzLjE0MSAxMi45MzQgNC43MzQgMTkuODE5IDQuNjQgMjMuMjk0LS4zMTUgNDEuODk2LTE5LjQ2OSA0MS41OC00Mi44NDgtLjA0NS0zLjMyOC0uNDczLTYuNTY1LTEuMjQxLTkuNzEzLTcuNyA3Ljk5OS0xNy41NjUgMTYuODc5LTI4LjU4MyAyNS42OXptLTU0LjQzNS0xNC44MzljLjA2MyA0LjY1Ljg0OSA5LjEyIDIuMzEzIDEzLjI4MmwzLjM0MiA3LjMzN2MuODc0IDEuNTI0IDEuODMyIDIuOTYyIDIuODc1IDQuMzU2IDkuNzQyLTUuMzggMjIuMDQ2LTEzLjY5NiAzNC45NjUtMjMuOTg0IDEyLjgzNC0xMC4yMDEgMjMuNjYzLTIwLjMzMiAzMS4wNjItMjguNTgyLTEuMjU4LTEuNTE5LTIuNjQzLTIuOTUxLTQuMTEyLTQuMjU0bC02LjQyMy00Ljg2M2MtNi43NTUtNC4xMTMtMTQuNTM0LTYuMjQxLTIyLjQ0Mi02LjE0LTIzLjI5NC4zMTQtNDEuODk1IDE5LjUxMS00MS41OCA0Mi44NDh6IiBmaWxsPSJ1cmwoI2MpIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48L2c+PC9zdmc+');
+
+    display: inline-block;
+    width: .9em;
+    height: .9em;
+    content: " ";
+    margin-left: 2px;
+}
+
 /* 去掉末尾的 Web External Link 的样式 */
 .external-link[href^="https://github.com"],
 .external-link[href^="https://help.obsidian.md"],
 .external-link[href^="https://forum.obsidian.md"],
 .external-link[href^="https://obsidian.md"],
 .external-link[href^="https://sspai.com"],
-.external-link[href^="https://mp.weixin.qq.com"] {
+.external-link[href^="https://mp.weixin.qq.com"],
+.external-link[href^="https://www.xiaoyuzhoufm.com"] {
     background: none;
     padding-right: 0
 }
