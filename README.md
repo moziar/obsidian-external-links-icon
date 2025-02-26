@@ -17,6 +17,7 @@ A  simple plugin that auto adds icon to the external links.
 - Obsidian
 - 少数派
 - 微信公众号
+- 小宇宙 FM
 
 ## Performance
 This plugin is designed for high performance. 
@@ -27,6 +28,10 @@ Some icons are adaptive to the _Base color scheme_ and will automatically adjust
 
 ## Installation
 Use the [BRAT](https://obsidian.md/plugins?id=obsidian42-brat) to install this plugin.
+
+## Setting
+By default, both URL Scheme and WebSite icon are enabled. You could disable any of theme by Style Setting plugin.
+![style-setting](style-setting.png)
 
 ## Credit
 The implementation borrows from [marginnote-companion](https://github.com/aidenlx/marginnote-companion).
