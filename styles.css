@@ -174,9 +174,11 @@ settings:
         title: Fancy url scheme
         description: Enable url scheme icon
         type: class-toggle
+        default: true
     - 
         id: fancy-web-link
         title: Fancy web link
         description: Enable web page link icon
         type: class-toggle
+        default: true
 */
