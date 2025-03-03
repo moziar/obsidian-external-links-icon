@@ -1,5 +1,6 @@
 ## Obsidian external links icon
 A  simple plugin that auto adds icon to the external links. 
+
 ![demo.png](demo.png)
 
 ## Support links
@@ -15,9 +16,12 @@ A  simple plugin that auto adds icon to the external links.
 ### WebSite
 - Github
 - Obsidian
-- 少数派
+- 少数派 SSPai
 - 微信公众号
 - 小宇宙 FM
+- 豆瓣 Douban
+- 哔哩哔哩 BiliBili
+- YouTube
 
 ## Performance
 This plugin is designed for high performance. 
