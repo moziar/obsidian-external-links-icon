@@ -96,7 +96,10 @@ body.fancy-web-link .external-link[href^="https://obsidian.md"],
 body.fancy-web-link .external-link[href^="https://sspai.com"],
 body.fancy-web-link .external-link[href^="https://mp.weixin.qq.com"],
 body.fancy-web-link .external-link[href^="https://www.xiaoyuzhoufm.com"],
-body.fancy-web-link .external-link[href^="https://www.douban.com"] {
+body.fancy-web-link .external-link[href^="https://www.douban.com"],
+body.fancy-web-link .external-link[href^="https://book.douban.com"],
+body.fancy-web-link .external-link[href^="https://movie.douban.com"],
+body.fancy-web-link .external-link[href^="https://music.douban.com"] {
     background: none;
     padding-right: 0
 }
@@ -109,7 +112,10 @@ body.fancy-web-link .external-link[href^="https://forum.obsidian.md"]::after,
 body.fancy-web-link .external-link[href^="https://sspai.com"]::after,
 body.fancy-web-link .external-link[href^="https://mp.weixin.qq.com"]::after,
 body.fancy-web-link .external-link[href^="https://www.xiaoyuzhoufm.com"]::after,
-body.fancy-web-link .external-link[href^="https://www.douban.com"]::after {
+body.fancy-web-link .external-link[href^="https://www.douban.com"]::after,
+body.fancy-web-link .external-link[href^="https://book.douban.com"]::after,
+body.fancy-web-link .external-link[href^="https://movie.douban.com"]::after,
+body.fancy-web-link .external-link[href^="https://music.douban.com"]::after {
     display: inline-block;
     width: .8em;
     height: .8em;
@@ -168,11 +174,17 @@ body.fancy-web-link .external-link[href^="https://www.xiaoyuzhoufm.com"]::after 
 
 /* 豆瓣 SVG 图标 */
 /* 自适应亮暗模式 */
-body.theme-light.fancy-web-link .external-link[href^="https://www.douban.com"]::after {
+body.theme-light.fancy-web-link .external-link[href^="https://www.douban.com"]::after,
+body.theme-light.fancy-web-link .external-link[href^="https://book.douban.com"]::after,
+body.theme-light.fancy-web-link .external-link[href^="https://movie.douban.com"]::after,
+body.theme-light.fancy-web-link .external-link[href^="https://music.douban.com"]::after{
     background: no-repeat url('data:image/svg+xml;base64,PHN2ZyBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJtNjQgMTZ2MzJjMCA4LjgzMS03LjE2OSAxNi0xNiAxNmgtMzJjLTguODMxIDAtMTYtNy4xNjktMTYtMTZ2LTMyYzAtOC44MzEgNy4xNjktMTYgMTYtMTZoMzJjOC44MzEgMCAxNiA3LjE2OSAxNiAxNnoiIGZpbGw9IiMyZTk1M2QiLz48cGF0aCBkPSJtNjUuMDIzIDMwLjE2aC00Ni40NDl2MTYuMDI0aDQ2LjQ0OXptLTU1LjkxOC04LjM3OWg2NS4yODZ2MzIuNzc4aC02NS4yODZ6bS02Ljg3MS0xNy4xMzNoNzkuMDMydjguMzg3aC03OS4wMzJ6bTIyLjEwMiA1MS4zMDVjMy40NjEgNC44MzIgNi41NTkgMTAuNjcyIDkuMjkzIDE3LjQ5NmgxNi41MjdjMy4yNzQtNS4yNjUgNi4xNTMtMTEuMTA1IDguNjIxLTE3LjQ5Nmw5LjUgMy4yNjJjLTIuNDg0IDUuMzg3LTUuMTY0IDEwLjE0LTguMDA3IDE0LjIzNGgyMy4yM3Y4LjI5M2gtODMuNXYtOC4yOTNoMjQuMzM2Yy0yLjIzNC00LjQwNi01LjEzNy05LjE0OC04Ljc0Mi0xNC4yMzR6IiBmaWxsPSIjZmZmIiBmaWxsLXJ1bGU9Im5vbnplcm8iIHRyYW5zZm9ybT0ibWF0cml4KC42MDY0NjEgMCAwIC42MjEwODkgNy4xODAyMyA0LjY5OTI5KSIvPjwvc3ZnPg==');
 }
 
-body.theme-dark.fancy-web-link .external-link[href^="https://www.douban.com"]::after {
+body.theme-dark.fancy-web-link .external-link[href^="https://www.douban.com"]::after,
+body.theme-dark.fancy-web-link .external-link[href^="https://book.douban.com"]::after,
+body.theme-dark.fancy-web-link .external-link[href^="https://movie.douban.com"]::after,
+body.theme-dark.fancy-web-link .external-link[href^="https://music.douban.com"]::after {
     background: no-repeat url('data:image/svg+xml;base64,PHN2ZyBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJtNjUuMDIzIDMwLjE2aC00Ni40NDl2MTYuMDI0aDQ2LjQ0OXptLTU1LjkxOC04LjM3OWg2NS4yODZ2MzIuNzc4aC02NS4yODZ6bS02Ljg3MS0xNy4xMzNoNzkuMDMydjguMzg3aC03OS4wMzJ6bTIyLjEwMiA1MS4zMDVjMy40NjEgNC44MzIgNi41NTkgMTAuNjcyIDkuMjkzIDE3LjQ5NmgxNi41MjdjMy4yNzQtNS4yNjUgNi4xNTMtMTEuMTA1IDguNjIxLTE3LjQ5Nmw5LjUgMy4yNjJjLTIuNDg0IDUuMzg3LTUuMTY0IDEwLjE0LTguMDA3IDE0LjIzNGgyMy4yM3Y4LjI5M2gtODMuNXYtOC4yOTNoMjQuMzM2Yy0yLjIzNC00LjQwNi01LjEzNy05LjE0OC04Ljc0Mi0xNC4yMzR6IiBmaWxsPSIjMmU5NTNkIiBmaWxsLXJ1bGU9Im5vbnplcm8iIHRyYW5zZm9ybT0ibWF0cml4KC42MDY0NjEgMCAwIC42MjEwODkgNy4xODAyMyA0LjY5OTI5KSIvPjwvc3ZnPg==');
 }
 
