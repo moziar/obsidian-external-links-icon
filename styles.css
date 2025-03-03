@@ -172,7 +172,7 @@ body.fancy-web-link .external-link[href^="https://www.xiaoyuzhoufm.com"]::after 
     height: .9em;
 }
 
-/* 豆瓣 SVG 图标 */
+/* 豆瓣 */
 /* 自适应亮暗模式 */
 body.theme-light.fancy-web-link .external-link[href^="https://www.douban.com"]::after,
 body.theme-light.fancy-web-link .external-link[href^="https://book.douban.com"]::after,
