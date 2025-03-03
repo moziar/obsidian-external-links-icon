@@ -100,7 +100,8 @@ body.fancy-web-link .external-link[href^="https://www.douban.com"],
 body.fancy-web-link .external-link[href^="https://book.douban.com"],
 body.fancy-web-link .external-link[href^="https://movie.douban.com"],
 body.fancy-web-link .external-link[href^="https://music.douban.com"],
-body.fancy-web-link .external-link[href^="https://www.bilibili.com"] {
+body.fancy-web-link .external-link[href^="https://www.bilibili.com"],
+body.fancy-web-link .external-link[href^="https://www.youtube.com"] {
     background: none;
     padding-right: 0
 }
@@ -117,7 +118,8 @@ body.fancy-web-link .external-link[href^="https://www.douban.com"]::after,
 body.fancy-web-link .external-link[href^="https://book.douban.com"]::after,
 body.fancy-web-link .external-link[href^="https://movie.douban.com"]::after,
 body.fancy-web-link .external-link[href^="https://music.douban.com"]::after,
-body.fancy-web-link .external-link[href^="https://www.bilibili.com"]::after {
+body.fancy-web-link .external-link[href^="https://www.bilibili.com"]::after,
+body.fancy-web-link .external-link[href^="https://www.youtube.com"]::after {
     display: inline-block;
     width: .8em;
     height: .8em;
@@ -153,9 +155,10 @@ body.fancy-web-link .external-link[href^="https://forum.obsidian.md"]::after {
 body.fancy-web-link .external-link[href^="https://sspai.com"]::after {
     background: no-repeat url('data:image/svg+xml;base64,PHN2ZyBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiIHZpZXdCb3g9IjAgMCA2NCA2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiBmaWxsPSIjZDcxNzFjIiByPSIzMiIvPjxwYXRoIGQ9Im0xNS41IDIxLjYwNyAzMS4yNS01LjI1czEuMjUtLjA5NCAxLjI1IDF2Mi43NXMuNTk0LjkyNS0uNzUgMS4yNS02LjI1IDEuMjUtNi4yNSAxLjI1bC0uMjUgMTUuNzVzLjA2NyAxLjA0OC43NSAyIDQgNy4yNSA0IDcuMjUuMDcgMS4wNzgtLjUgMWMtLjU3LS4wNzctNC41IDAtNC41IDBzLS43ODguMzc3LTEuNS0xLjI1LTMuNS02Ljc1LTMuNS02Ljc1bC0uMjUtMTctNy43NSAxLjI1LS4yNSAyMS0zLjI1IDIuNzVzLTEuNjMxLjIyLTItLjUgMC0yMS43NSAwLTIxLjc1bC03IC41cy0uNjY2LS4wNTgtLjc1LTEgMC0zLjI1IDAtMy4yNS4xMDItLjgwMyAxLjI1LTF6IiBmaWxsPSIjZmFmYWZhIi8+PC9zdmc+');
     
+    margin-left: 3px;
+
     /* 色彩自适应 */
     opacity: 0.85;
-    margin-left: 3px;
 }
 
 /* 微信公众号 */
@@ -193,6 +196,18 @@ body.theme-dark.fancy-web-link .external-link[href^="https://music.douban.com"]:
 /* 哔哩哔哩 */
 body.fancy-web-link .external-link[href^="https://www.bilibili.com"]::after {
     background: no-repeat url('data:image/svg+xml;base64,PHN2ZyBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiIHZpZXdCb3g9IjAgMCA2OCA2NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjMDZiNmYyIiBmaWxsLXJ1bGU9Im5vbnplcm8iIHRyYW5zZm9ybT0ibWF0cml4KC4yMzc3NjIgMCAwIC4yMzgwOTUgMS45MDIxIDIuNjE5MDUpIj48cGF0aCBkPSJtMjYxLjMzOSA2NC4yNzljLTQuOTAzLTkuMTc5LTEyLjA1Mi0xNi4zMjgtMjEuMjMxLTIxLjI1NS05LjIyNi00LjkyNy0xOC4zMDgtNy40MzktNDIuMzg5LTcuNDM5aC0yLjg5OGw5Ljk5OS0xMS42NjZjNS4yMTgtNi4wNjMgNC40OTMtMTUuMjY1LTEuNTctMjAuNDU4LTUuOTY2LTUuMTIxLTE1LjA3MS00LjQ5My0yMC40NTggMS41N2wtMjYuMjA2IDMwLjU3OGgtNDQuMDc5bC0yNi4zNTItMzAuNzQ3Yy01LjIxNy01Ljg5NC0xNC4zMjMtNi41MjItMjAuMjg5LTEuMzc3LTYuMDYyIDUuMjE3LTYuNzYzIDE0LjM5NS0xLjU3IDIwLjQ1OGwxMCAxMS42NjZoLTMuMjM3Yy0yMy43MTggMC0zMi45OTMgMi41MTItNDEuODU4IDcuMTczbC0uNTMxLjI5Yy05LjE3OCA0LjkwMy0xNi4zMjggMTIuMDUzLTIxLjIzMSAyMS4yNTUtNC45MjcgOS4yMjYtNy40MzkgMTguMzMyLTcuNDM5IDQyLjQxMnY3NC44NzZjLjA0OCAyMy4yMzUgMi41NiAzMi4zODkgNy4xNDkgNDEuMTgxbC4yOS41MzJjNC45MDMgOS4xNzggMTIuMDUzIDE2LjMyNyAyMS4yMzEgMjEuMjU1bC44MjEuNDM0YzguNzY4IDQuNTQxIDE3Ljk3IDcuMDA0IDQxLjU2OCA3LjAwNGgxMjcuMzM2YzIzLjIxMi0uMDQ4IDMyLjM2Ni0yLjU2IDQxLjE1OC03LjE0OWwuNTMxLS4yODljOS4xNzktNC45MDQgMTYuMzI4LTEyLjA1MyAyMS4yMzEtMjEuMjU1IDQuOTI4LTkuMjI3IDcuNDQtMTguMzMzIDcuNDQtNDIuNDEzdi03NC4xNzZjMC0yMy43NDItMi41MTItMzMuMDE3LTcuMTUtNDEuODgxem0tMjIuMTk3IDQyLjQxMnY3NC41MTNjMCA5LjIyNy0uNDM1IDE1Ljk0Mi0xLjI4IDIwLjUzMWwtLjA0OC4yOWMtLjU1NiAyLjg1LTEuMTg0IDQuNjEzLTIuNjA5IDcuMjkzLTIuMTI1IDMuOTg2LTUuMDk2IDYuOTU2LTkuMDgyIDkuMDgyLTIuNjU3IDEuNDI2LTQuNDIgMi4wNTQtNy4yNyAyLjYwOS00LjYzNy44OTQtMTEuNTY5IDEuMzI4LTIxLjEzNCAxLjMyOGgtMTI2Ljk3NGMtOS4yMjYgMC0xNS45NDEtLjQzNC0yMC41MDYtMS4yOGwtLjI5LS4wNDhjLTIuODUtLjU1NS00LjYxMy0xLjE4My03LjI3LTIuNjA5LTMuOTg1LTIuMTI2LTYuOTU2LTUuMDk2LTkuMDgyLTkuMDgyLTEuNDI1LTIuNjU2LTIuMDUzLTQuNDE5LTIuNjA4LTcuMjkzLS44NDYtNC4zOTYtMS4yOC0xMC43NzMtMS4zMjktMTkuNTE2di03Ni4xNTZjMC05LjIyNi40MzUtMTUuOTQxIDEuMjgtMjAuNTNsLjA0OS0uMjljLjU1NS0yLjg1IDEuMTgzLTQuNjM3IDIuNjA4LTcuMjk0IDIuMTI2LTMuOTg1IDUuMDk3LTYuOTU2IDkuMDgyLTkuMDgxIDIuNjU3LTEuNDI1IDQuNDItMi4wNTQgNy4yNy0yLjYwOSA0LjM3Mi0uODQ1IDEwLjc0OC0xLjI4IDE5LjQ5Mi0xLjMyOGgxMjguNjE2YzkuMjI3IDAgMTUuOTQyLjQzNCAyMC41MDYgMS4yOGwuMjkuMDQ4YzIuODUuNTU1IDQuNjEzIDEuMTg0IDcuMjcgMi42MDkgMy45ODYgMi4xMjUgNi45NTcgNS4wOTYgOS4wODIgOS4wODEgMS40MjUgMi42NTcgMi4wNTMgNC40MiAyLjYwOSA3LjI5NC44OTMgNC42NjIgMS4zMjggMTEuNTcgMS4zMjggMjEuMTU4eiIvPjxwYXRoIGQ9Im04Ni45NDggMTA2LjI4MWMxMC42NzYgMCAxOS4zMjIgOC42NDYgMTkuMzIyIDE5LjMyMnYzNi4yMjljMCAxMC42NzctOC42NDYgMTkuMzIzLTE5LjMyMiAxOS4zMjNzLTE5LjMyMy04LjY0Ni0xOS4zMjMtMTkuMzIzdi0zNi4yMjljMC0xMC42NzYgOC42NDctMTkuMzIyIDE5LjMyMy0xOS4zMjJ6Ii8+PHBhdGggZD0ibTE4My41NjMgMTA2LjI4MWMxMC42NzYgMCAxOS4zMjMgOC42NDYgMTkuMzIzIDE5LjMyMnYzNi4yMjljMCAxMC42NzctOC42NDcgMTkuMzIzLTE5LjMyMyAxOS4zMjMtMTAuNjc1IDAtMTkuMzIzLTguNjQ2LTE5LjMyMy0xOS4zMjN2LTM2LjIyOWMwLTEwLjY3NiA4LjY0OC0xOS4zMjIgMTkuMzIzLTE5LjMyMnoiLz48L2c+PC9zdmc+');
+}
+
+/* YouTube */
+body.fancy-web-link .external-link[href^="https://www.youtube.com"]::after {
+    background: no-repeat url('data:image/svg+xml;base64,PHN2ZyBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxnIGZpbGwtcnVsZT0ibm9uemVybyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLjAwNDUwNSA0NSkiPjxwYXRoIGQ9Im0yNTAuMzQ2IDI4LjA3NWMtMi45ODQtMTEuMDI5LTExLjYyNy0xOS42NzItMjIuNjU2LTIyLjY1Ny0xOS44NjYtNS40MTgtOTkuODItNS40MTgtOTkuODItNS40MThzLTc5Ljk1OC4xNjQtOTkuODI0IDUuNTgyYy0xMS4wMjkgMi45ODUtMTkuNjcyIDExLjYyOS0yMi42NTYgMjIuNjU4LTYuMDA5IDM1LjI5OC04LjM0IDg5LjA4NC4xNjUgMTIyLjk3IDIuOTg0IDExLjAyOSAxMS42MjcgMTkuNjcyIDIyLjY1NiAyMi42NTcgMTkuODY2IDUuNDE4IDk5LjgyMiA1LjQxOCA5OS44MjIgNS40MThzNzkuOTU1IDAgOTkuODItNS40MThjMTEuMDI5LTIuOTg1IDE5LjY3Mi0xMS42MjggMjIuNjU3LTIyLjY1NyA2LjMzOC0zNS4zNDggOC4yOTEtODkuMS0uMTY0LTEyMy4xMzR6IiBmaWxsPSIjZjAwIi8+PHBhdGggZD0ibTEwMi40MjEgMTI4LjA2IDY2LjMyOC0zOC40MTgtNjYuMzI4LTM4LjQxOHoiIGZpbGw9IiNmZmYiLz48L2c+PC9zdmc+');
+    
+    width: .9em;
+    height: .9em;
+    margin-left: 3px;
+
+    /* 色彩自适应 */
+    opacity: .85;
 }
 
 /* @settings
