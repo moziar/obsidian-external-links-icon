@@ -250,19 +250,19 @@ settings:
     - 
         id: fancy-url-scheme
         title: Fancy url scheme
-        description: Enable url scheme icon
+        description: Enable icons for url schemes.
         type: class-toggle
         default: true
     - 
         id: fancy-web-link
         title: Fancy web link
-        description: Enable web page link icon
+        description: Enable icons for web page links.
         type: class-toggle
         default: true
     -
-        id: fancy-obsidian-link
-        title: Fancy obsidian link
-        description: Enable internal link or external vault link icon
+        id: fancy-obsidian-note-link
+        title: Fancy obsidian note link
+        description: Enable internal links or external vault links icon. Choose the behavior that best fits your workflow.
         type: class-select
         allowEmpty: yes
         default: none
