@@ -1,7 +1,7 @@
 {
 	"name": "external-links-icon",
-	"version": "0.1.0",
-	"description": "Auto add icon to the external links.",
+	"version": "0.3.0",
+	"description": "Auto add icons to the external and internal links.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
