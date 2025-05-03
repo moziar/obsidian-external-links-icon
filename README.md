@@ -1,4 +1,4 @@
-## Obsidian external links icon
+## External links icon
 A simple plugin that automatically adds icons to the external and internal links, designed to work seamlessly in your local environment.
 
 ![demo.png](demo.png)
