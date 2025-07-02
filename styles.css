@@ -124,7 +124,7 @@ body.fancy-web-link .external-link[href^="https://www.siliconflow.cn"],
 body.fancy-web-link .external-link[href^="https://"][href*="douyin.com"],
 body.fancy-web-link .external-link[href^="https://"][href*="tiktok.com"],
 body.fancy-web-link .external-link[href^="https://"][href*="baidu.com"],
-body.fancy-web-link .external-link[href^="https://"][href*="flomoapp.com/"] {
+body.fancy-web-link .external-link[href^="https://"][href*="flomoapp.com"] {
     background: none;
     padding-right: 0
 }
