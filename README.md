@@ -13,6 +13,7 @@ A simple plugin that automatically adds icons to the external and internal links
 - Bear
 - Prodrafts
 - Things
+- Apple Shortcuts
 
 ### WebSite
 - Github
@@ -23,6 +24,14 @@ A simple plugin that automatically adds icons to the external and internal links
 - 豆瓣 Douban
 - 哔哩哔哩 BiliBili
 - YouTube
+- Ollama
+- ModelScope
+- Hugging Face
+- OpenRouter
+- SiliconFlow
+- 抖音/TikTok
+- Baidu
+- flomo
 
 ### Obsidian
 - Website
