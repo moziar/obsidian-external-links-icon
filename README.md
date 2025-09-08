@@ -50,7 +50,12 @@ Every image has been meticulously optimized, with most displayed in `SVG` format
 Some icons are adaptive to the _Base color scheme_ and will automatically adjust their highlight color accordingly.
 
 ## Installation
-Use the [BRAT](https://obsidian.md/plugins?id=obsidian42-brat) to install this plugin.
+Use the [BRAT](https://github.com/TfTHacker/obsidian42-brat) to install this plugin.
+
+1. Install [BRAT](https://obsidian.md/plugins?id=obsidian42-brat) Obsidian plugin
+2. Use `BRAT: Plugins: Add a beta plugin for testing` command to install a new plugin 
+3. Enter `moziar/obsidian-external-links-icon` on the popup window
+4. Enjoy
 
 ## Setting
 By default, both URL Scheme and WebSite icon are enabled. You could disable any of them via the **Style Setting plugin**.
