@@ -14,6 +14,7 @@ A simple plugin that automatically adds icons to the external and internal links
 - Prodrafts
 - Things
 - Apple Shortcuts
+- Advanced-URI
 
 ### WebSite
 - Github
@@ -32,6 +33,11 @@ A simple plugin that automatically adds icons to the external and internal links
 - 抖音/TikTok
 - Baidu
 - flomo
+- Wikipedia
+- Archive.org
+- Google Docs
+- Google Cloud
+- Other Google site
 
 ### Obsidian
 - Website
