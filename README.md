@@ -16,7 +16,6 @@ A simple plugin that automatically adds icons to the external and internal links
 - Things
 - Apple Shortcuts
 - Advanced-URI
-</details>
 
 <details>
 <summary><h3>WebSite</h3></summary>
