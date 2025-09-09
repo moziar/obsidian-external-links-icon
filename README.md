@@ -4,6 +4,7 @@ A simple plugin that automatically adds icons to the external and internal links
 ![demo.png](demo.png)
 
 ## Support links
+
 ### URL Scheme
 - GoodLinks
 - Zotero
@@ -15,8 +16,11 @@ A simple plugin that automatically adds icons to the external and internal links
 - Things
 - Apple Shortcuts
 - Advanced-URI
+</details>
 
-### WebSite
+<details>
+<summary><h3>WebSite</h3></summary>
+	
 - Github
 - 少数派 SSPai
 - 微信公众号
@@ -38,6 +42,7 @@ A simple plugin that automatically adds icons to the external and internal links
 - Google Docs
 - Google Cloud
 - Other Google site
+</details>
 
 ### Obsidian
 - Website
