@@ -152,13 +152,15 @@ const ICON_CATEGORIES: IconCategories = {
 	// 特殊选择器图标
 	SPECIAL: {
 		'obsidianweb': {
-			selector: 'body.fancy-external-obsidian-link .external-link[href^="obsidian"]:after, body.fancy-both-obsidian-link .external-link[href^="obsidian"]:after'
+			selector: 'body.fancy-external-obsidian-link .external-link[href^="https://"][href*="obsidian"], body.fancy-both-obsidian-link .external-link[href^="https://"][href*="obsidian"]'
 		},
+		// obsidiannote should match internal note links and obsidian://... external links
+		// EXCEPT advanced uri (obsidian://adv-uri) which is handled by advanceduri.
 		'obsidiannote': {
-			selector: 'body.fancy-internal-obsidian-link .internal-link:after, body.fancy-both-obsidian-link .internal-link:after'
+			selector: 'body.fancy-internal-obsidian-link .internal-link, body.fancy-both-obsidian-link .internal-link, body.fancy-external-obsidian-link .external-link[href^="obsidian://"]:not([href^="obsidian://adv-uri"]), body.fancy-both-obsidian-link .external-link[href^="obsidian://"]:not([href^="obsidian://adv-uri"])'
 		},
 		'advanceduri': {
-			selector: 'body.fancy-advanced-uri-link .external-link[href^="obsidian://adv-uri"][href*="settingid"]:after'
+			selector: 'body.fancy-advanced-uri-link .external-link[href^="obsidian://adv-uri"][href*="settingid"]'
 		}
 	}
 };
@@ -393,9 +395,10 @@ const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
 		},
 		"advanceduri": {
 			"name": "advanceduri",
-			"svgData": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill-rule=\"evenodd\" stroke-linecap=\"round\" stroke-linejoin=\"round\" viewBox=\"0 0 20 22\" fill=\"none\" stroke=\"#dadada\" stroke-width=\"2\" xmlns:v=\"https://vecta.io/nano\"><path d=\"M7.627 3.119A2.35 2.35 0 0 1 9.956 1a2.35 2.35 0 0 1 2.33 2.119 2.35 2.35 0 0 0 2.331 2.134 2.34 2.34 0 0 0 .988-.219 2.34 2.34 0 0 1 .967-.209 2.35 2.35 0 0 1 2.34 2.34 2.34 2.34 0 0 1-.977 1.902 2.34 2.34 0 0 0-.996 1.915c0 .762.372 1.478.996 1.916a2.34 2.34 0 0 1 .977 1.902 2.35 2.35 0 0 1-2.34 2.34 2.34 2.34 0 0 1-.967-.209 2.34 2.34 0 0 0-.988-.219 2.35 2.35 0 0 0-2.331 2.134 2.35 2.35 0 0 1-2.329 2.119 2.35 2.35 0 0 1-2.33-2.119 2.35 2.35 0 0 0-2.331-2.134c-.342 0-.679.075-.989.219a2.34 2.34 0 0 1-.967.209A2.35 2.35 0 0 1 1 14.8a2.34 2.34 0 0 1 .977-1.902 2.34 2.34 0 0 0 .996-1.915c0-.762-.372-1.478-.996-1.916a2.34 2.34 0 0 1-.976-1.901c0-1.284 1.057-2.34 2.34-2.34a2.34 2.34 0 0 1 .965.208 2.34 2.34 0 0 0 .988.219 2.35 2.35 0 0 0 2.331-2.134\"/><circle cx=\"9.956\" cy=\"10.983\" r=\"3\"/></svg>",
+			"svgData": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill-rule=\"evenodd\" stroke-linecap=\"round\" stroke-linejoin=\"round\" viewBox=\"0 0 20 22\" fill=\"none\" stroke=\"#000\" stroke-width=\"2\" xmlns:v=\"https://vecta.io/nano\"><path d=\"M7.627 3.119A2.35 2.35 0 0 1 9.956 1a2.35 2.35 0 0 1 2.33 2.119 2.35 2.35 0 0 0 2.331 2.134 2.34 2.34 0 0 0 .988-.219 2.34 2.34 0 0 1 .967-.209 2.35 2.35 0 0 1 2.34 2.34 2.34 2.34 0 0 1-.977 1.902 2.34 2.34 0 0 0-.996 1.915c0 .762.372 1.478.996 1.916a2.34 2.34 0 0 1 .977 1.902 2.35 2.35 0 0 1-2.34 2.34 2.34 2.34 0 0 1-.967-.209 2.34 2.34 0 0 0-.988-.219 2.35 2.35 0 0 0-2.331 2.134 2.35 2.35 0 0 1-2.329 2.119 2.35 2.35 0 0 1-2.33-2.119 2.35 2.35 0 0 0-2.331-2.134c-.342 0-.679.075-.989.219a2.34 2.34 0 0 1-.967.209A2.35 2.35 0 0 1 1 14.8a2.34 2.34 0 0 1 .977-1.902 2.34 2.34 0 0 0 .996-1.915c0-.762-.372-1.478-.996-1.916a2.34 2.34 0 0 1-.976-1.901c0-1.284 1.057-2.34 2.34-2.34a2.34 2.34 0 0 1 .965.208 2.34 2.34 0 0 0 .988.219 2.35 2.35 0 0 0 2.331-2.134\"/><circle cx=\"9.956\" cy=\"10.983\" r=\"3\"/></svg>",
 			"order": 33,
-			"linkType": "scheme"
+			"linkType": "scheme",
+			"themeDarkSvgData": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill-rule=\"evenodd\" stroke-linecap=\"round\" stroke-linejoin=\"round\" viewBox=\"0 0 20 22\" fill=\"none\" stroke=\"#dadada\" stroke-width=\"2\" xmlns:v=\"https://vecta.io/nano\"><path d=\"M7.627 3.119A2.35 2.35 0 0 1 9.956 1a2.35 2.35 0 0 1 2.33 2.119 2.35 2.35 0 0 0 2.331 2.134 2.34 2.34 0 0 0 .988-.219 2.34 2.34 0 0 1 .967-.209 2.35 2.35 0 0 1 2.34 2.34 2.34 2.34 0 0 1-.977 1.902 2.34 2.34 0 0 0-.996 1.915c0 .762.372 1.478.996 1.916a2.34 2.34 0 0 1 .977 1.902 2.35 2.35 0 0 1-2.34 2.34 2.34 2.34 0 0 1-.967-.209 2.34 2.34 0 0 0-.988-.219 2.35 2.35 0 0 0-2.331 2.134 2.35 2.35 0 0 1-2.329 2.119 2.35 2.35 0 0 1-2.33-2.119 2.35 2.35 0 0 0-2.331-2.134c-.342 0-.679.075-.989.219a2.34 2.34 0 0 1-.967.209A2.35 2.35 0 0 1 1 14.8a2.34 2.34 0 0 1 .977-1.902 2.34 2.34 0 0 0 .996-1.915c0-.762-.372-1.478-.996-1.916a2.34 2.34 0 0 1-.976-1.901c0-1.284 1.057-2.34 2.34-2.34a2.34 2.34 0 0 1 .965.208 2.34 2.34 0 0 0 .988.219 2.35 2.35 0 0 0 2.331-2.134\"/><circle cx=\"9.956\" cy=\"10.983\" r=\"3\"/></svg>"
 		}
 	},
 	customIcons: {}
@@ -586,11 +589,29 @@ export default class ExternalLinksIcon extends Plugin {
 			// so the icon can replace the link suffix. These are emitted per-selector
 			// rather than globally to preserve Obsidian defaults for non-matching links.
 			const baseAfter = `content: " "; display: inline-block; width: ${CSS_CONSTANTS.ICON_SIZE}; height: ${CSS_CONSTANTS.ICON_SIZE}; margin-left: ${CSS_CONSTANTS.ICON_MARGIN}; background-size: contain; background-repeat: no-repeat; background-position: center; vertical-align: middle;`;
+
+			// Helper: if a selector already targets the <body> (e.g. starts with "body.")
+			// we should merge the theme class into that same body selector (so that
+			// we end up with `body.theme-light.fancy-...` instead of
+			// `body.theme-light body.fancy-...`). Support comma-separated selectors.
+			const wrapWithTheme = (sel: string, themeClass: string) => {
+				return sel.split(',').map(s => {
+					s = s.trim();
+					if (/^body\b/.test(s)) {
+						return s.replace(/^body\b/, `body.${themeClass}`);
+					}
+					return `body.${themeClass} ${s}`;
+				}).join(', ');
+			};
+
+			const lightSelector = wrapWithTheme(selector, 'theme-light');
+			const darkSelector = wrapWithTheme(selector, 'theme-dark');
+
 			return `
-				body.theme-light ${selector} { background: none; padding-right: 0; }
-				body.theme-dark ${selector} { background: none; padding-right: 0; }
-				body.theme-light ${selector}::after { ${baseAfter} background-image: url("${lightEncodedSvg}"); }
-				body.theme-dark ${selector}::after { ${baseAfter} background-image: url("${darkEncodedSvg}"); }
+				${lightSelector} { background: none; padding-right: 0; }
+				${darkSelector} { background: none; padding-right: 0; }
+				${lightSelector}::after { ${baseAfter} background-image: url("${lightEncodedSvg}"); }
+				${darkSelector}::after { ${baseAfter} background-image: url("${darkEncodedSvg}"); }
 			`;
 		} catch (error) {
 			console.warn(`Failed to generate theme-specific CSS for icon '${icon.name}':`, error);
@@ -602,44 +623,56 @@ export default class ExternalLinksIcon extends Plugin {
 	 * 生成单主题 CSS
 	 */
 	private generateSingleThemeCSS(icon: IconItem, encodedSvg: string): string {
-		const selector = this.getIconSelector(icon);
+		const selector = this.getIconSelector(icon).trim();
 		// Emit per-selector padding/background removal so only matched links lose
 		// the default suffix. Also emit the full ::after base rules so only
 		// matched selectors receive the pseudo-element (and its sizing).
 		const baseAfter = `content: " "; display: inline-block; width: ${CSS_CONSTANTS.ICON_SIZE}; height: ${CSS_CONSTANTS.ICON_SIZE}; margin-left: ${CSS_CONSTANTS.ICON_MARGIN}; background-size: contain; background-repeat: no-repeat; background-position: center; vertical-align: middle;`;
-		return `${selector} { background: none; padding-right: 0; }\n${selector}::after { ${baseAfter} background-image: url("${encodedSvg}"); }`;
+
+		// If the selector contains commas, emit rules for each part cleanly.
+		const parts = selector.split(',').map(s => s.trim()).filter(Boolean);
+		const rules: string[] = [];
+		for (const p of parts) {
+			rules.push(`${p} { background: none; padding-right: 0; }`);
+			rules.push(`${p}::after { ${baseAfter} background-image: url("${encodedSvg}"); }`);
+		}
+		return rules.join('\n');
 	}
 
 	/**
 	 * 获取图标的 CSS 选择器
 	 */
 	private getIconSelector(icon: IconItem): string {
-		// URL Scheme 类型 - 优先级最高
+		// Special icons (advanced handling via predefined selectors) should
+		// take precedence over generic scheme matching so that advanced-uri
+		// selectors (which target specific query params) are favored.
+		if (this.isSpecialIcon(icon.name)) {
+			// Return the stored selector but strip any trailing `:after` markers
+			// because the per-icon generator will attach ::after itself.
+			return ICON_CATEGORIES.SPECIAL[icon.name].selector.replace(/:?:after/g, '');
+		}
+
+		// URL Scheme 类型
 		if (icon.linkType === 'scheme') {
 			return `${CSS_SELECTORS.URL_SCHEME}[href^="${icon.name}://"]`;
 		}
-		
-		// 特殊类型图标
-		if (this.isSpecialIcon(icon.name)) {
-			return ICON_CATEGORIES.SPECIAL[icon.name].selector;
-		}
-		
+
 		// Web 图标 - 预定义的映射
 		const domain = this.getWebDomain(icon.name);
 		if (domain) {
 			return `${CSS_SELECTORS.WEB_LINK}[href*="${domain}"]`;
 		}
-		
+
 		// URL 类型的自定义图标 - 直接使用 icon.name 作为域名匹配
 		if (icon.linkType === 'url') {
 			return `${CSS_SELECTORS.WEB_LINK}[href*="${icon.name}"]`;
 		}
-		
+
 		// URL Scheme 图标（兼容遗留）- 但只针对未明确指定 linkType 的情况
 		if (this.isUrlSchemeIcon(icon.name) && !icon.linkType) {
 			return `${CSS_SELECTORS.URL_SCHEME}[href^="${icon.name}://"]`;
 		}
-		
+
 		// 兜底：自定义数据属性
 		return `${CSS_SELECTORS.CUSTOM_DATA}[data-icon="${icon.name}"]`;
 	}
