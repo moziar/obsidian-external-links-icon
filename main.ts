@@ -541,19 +541,11 @@ export default class ExternalLinksIcon extends Plugin {
 	 * 获取基础 CSS 规则
 	 */
 	private getBaseCSSRules(): string {
-		return `
-			body .external-link::after {
-				content: " ";
-				display: inline-block;
-				width: ${CSS_CONSTANTS.ICON_SIZE};
-				height: ${CSS_CONSTANTS.ICON_SIZE};
-				margin-left: ${CSS_CONSTANTS.ICON_MARGIN};
-				background-size: contain;
-				background-repeat: no-repeat;
-				background-position: center;
-				vertical-align: middle;
-			}
-		`;
+		// The global `body .external-link::after` rule has been removed so that
+		// only links with an associated icon receive the pseudo-element. The
+		// per-icon generator emits the ::after base rules next to each matching
+		// selector in `generateSingleThemeCSS` / `generateThemeSpecificCSS`.
+		return '';
 	}
 
 	/**
@@ -589,10 +581,16 @@ export default class ExternalLinksIcon extends Plugin {
 		try {
 			const darkEncodedSvg = icon.themeDarkSvgData ? this.encodeSvgData(icon.themeDarkSvgData) : undefined;
 			const selector = this.getIconSelector(icon);
-			
+
+			// Also emit rules to remove the default background/padding on matched links
+			// so the icon can replace the link suffix. These are emitted per-selector
+			// rather than globally to preserve Obsidian defaults for non-matching links.
+			const baseAfter = `content: " "; display: inline-block; width: ${CSS_CONSTANTS.ICON_SIZE}; height: ${CSS_CONSTANTS.ICON_SIZE}; margin-left: ${CSS_CONSTANTS.ICON_MARGIN}; background-size: contain; background-repeat: no-repeat; background-position: center; vertical-align: middle;`;
 			return `
-				body.theme-light ${selector}::after { background-image: url("${lightEncodedSvg}"); }
-				body.theme-dark ${selector}::after { background-image: url("${darkEncodedSvg}"); }
+				body.theme-light ${selector} { background: none; padding-right: 0; }
+				body.theme-dark ${selector} { background: none; padding-right: 0; }
+				body.theme-light ${selector}::after { ${baseAfter} background-image: url("${lightEncodedSvg}"); }
+				body.theme-dark ${selector}::after { ${baseAfter} background-image: url("${darkEncodedSvg}"); }
 			`;
 		} catch (error) {
 			console.warn(`Failed to generate theme-specific CSS for icon '${icon.name}':`, error);
@@ -605,7 +603,11 @@ export default class ExternalLinksIcon extends Plugin {
 	 */
 	private generateSingleThemeCSS(icon: IconItem, encodedSvg: string): string {
 		const selector = this.getIconSelector(icon);
-		return `${selector}::after { background-image: url("${encodedSvg}"); }`;
+		// Emit per-selector padding/background removal so only matched links lose
+		// the default suffix. Also emit the full ::after base rules so only
+		// matched selectors receive the pseudo-element (and its sizing).
+		const baseAfter = `content: " "; display: inline-block; width: ${CSS_CONSTANTS.ICON_SIZE}; height: ${CSS_CONSTANTS.ICON_SIZE}; margin-left: ${CSS_CONSTANTS.ICON_MARGIN}; background-size: contain; background-repeat: no-repeat; background-position: center; vertical-align: middle;`;
+		return `${selector} { background: none; padding-right: 0; }\n${selector}::after { ${baseAfter} background-image: url("${encodedSvg}"); }`;
 	}
 
 	/**
