@@ -161,6 +161,15 @@ const ICON_CATEGORIES: IconCategories = {
 		},
 		'advanceduri': {
 			selector: 'body.fancy-advanced-uri-link .external-link[href^="obsidian://adv-uri"]'
+		},
+		'google': {
+			selector: 'body.fancy-web-link .external-link[href^="https://"][href*="google.com"]:not([href*="docs.google.com"]):not([href*="cloud.google.com"])'
+		},
+		'googledocs': {
+			selector: 'body.fancy-web-link .external-link[href^="https://"][href*="docs.google.com"]'
+		},
+		'googlecloud': {
+			selector: 'body.fancy-web-link .external-link[href^="https://"][href*="cloud.google.com"]'
 		}
 	}
 };
@@ -657,6 +666,12 @@ export default class ExternalLinksIcon extends Plugin {
 			return `${CSS_SELECTORS.URL_SCHEME}[href^="${icon.name}://"]`;
 		}
 
+		// Web 图标 - 检查是否为特殊 Web 图标
+		// 先检查 SPECIAL 配置，如果存在则使用特殊选择器
+		if (this.isSpecialWebIcon(icon.name)) {
+			return ICON_CATEGORIES.SPECIAL[icon.name].selector.replace(/:?:after/g, '');
+		}
+
 		// Web 图标 - 预定义的映射
 		const domain = this.getWebDomain(icon.name);
 		if (domain) {
@@ -682,6 +697,14 @@ export default class ExternalLinksIcon extends Plugin {
 	 */
 	private isSpecialIcon(iconName: string): iconName is keyof typeof ICON_CATEGORIES.SPECIAL {
 		return iconName in ICON_CATEGORIES.SPECIAL;
+	}
+
+	/**
+	 * 检查是否为特殊 Web 图标
+	 */
+	private isSpecialWebIcon(iconName: string): boolean {
+		// 检查是否在 SPECIAL 配置中且不是 URL Scheme
+		return iconName in ICON_CATEGORIES.SPECIAL && !ICON_CATEGORIES.URL_SCHEME.includes(iconName as any);
 	}
 
 	/**
