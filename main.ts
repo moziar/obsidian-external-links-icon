@@ -152,7 +152,7 @@ const ICON_CATEGORIES: IconCategories = {
 	// 特殊选择器图标
 	SPECIAL: {
 		'obsidianweb': {
-			selector: 'body.fancy-external-obsidian-link .external-link[href^="https://"][href*="obsidian"], body.fancy-both-obsidian-link .external-link[href^="https://"][href*="obsidian"]'
+			selector: 'body.fancy-obsidian-web-link .external-link[href^="https://"][href*="obsidian.md"]'
 		},
 		// obsidiannote should match internal note links and obsidian://... external links
 		// EXCEPT advanced uri (obsidian://adv-uri) which is handled by advanceduri.
@@ -160,15 +160,15 @@ const ICON_CATEGORIES: IconCategories = {
 			selector: 'body.fancy-internal-obsidian-link .internal-link, body.fancy-both-obsidian-link .internal-link, body.fancy-external-obsidian-link .external-link[href^="obsidian://"]:not([href^="obsidian://adv-uri"]), body.fancy-both-obsidian-link .external-link[href^="obsidian://"]:not([href^="obsidian://adv-uri"])'
 		},
 		'advanceduri': {
-			selector: 'body.fancy-advanced-uri-link .external-link[href^="obsidian://adv-uri"][href*="settingid"]'
+			selector: 'body.fancy-advanced-uri-link .external-link[href^="obsidian://adv-uri"]'
 		}
 	}
 };
 
 // CSS 选择器常量
 const CSS_SELECTORS = {
-	URL_SCHEME: '.external-link',  // 简化选择器，不依赖 body 类
-	WEB_LINK: '.external-link[href^="https://"]',  // 简化选择器
+	URL_SCHEME: 'body.fancy-url-scheme .external-link',  // 依赖 fancy-url-scheme 类
+	WEB_LINK: 'body.fancy-web-link .external-link[href^="https://"]',  // 依赖 fancy-web-link 类
 	CUSTOM_DATA: '.external-link'
 } as const;
 
