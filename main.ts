@@ -417,7 +417,7 @@ const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
  * 外部链接图标插件主类
  */
 export default class ExternalLinksIcon extends Plugin {
-	settings: ExternalLinksIconSettings;
+	settings!: ExternalLinksIconSettings;
 	private styleElement: HTMLStyleElement | null = null;
 
 	/**
@@ -661,9 +661,10 @@ export default class ExternalLinksIcon extends Plugin {
 			return ICON_CATEGORIES.SPECIAL[icon.name].selector.replace(/:?:after/g, '');
 		}
 
-		// URL Scheme 类型
+		// URL Scheme 类型 - 使用 target 作为 scheme 标识符
 		if (icon.linkType === 'scheme') {
-			return `${CSS_SELECTORS.URL_SCHEME}[href^="${icon.name}://"]`;
+			const scheme = icon.target || icon.name;
+			return `${CSS_SELECTORS.URL_SCHEME}[href^="${scheme}://"]`;
 		}
 
 		// Web 图标 - 检查是否为特殊 Web 图标
@@ -678,14 +679,16 @@ export default class ExternalLinksIcon extends Plugin {
 			return `${CSS_SELECTORS.WEB_LINK}[href*="${domain}"]`;
 		}
 
-		// URL 类型的自定义图标 - 直接使用 icon.name 作为域名匹配
+		// URL 类型的自定义图标 - 使用 target 作为域名匹配
 		if (icon.linkType === 'url') {
-			return `${CSS_SELECTORS.WEB_LINK}[href*="${icon.name}"]`;
+			const domain = icon.target || icon.name;
+			return `${CSS_SELECTORS.WEB_LINK}[href*="${domain}"]`;
 		}
 
 		// URL Scheme 图标（兼容遗留）- 但只针对未明确指定 linkType 的情况
 		if (this.isUrlSchemeIcon(icon.name) && !icon.linkType) {
-			return `${CSS_SELECTORS.URL_SCHEME}[href^="${icon.name}://"]`;
+			const scheme = icon.target || icon.name;
+			return `${CSS_SELECTORS.URL_SCHEME}[href^="${scheme}://"]`;
 		}
 
 		// 兜底：自定义数据属性
@@ -938,8 +941,6 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 	private createAddIconButton(containerEl: HTMLElement): void {
 		const s = new Setting(containerEl).setName('Add new icon').setHeading();
 		const btnContainer = s.controlEl.createDiv({ cls: 'add-buttons' });
-		btnContainer.style.display = 'flex';
-		btnContainer.style.gap = '8px';
 
 		const addWebsiteBtn = document.createElement('button');
 		addWebsiteBtn.textContent = 'Add Website';
@@ -1156,8 +1157,8 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.addOption('url', 'Website')
 			.addOption('scheme', 'URL Scheme')
 			.setValue(icon.linkType || 'url')
-			.onChange(async (value: LinkType) => {
-				icon.linkType = value;
+			.onChange(async (value: string) => {
+				icon.linkType = value as LinkType;
 				await this.plugin.saveSettings();
 				// 重新显示以更新占位符
 				this.display();
@@ -1424,35 +1425,48 @@ class NewIconModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		contentEl.createEl('h3', { text: 'Add new icon' });
-		contentEl.createEl('div', { text: 'Provide icon information. Name must be unique.' });
+		// 创建模态窗口的容器结构
+		const modalContainer = contentEl.createDiv();
+		modalContainer.addClass('external-links-icon-modal-container');
+		
+		const modal = modalContainer.createDiv();
+		modal.addClass('external-links-icon-modal');
+		
+		// 模态窗口头部
+		const modalHeader = modal.createDiv();
+		modalHeader.addClass('external-links-icon-modal-header');
+		modalHeader.createEl('h3', { text: 'Add new icon' });
+		
+		// 模态窗口内容
+		const modalContent = modal.createDiv();
+		modalContent.addClass('external-links-icon-modal-content');
+		modalContent.createEl('div', { text: 'Provide icon information. Name must be unique.' });
 
-	// Modal no longer exposes a dropdown; default to Website when adding here
+		// Modal no longer exposes a dropdown; default to Website when adding here
 
-		const nameInput = contentEl.createEl('input');
+		const nameInput = modalContent.createEl('input');
 		nameInput.placeholder = 'Icon name (unique)';
-		nameInput.style.width = '100%';
-		nameInput.style.marginTop = '8px';
+		nameInput.type = 'text';
+		nameInput.addClass('external-links-icon-modal-input');
 
-		const targetInput = contentEl.createEl('input');
+		const targetInput = modalContent.createEl('input');
 		targetInput.placeholder = 'Website (e.g. baidu.com) or scheme (e.g. bear)';
-		targetInput.style.width = '100%';
-		targetInput.style.marginTop = '8px';
+		targetInput.type = 'text';
+		targetInput.addClass('external-links-icon-modal-input');
 
-	// Upload SVG controls
+		// Upload SVG controls
 		let uploadedSvgData: string | undefined;
-		const uploadRow = contentEl.createDiv({ cls: 'upload-row' });
-		uploadRow.style.display = 'flex';
-		uploadRow.style.gap = '8px';
-		uploadRow.style.marginTop = '8px';
+		const uploadRow = modalContent.createDiv();
+		uploadRow.addClass('external-links-icon-upload-row');
 
-	const uploadBtn = uploadRow.createEl('button', { text: 'Upload SVG' });
-	const uploadName = uploadRow.createSpan({ text: '' });
-	const previewDiv = uploadRow.createDiv();
-	previewDiv.style.width = '48px';
-	previewDiv.style.height = '24px';
-	previewDiv.style.overflow = 'hidden';
-	previewDiv.style.display = 'inline-block';
+		const uploadBtn = uploadRow.createEl('button', { text: 'Upload SVG' });
+		uploadBtn.addClass('external-links-icon-upload-btn');
+		
+		const uploadName = uploadRow.createSpan({ text: 'No file chosen' });
+		uploadName.addClass('external-links-icon-upload-name');
+		
+		const previewDiv = uploadRow.createDiv();
+		previewDiv.addClass('external-links-icon-preview-div');
 
 		const hiddenInput = document.createElement('input');
 		hiddenInput.type = 'file';
@@ -1499,20 +1513,20 @@ class NewIconModal extends Modal {
 
 		uploadBtn.onclick = () => hiddenInput.click();
 
-	// set placeholder based on default type
-	const defaultType = this._defaultLinkType || 'url';
-	targetInput.placeholder = defaultType === 'url' ? 'Website (e.g. baidu.com or https://baidu.com)' : 'Scheme identifier (e.g. bear)';
+		// set placeholder based on default type
+		const defaultType = this._defaultLinkType || 'url';
+		targetInput.placeholder = defaultType === 'url' ? 'Website (e.g. baidu.com or https://baidu.com)' : 'Scheme identifier (e.g. bear)';
 
-		const actions = contentEl.createDiv({ cls: 'modal-actions' });
-		actions.style.display = 'flex';
-		actions.style.justifyContent = 'flex-end';
-		actions.style.marginTop = '12px';
+		// 模态窗口操作按钮
+		const modalActions = modal.createDiv();
+		modalActions.addClass('external-links-icon-modal-actions');
 
-		const cancelBtn = actions.createEl('button', { text: 'Cancel' });
+		const cancelBtn = modalActions.createEl('button', { text: 'Cancel' });
+		cancelBtn.addClass('external-links-icon-cancel-btn');
 		cancelBtn.onclick = () => { this.close(); };
 
-		const addBtn = actions.createEl('button', { text: 'Add icon' });
-		addBtn.style.marginLeft = '8px';
+		const addBtn = modalActions.createEl('button', { text: 'Add icon' });
+		addBtn.addClass('external-links-icon-add-btn');
 		addBtn.onclick = () => {
 			const name = (nameInput as HTMLInputElement).value.trim();
 			let target = (targetInput as HTMLInputElement).value.trim();
