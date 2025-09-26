@@ -778,7 +778,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 		// 第一板块：Add new icon（标题 + 右侧按钮）和说明
 		this.createAddIconButton(containerEl);
-		containerEl.createEl('div', { text: 'Click "Add icon" to open a dialog and provide icon information. Name must be unique.' });
+		containerEl.createEl('div', { text: 'Add website or URL scheme icon. Name must be unique.' });
 
 		// 第二板块：WebSite
 		this.displayWebsiteSection(containerEl);
@@ -792,7 +792,8 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 	 */
 	private displayWebsiteSection(containerEl: HTMLElement): void {
 		containerEl.createEl('h3', { text: 'WebSite' });
-		containerEl.createEl('div', { text: 'Website icons and their associated domains. Built-in icons are read-only; custom icons can be edited.' });
+		containerEl.createEl('div', { text: 'WebSite icons are matched by domain. When adding a website-type icon, provide a unique name and the domain (e.g. "baidu.com").' });
+		
 
 	// 内置 Website 图标（只读，默认折叠）
 	const builtInWrap = containerEl.createDiv({ cls: 'website-builtins' });
@@ -868,7 +869,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 	 */
 	private displayURLSchemeSection(containerEl: HTMLElement): void {
 		containerEl.createEl('h3', { text: 'URL Scheme' });
-		containerEl.createEl('div', { text: 'URL Scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. "bear").' });
+		containerEl.createEl('div', { text: 'URL Scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. "zotero").' });
 
 	// Built-in scheme icons (read-only, default collapsed)
 	const builtInWrap = containerEl.createDiv({ cls: 'scheme-builtins' });
@@ -1072,6 +1073,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			img.style.height = '100%';
 			img.style.objectFit = 'contain';
 			img.style.display = 'block';
+			img.style.boxShadow = 'none';		//TODO fix：Things 主题下图片边框阴影
 			previewIcon.appendChild(img);
 			// no debug badge
 		} catch (error) {
@@ -1099,7 +1101,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			// Scheme custom icons: only editable scheme identifier (protocol).
 			// Icon ID (name) is shown in the preview area and should not be editable here.
 			settingItem.addText(text => {
-				text.setPlaceholder('scheme (e.g. bear)')
+				text.setPlaceholder('scheme (e.g. zotero)')
 					.setValue(icon.target || '')
 					.onChange((value) => {
 						this.debounceUpdateTarget(icon.name, value);
@@ -1425,48 +1427,41 @@ class NewIconModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		// 创建模态窗口的容器结构
-		const modalContainer = contentEl.createDiv();
-		modalContainer.addClass('external-links-icon-modal-container');
+		// 直接在 contentEl 上创建模态窗口内容，避免多层嵌套
+		contentEl.createEl('h3', { text: 'Add new icon' });
 		
-		const modal = modalContainer.createDiv();
-		modal.addClass('external-links-icon-modal');
-		
-		// 模态窗口头部
-		const modalHeader = modal.createDiv();
-		modalHeader.addClass('external-links-icon-modal-header');
-		modalHeader.createEl('h3', { text: 'Add new icon' });
-		
-		// 模态窗口内容
-		const modalContent = modal.createDiv();
-		modalContent.addClass('external-links-icon-modal-content');
-		modalContent.createEl('div', { text: 'Provide icon information. Name must be unique.' });
+		const descEl = contentEl.createEl('div', { text: 'Provide icon information. Name must be unique.' });
+		descEl.style.marginBottom = '10px';
 
-		// Modal no longer exposes a dropdown; default to Website when adding here
-
-		const nameInput = modalContent.createEl('input');
+		// Icon name input
+		const nameInput = contentEl.createEl('input');
 		nameInput.placeholder = 'Icon name (unique)';
 		nameInput.type = 'text';
-		nameInput.addClass('external-links-icon-modal-input');
+		nameInput.style.marginBottom = '10px';
+		nameInput.style.width = '100%';
 
-		const targetInput = modalContent.createEl('input');
-		targetInput.placeholder = 'Website (e.g. baidu.com) or scheme (e.g. bear)';
+		// Target input
+		const targetInput = contentEl.createEl('input');
+		targetInput.placeholder = 'Website (e.g. baidu.com) or scheme (e.g. zotero)';
 		targetInput.type = 'text';
-		targetInput.addClass('external-links-icon-modal-input');
+		targetInput.style.marginBottom = '10px';
+		targetInput.style.width = '100%';
 
 		// Upload SVG controls
 		let uploadedSvgData: string | undefined;
-		const uploadRow = modalContent.createDiv();
-		uploadRow.addClass('external-links-icon-upload-row');
+		const uploadRow = contentEl.createDiv();
+		uploadRow.style.marginBottom = '10px';
+		uploadRow.style.display = 'flex';
+		uploadRow.style.alignItems = 'center';
+		uploadRow.style.gap = '10px';
 
 		const uploadBtn = uploadRow.createEl('button', { text: 'Upload SVG' });
-		uploadBtn.addClass('external-links-icon-upload-btn');
 		
 		const uploadName = uploadRow.createSpan({ text: 'No file chosen' });
-		uploadName.addClass('external-links-icon-upload-name');
 		
 		const previewDiv = uploadRow.createDiv();
-		previewDiv.addClass('external-links-icon-preview-div');
+		previewDiv.style.width = '20px';
+		previewDiv.style.height = '20px';
 
 		const hiddenInput = document.createElement('input');
 		hiddenInput.type = 'file';
@@ -1515,18 +1510,19 @@ class NewIconModal extends Modal {
 
 		// set placeholder based on default type
 		const defaultType = this._defaultLinkType || 'url';
-		targetInput.placeholder = defaultType === 'url' ? 'Website (e.g. baidu.com or https://baidu.com)' : 'Scheme identifier (e.g. bear)';
+		targetInput.placeholder = defaultType === 'url' ? 'Domain (e.g. baidu.com or https://baidu.com)' : 'Scheme identifier (e.g. zotero)';
 
-		// 模态窗口操作按钮
-		const modalActions = modal.createDiv();
-		modalActions.addClass('external-links-icon-modal-actions');
+		// Action buttons
+		const buttonContainer = contentEl.createDiv();
+		buttonContainer.style.display = 'flex';
+		buttonContainer.style.justifyContent = 'flex-end';
+		buttonContainer.style.gap = '10px';
+		buttonContainer.style.marginTop = '20px';
 
-		const cancelBtn = modalActions.createEl('button', { text: 'Cancel' });
-		cancelBtn.addClass('external-links-icon-cancel-btn');
+		const cancelBtn = buttonContainer.createEl('button', { text: 'Cancel' });
 		cancelBtn.onclick = () => { this.close(); };
 
-		const addBtn = modalActions.createEl('button', { text: 'Add icon' });
-		addBtn.addClass('external-links-icon-add-btn');
+		const addBtn = buttonContainer.createEl('button', { text: 'Add icon' });
 		addBtn.onclick = () => {
 			const name = (nameInput as HTMLInputElement).value.trim();
 			let target = (targetInput as HTMLInputElement).value.trim();
