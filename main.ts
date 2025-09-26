@@ -924,7 +924,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 		});
 
 		// Custom scheme icons (editable)
-		const customSchemeIcons = Object.values(this.plugin.settings.customIcons || {}).filter(ic => ic.linkType === 'scheme');
+		const customSchemeIcons = this.getSortedCustomIcons().filter(ic => ic.linkType === 'scheme');
 		if (customSchemeIcons.length > 0) {
 			const customWrap = containerEl.createDiv({ cls: 'scheme-custom' });
 			customWrap.createEl('h4', { text: 'Custom' });
