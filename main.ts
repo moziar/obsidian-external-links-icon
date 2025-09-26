@@ -842,7 +842,9 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 				img.style.height = '100%';
 				img.style.objectFit = 'contain';
 				img.style.display = 'block';
-					iconEl.appendChild(img);
+				img.style.boxShadow = 'none';
+				img.style.margin = '0';
+				iconEl.appendChild(img);
 			} catch (e) {
 				console.warn('Failed to render builtin website preview', e);
 				iconEl.textContent = '🔗';
@@ -1073,7 +1075,8 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			img.style.height = '100%';
 			img.style.objectFit = 'contain';
 			img.style.display = 'block';
-			img.style.boxShadow = 'none';		//TODO fix：Things 主题下图片边框阴影
+			img.style.boxShadow = 'none';
+			img.style.margin = '0';
 			previewIcon.appendChild(img);
 			// no debug badge
 		} catch (error) {
