@@ -156,11 +156,12 @@ const ICON_CATEGORIES: IconCategories = {
 		},
 		// obsidiannote should match internal note links and obsidian://... external links
 		// EXCEPT advanced uri (obsidian://adv-uri) which is handled by advanceduri.
+		// only support settingid now.
 		'obsidiannote': {
-			selector: 'body.fancy-internal-obsidian-link .internal-link, body.fancy-both-obsidian-link .internal-link, body.fancy-external-obsidian-link .external-link[href^="obsidian://"]:not([href^="obsidian://adv-uri"]), body.fancy-both-obsidian-link .external-link[href^="obsidian://"]:not([href^="obsidian://adv-uri"])'
+			selector: 'body.fancy-internal-obsidian-link .internal-link, body.fancy-both-obsidian-link .internal-link, body.fancy-external-obsidian-link .external-link[href^="obsidian://"]:not([href^="obsidian://adv-uri"][href*="settingid"]), body.fancy-both-obsidian-link .external-link[href^="obsidian://"]:not([href^="obsidian://adv-uri"][href*="settingid"])'
 		},
-		'advanceduri': {
-			selector: 'body.fancy-advanced-uri-link .external-link[href^="obsidian://adv-uri"]'
+		'advancedurisetting': {
+			selector: 'body.fancy-advanced-uri-link .external-link[href^="obsidian://adv-uri"][href*="settingid"]'
 		},
 		'google': {
 			selector: 'body.fancy-web-link .external-link[href^="https://"][href*="google.com"]:not([href*="docs.google.com"]):not([href*="cloud.google.com"])'
@@ -402,8 +403,8 @@ const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
 			"order": 34,
 			"linkType": "scheme"
 		},
-		"advanceduri": {
-			"name": "advanceduri",
+		"advanceduri setting": {
+			"name": "advancedurisetting",
 			"svgData": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill-rule=\"evenodd\" stroke-linecap=\"round\" stroke-linejoin=\"round\" viewBox=\"0 0 20 22\" fill=\"none\" stroke=\"#000\" stroke-width=\"2\" xmlns:v=\"https://vecta.io/nano\"><path d=\"M7.627 3.119A2.35 2.35 0 0 1 9.956 1a2.35 2.35 0 0 1 2.33 2.119 2.35 2.35 0 0 0 2.331 2.134 2.34 2.34 0 0 0 .988-.219 2.34 2.34 0 0 1 .967-.209 2.35 2.35 0 0 1 2.34 2.34 2.34 2.34 0 0 1-.977 1.902 2.34 2.34 0 0 0-.996 1.915c0 .762.372 1.478.996 1.916a2.34 2.34 0 0 1 .977 1.902 2.35 2.35 0 0 1-2.34 2.34 2.34 2.34 0 0 1-.967-.209 2.34 2.34 0 0 0-.988-.219 2.35 2.35 0 0 0-2.331 2.134 2.35 2.35 0 0 1-2.329 2.119 2.35 2.35 0 0 1-2.33-2.119 2.35 2.35 0 0 0-2.331-2.134c-.342 0-.679.075-.989.219a2.34 2.34 0 0 1-.967.209A2.35 2.35 0 0 1 1 14.8a2.34 2.34 0 0 1 .977-1.902 2.34 2.34 0 0 0 .996-1.915c0-.762-.372-1.478-.996-1.916a2.34 2.34 0 0 1-.976-1.901c0-1.284 1.057-2.34 2.34-2.34a2.34 2.34 0 0 1 .965.208 2.34 2.34 0 0 0 .988.219 2.35 2.35 0 0 0 2.331-2.134\"/><circle cx=\"9.956\" cy=\"10.983\" r=\"3\"/></svg>",
 			"order": 33,
 			"linkType": "scheme",
