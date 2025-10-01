@@ -3,7 +3,10 @@ A simple plugin that automatically adds icons to the external and internal links
 
 ![demo.png](demo.png)
 
-## Support links
+<details>
+	<summary><h2>Built-in links</h2></summary>
+
+![built-in links](built-in%20links.png)
 
 ### URL Scheme
 - GoodLinks
@@ -17,9 +20,7 @@ A simple plugin that automatically adds icons to the external and internal links
 - Apple Shortcuts
 - Advanced-URI
 
-<details>
-<summary><h3>WebSite</h3></summary>
-	
+### WebSite
 - Github
 - 少数派 SSPai
 - 微信公众号
@@ -41,7 +42,6 @@ A simple plugin that automatically adds icons to the external and internal links
 - Google Docs
 - Google Cloud
 - Other Google site
-</details>
 
 ### Obsidian
 - Website
@@ -52,10 +52,18 @@ A simple plugin that automatically adds icons to the external and internal links
   - internal link
   - external vault link
 
-## Performance
-This plugin is designed for high performance. 
+</details>
 
-Every image has been meticulously optimized, with most displayed in `SVG` format. 
+## Custom Icons
+To add a custom icon, click **Add Website** or **Add URL Scheme** in the settings.
+
+- Only **SVG** format is supported.
+- We recommend compressing your SVG file before uploading to improve performance.
+
+## Performance
+This plugin is designed for high performance.
+
+Every image has been meticulously optimized, with most displayed in `SVG` format.
 
 Some icons are adaptive to the _Base color scheme_ and will automatically adjust their highlight color accordingly.
 
@@ -63,7 +71,7 @@ Some icons are adaptive to the _Base color scheme_ and will automatically adjust
 Use the [BRAT](https://github.com/TfTHacker/obsidian42-brat) to install this plugin.
 
 1. Install [BRAT](https://obsidian.md/plugins?id=obsidian42-brat) Obsidian plugin
-2. Use `BRAT: Plugins: Add a beta plugin for testing` command to install a new plugin 
+2. Use `BRAT: Plugins: Add a beta plugin for testing` command to install a new plugin
 3. Enter `moziar/obsidian-external-links-icon` on the popup window
 4. Enjoy
 
