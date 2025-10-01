@@ -917,6 +917,8 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 					img.style.height = '100%';
 					img.style.objectFit = 'contain';
 					img.style.display = 'block';
+					img.style.boxShadow = 'none';
+					img.style.margin = '0';
 					iconEl.appendChild(img);
 				} catch (e) {
 					console.warn('Failed to render builtin scheme preview', e);
