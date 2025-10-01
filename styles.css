@@ -9,6 +9,190 @@
    default suffix behavior for non-matching links. */
 
 /***
+模态窗口样式
+***/
+
+/* Add Website 和 Add URL Scheme 模态窗口样式 */
+.external-links-icon-modal-container {
+	font-family: var(--font-interface);
+}
+
+.external-links-icon-modal {
+	background-color: var(--background-primary);
+	border-radius: 8px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	border: 1px solid var(--divider-color);
+	padding: 0;
+	max-width: 500px;
+	width: 90vw;
+}
+
+.external-links-icon-modal-header {
+	padding: 16px 20px;
+	border-bottom: 1px solid var(--divider-color);
+	background-color: var(--background-secondary);
+	border-radius: 8px 8px 0 0;
+}
+
+.external-links-icon-modal-header h3 {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.external-links-icon-modal-content {
+	padding: 20px;
+}
+
+.external-links-icon-modal-content > div {
+	margin-bottom: 16px;
+	color: var(--text-muted);
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.external-links-icon-modal-input {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid var(--interactive-accent);
+	border-radius: 4px;
+	background-color: var(--background-modifier-form-field);
+	color: var(--text-normal);
+	font-size: 14px;
+	transition: border-color 0.2s ease;
+	box-sizing: border-box;
+	margin-top: 8px;
+	margin-bottom: 16px;
+}
+
+.external-links-icon-modal-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent-hover);
+	box-shadow: 0 0 0 2px var(--background-modifier-active);
+}
+
+.external-links-icon-modal-input::placeholder {
+	color: var(--text-muted);
+}
+
+.external-links-icon-upload-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px;
+	background-color: var(--background-secondary);
+	border-radius: 4px;
+	border: 1px dashed var(--interactive-accent);
+	margin-top: 8px;
+	margin-bottom: 16px;
+}
+
+.external-links-icon-upload-btn {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	padding: 6px 12px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 14px;
+	transition: background-color 0.2s ease;
+	flex-shrink: 0;
+}
+
+.external-links-icon-upload-btn:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+.external-links-icon-upload-name {
+	flex-grow: 1;
+	color: var(--text-muted);
+	font-size: 14px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.external-links-icon-preview-div {
+	width: 48px;
+	height: 24px;
+	overflow: hidden;
+	flex-shrink: 0;
+	background-color: var(--background-primary);
+	border-radius: 2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.external-links-icon-modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 12px;
+	padding: 16px 20px 20px;
+	border-top: 1px solid var(--divider-color);
+}
+
+.external-links-icon-modal-actions button {
+	padding: 8px 16px;
+	border-radius: 4px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	border: 1px solid transparent;
+}
+
+.external-links-icon-cancel-btn {
+	background-color: var(--background-secondary);
+	color: var(--text-normal);
+	border-color: var(--divider-color);
+}
+
+.external-links-icon-cancel-btn:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.external-links-icon-add-btn {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.external-links-icon-add-btn:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+.external-links-icon-modal-actions button:active {
+	transform: translateY(1px);
+}
+
+/***
+设置页面按钮样式
+***/
+
+.add-buttons {
+	display: flex;
+	gap: 8px;
+	margin: 12px 0;
+}
+
+.add-buttons button {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	padding: 8px 16px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	transition: background-color 0.2s ease;
+}
+
+.add-buttons button:hover {
+	background: var(--interactive-accent-hover);
+}
+
+/***
 URL Scheme 链接
 ***/
 
@@ -110,7 +294,7 @@ settings:
         description: Enable icons for url schemes.
         type: class-toggle
         default: true
-    - 
+    -
         id: fancy-web-link
         title: Fancy web link
         description: Enable icons for web page links.
@@ -186,7 +370,7 @@ settings:
 .icon-setting-item .setting-item-control button,
 .icon-setting-item .setting-item-control .mod-cta,
 .add-buttons button,
-.upload-row button,
+.external-links-icon-upload-btn,
 .svg-preview-container button,
 .website-item button,
 .scheme-item button {
@@ -206,9 +390,9 @@ settings:
 .add-buttons button:hover,
 .add-buttons button:focus,
 .add-buttons button:active,
-.upload-row button:hover,
-.upload-row button:focus,
-.upload-row button:active,
+.external-links-icon-upload-btn:hover,
+.external-links-icon-upload-btn:focus,
+.external-links-icon-upload-btn:active,
 .website-item button:hover,
 .website-item button:focus,
 .website-item button:active,
@@ -228,8 +412,8 @@ settings:
 .icon-setting-item .setting-item-control button::after,
 .add-buttons button::before,
 .add-buttons button::after,
-.upload-row button::before,
-.upload-row button::after,
+.external-links-icon-upload-btn::before,
+.external-links-icon-upload-btn::after,
 .website-item button::before,
 .website-item button::after,
 .scheme-item button::before,
@@ -265,7 +449,7 @@ details.builtin-list summary {
 }
 
 /* svg preview in modal */
-.upload-row div {
+.external-links-icon-preview-div {
 	display: inline-block;
 	vertical-align: middle;
 }
