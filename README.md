@@ -6,7 +6,7 @@ A simple plugin that automatically adds icons to the external and internal links
 <details>
 	<summary><h2>Built-in links</h2></summary>
 
-![built-in links](built-in%20links.png)
+![links](links.png)
 
 ### URL Scheme
 - GoodLinks
