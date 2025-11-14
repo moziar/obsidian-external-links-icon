@@ -1,4 +1,9 @@
 ## External links icon
+[![GitHub Release](https://img.shields.io/github/v/release/moziar/obsidian-external-links-icon)](https://github.com/moziar/obsidian-external-links-icon/releases/latest)
+[![Total Downloads](https://img.shields.io/github/downloads/moziar/obsidian-external-links-icon/total?label=Total%20Downloads)](https://github.com/moziar/obsidian-external-links-icon/releases)
+[![Latest Downloads](https://img.shields.io/github/downloads/moziar/obsidian-external-links-icon/latest/total?label=Latest%20Downloads)](https://github.com/moziar/obsidian-external-links-icon/releases/latest)
+[![Last Commit](https://img.shields.io/github/last-commit/moziar/obsidian-external-links-icon?label=Last%20Commit)](https://github.com/moziar/obsidian-external-links-icon/commits/master)
+
 A simple plugin that automatically adds icons to the external and internal links, designed to work seamlessly in your local environment.
 
 ![demo.png](demo.png)
