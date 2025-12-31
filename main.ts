@@ -420,6 +420,7 @@ const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
 export default class ExternalLinksIcon extends Plugin {
 	settings!: ExternalLinksIconSettings;
 	private styleElement: HTMLStyleElement | null = null;
+	private generatedCss: string = '';
 
 	/**
 	 * 插件加载
@@ -506,24 +507,20 @@ export default class ExternalLinksIcon extends Plugin {
 	 * 移除图标样式
 	 */
 	private removeIconStyles(): void {
-		if (this.styleElement) {
-			this.styleElement.remove();
-			this.styleElement = null;
-		}
+		// Do not remove or manage a runtime <style> element. Generated CSS is
+		// stored in memory and can be used by future implementations that avoid
+		// creating DOM style elements.
+		this.generatedCss = '';
 	}
 
 	/**
 	 * 应用图标样式
 	 */
 	private applyIconStyles(): void {
-		this.removeIconStyles();
-		
-		this.styleElement = document.createElement('style');
-		this.styleElement.id = CSS_CONSTANTS.STYLE_ID;
-		
-		const cssContent = this.generateCSS();
-		this.styleElement.textContent = cssContent;
-		document.head.appendChild(this.styleElement);
+		// Avoid creating and appending <style> elements at runtime. For now we
+		// generate CSS into a string that can be reviewed or used by a future
+		// mechanism that does not rely on inserting DOM style nodes.
+		this.generatedCss = this.generateCSS();
 	}
 
 	/**
@@ -800,10 +797,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 	const builtInWrap = containerEl.createDiv({ cls: 'website-builtins' });
 	const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
 	builtinsDetails.createEl('summary', { text: 'Built-in' });
-	const builtinRow = builtinsDetails.createDiv();
-	builtinRow.style.display = 'flex';
-	builtinRow.style.flexWrap = 'wrap';
-	builtinRow.style.gap = '8px';
+	const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
 
 
 		// Render built-in website icons from DEFAULT_SETTINGS only (built-ins are read-only in Settings)
@@ -814,17 +808,8 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.filter((ic: IconItem) => ic.linkType === 'url');
 		builtinIcons.forEach((icon: IconItem) => {
 			const box = builtinRow.createDiv({ cls: 'website-item' });
-			box.style.display = 'flex';
-			box.style.alignItems = 'center';
-			box.style.gap = '8px';
-			box.style.padding = '6px';
-			box.style.border = '1px solid var(--interactive-muted)';
-			box.style.borderRadius = '4px';
 
-			const iconEl = box.createDiv();
-			iconEl.style.width = '20px';
-			iconEl.style.height = '20px';
-			iconEl.style.flexShrink = '0';
+			const iconEl = box.createDiv({ cls: 'item-icon' });
 			try {
 				// Prefer explicit document theme: when document indicates light, always use svgData;
 				// when document indicates dark, prefer themeDarkSvgData if available.
@@ -839,12 +824,6 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 				const prepared = prepareSvgForSettings(svgSource, iconEl);
 				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 				img.alt = icon.name || '';
-				img.style.width = '100%';
-				img.style.height = '100%';
-				img.style.objectFit = 'contain';
-				img.style.display = 'block';
-				img.style.boxShadow = 'none';
-				img.style.margin = '0';
 				iconEl.appendChild(img);
 			} catch (e) {
 				console.warn('Failed to render builtin website preview', e);
@@ -878,10 +857,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 	const builtInWrap = containerEl.createDiv({ cls: 'scheme-builtins' });
 	const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
 	builtinsDetails.createEl('summary', { text: 'Built-in' });
-	const builtinRow = builtinsDetails.createDiv();
-	builtinRow.style.display = 'flex';
-	builtinRow.style.flexWrap = 'wrap';
-	builtinRow.style.gap = '8px';
+	const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
 
 
 		// For built-in scheme icons use DEFAULT_SETTINGS first (built-ins are read-only in Settings)
@@ -889,16 +865,8 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			const icon = (DEFAULT_SETTINGS.icons || {})[key] || (this.plugin.settings.icons || {})[key];
 			if (icon) {
 				const box = builtinRow.createDiv({ cls: 'scheme-item' });
-				box.style.display = 'flex';
-				box.style.alignItems = 'center';
-				box.style.gap = '8px';
-				box.style.padding = '6px';
-				box.style.border = '1px solid var(--interactive-muted)';
-				box.style.borderRadius = '4px';
 
-				const iconEl = box.createDiv();
-				iconEl.style.width = '20px';
-				iconEl.style.height = '20px';
+				const iconEl = box.createDiv({ cls: 'item-icon' });
 				try {
 					const preferDark = preferDarkThemeFromDocument();
 					// Explicitly prefer the light `svgData` when the document indicates light theme
@@ -913,12 +881,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 					const prepared = prepareSvgForSettings(svgSource, iconEl);
 					img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 					img.alt = icon.name || '';
-					img.style.width = '100%';
-					img.style.height = '100%';
-					img.style.objectFit = 'contain';
-					img.style.display = 'block';
-					img.style.boxShadow = 'none';
-					img.style.margin = '0';
+
 					iconEl.appendChild(img);
 				} catch (e) {
 					console.warn('Failed to render builtin scheme preview', e);
@@ -1045,10 +1008,8 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 	 */
 	private addIconPreview(settingItem: Setting, icon: IconItem): void {
 		const previewContainer = settingItem.nameEl.createDiv({ cls: 'svg-preview-container' });
-		previewContainer.style.cssText = 'display: flex; align-items: center; gap: 8px;';
 
-		const previewIcon = previewContainer.createDiv();
-		previewIcon.style.cssText = 'width: 16px; height: 16px; flex-shrink: 0;';
+		const previewIcon = previewContainer.createDiv({ cls: 'external-links-icon-preview-div small' });
 
 		// If this icon is a built-in, prefer the DEFAULT_SETTINGS version for Settings preview
 		const builtinOverride = (DEFAULT_SETTINGS.icons || {})[icon.name];
@@ -1074,12 +1035,6 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			const img = document.createElement('img');
 			img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 			img.alt = icon.name || '';
-			img.style.width = '100%';
-			img.style.height = '100%';
-			img.style.objectFit = 'contain';
-			img.style.display = 'block';
-			img.style.boxShadow = 'none';
-			img.style.margin = '0';
 			previewIcon.appendChild(img);
 			// no debug badge
 		} catch (error) {
@@ -1315,7 +1270,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const input = document.createElement('input');
 		input.type = 'file';
 		input.accept = '.svg,image/svg+xml';
-		input.style.display = 'none';
+		input.classList.add('external-links-icon-hidden-input');
 
 		input.onchange = async (event) => {
 			try {
@@ -1436,43 +1391,32 @@ class NewIconModal extends Modal {
 		// 直接在 contentEl 上创建模态窗口内容，避免多层嵌套
 		contentEl.createEl('h3', { text: 'Add new icon' });
 		
-		const descEl = contentEl.createEl('div', { text: 'Provide icon information. Name must be unique.' });
-		descEl.style.marginBottom = '10px';
+		const descEl = contentEl.createEl('div', { text: 'Provide icon information. Name must be unique.', cls: 'external-links-icon-desc' });
 
 		// Icon name input
-		const nameInput = contentEl.createEl('input');
+		const nameInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
 		nameInput.placeholder = 'Icon name (unique)';
 		nameInput.type = 'text';
-		nameInput.style.marginBottom = '10px';
-		nameInput.style.width = '100%';
 
 		// Target input
-		const targetInput = contentEl.createEl('input');
+		const targetInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
 		targetInput.placeholder = 'Website (e.g. baidu.com) or scheme (e.g. zotero)';
 		targetInput.type = 'text';
-		targetInput.style.marginBottom = '10px';
-		targetInput.style.width = '100%';
 
 		// Upload SVG controls
 		let uploadedSvgData: string | undefined;
-		const uploadRow = contentEl.createDiv();
-		uploadRow.style.marginBottom = '10px';
-		uploadRow.style.display = 'flex';
-		uploadRow.style.alignItems = 'center';
-		uploadRow.style.gap = '10px';
+		const uploadRow = contentEl.createDiv({ cls: 'external-links-icon-upload-row' });
 
 		const uploadBtn = uploadRow.createEl('button', { text: 'Upload SVG' });
 		
 		const uploadName = uploadRow.createSpan({ text: 'No file chosen' });
 		
-		const previewDiv = uploadRow.createDiv();
-		previewDiv.style.width = '20px';
-		previewDiv.style.height = '20px';
+		const previewDiv = uploadRow.createDiv({ cls: 'external-links-icon-preview-div small' });
 
 		const hiddenInput = document.createElement('input');
 		hiddenInput.type = 'file';
 		hiddenInput.accept = '.svg,image/svg+xml';
-		hiddenInput.style.display = 'none';
+		hiddenInput.classList.add('external-links-icon-hidden-input');
 		hiddenInput.onchange = async (ev) => {
 			const files = (ev.target as HTMLInputElement).files;
 			if (!files || files.length === 0) return;
@@ -1494,10 +1438,10 @@ class NewIconModal extends Modal {
 						const img = document.createElement('img');
 						img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 						img.alt = file.name;
-						img.style.width = '100%';
-						img.style.height = '100%';
-						img.style.objectFit = 'contain';
-						img.style.display = 'block';
+						
+						
+						
+						
 						previewDiv.innerHTML = '';
 						previewDiv.appendChild(img);
 					} catch {
@@ -1519,11 +1463,7 @@ class NewIconModal extends Modal {
 		targetInput.placeholder = defaultType === 'url' ? 'Domain (e.g. baidu.com or https://baidu.com)' : 'Scheme identifier (e.g. zotero)';
 
 		// Action buttons
-		const buttonContainer = contentEl.createDiv();
-		buttonContainer.style.display = 'flex';
-		buttonContainer.style.justifyContent = 'flex-end';
-		buttonContainer.style.gap = '10px';
-		buttonContainer.style.marginTop = '20px';
+		const buttonContainer = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
 
 		const cancelBtn = buttonContainer.createEl('button', { text: 'Cancel' });
 		cancelBtn.onclick = () => { this.close(); };

@@ -125,6 +125,31 @@
 	justify-content: center;
 }
 
+/* small variants used in Settings/modals */
+.svg-preview-container .external-links-icon-preview-div {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+}
+
+.svg-preview-container .external-links-icon-preview-div img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	display: block;
+	box-shadow: none;
+	margin: 0;
+}
+
+.external-links-icon-preview-div.small {
+	width: 20px;
+	height: 20px;
+}
+
+.external-links-icon-hidden-input { display: none; }
+
+.external-links-icon-desc { margin-bottom: 10px; }
+
 .external-links-icon-modal-actions {
 	display: flex;
 	justify-content: flex-end;
@@ -439,6 +464,13 @@ details.builtin-list summary {
 	padding: 6px 0;
 }
 
+.builtin-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 6px 0;
+}
+
 .website-item, .scheme-item {
 	display: flex;
 	align-items: center;
@@ -446,6 +478,24 @@ details.builtin-list summary {
 	padding: 6px;
 	border: 1px solid var(--interactive-muted);
 	border-radius: 6px;
+}
+
+.website-item .item-icon,
+.scheme-item .item-icon {
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+	display: inline-block;
+}
+
+.website-item .item-icon img,
+.scheme-item .item-icon img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	display: block;
+	box-shadow: none;
+	margin: 0;
 }
 
 /* svg preview in modal */
