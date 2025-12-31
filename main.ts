@@ -1,4 +1,4 @@
-import { Plugin, PluginSettingTab, Setting, App, Modal } from 'obsidian';
+import { Plugin, PluginSettingTab, Setting, App, Modal, Notice } from 'obsidian';
 
 /**
  * Sanitize SVG content: remove XML prolog/doctype, script/style tags,
@@ -935,8 +935,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const { linkType, name, target, svgData } = data;
 		const customIcons = this.plugin.settings.customIcons || {};
 		if (customIcons[name]) {
-			alert(`Icon name "${name}" already exists. Please choose a unique name.`);
-			return;
+				new Notice(`Icon name "${name}" already exists. Please choose a unique name.`);
 		}
 
 		// 规范化 target：如果是 url，去掉协议和尾部斜杠
@@ -1121,10 +1120,12 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.addOption('scheme', 'URL Scheme')
 			.setValue(icon.linkType || 'url')
 			.onChange(async (value: string) => {
-				icon.linkType = value as LinkType;
-				await this.plugin.saveSettings();
-				// 重新显示以更新占位符
-				this.display();
+				if (value === 'url' || value === 'scheme') {
+					icon.linkType = value;
+					await this.plugin.saveSettings();
+					// 重新显示以更新占位符
+					this.display();
+				}
 			}));
 	}
 
@@ -1282,7 +1283,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 				const file = files[0];
 				if (!this.isValidSvgFile(file)) {
-					alert('Please select a valid SVG file.');
+					new Notice('Please select a valid SVG file.');
 					return;
 				}
 
@@ -1293,11 +1294,11 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 					this.display();
 				} else {
-					alert('Invalid SVG file content.');
+					new Notice('Invalid SVG file content.');
 				}
 			} catch (error) {
 				console.error('Failed to upload SVG:', error);
-				alert('Failed to upload SVG file.');
+				new Notice('Failed to upload SVG file.');
 			}
 		};
 
@@ -1459,7 +1460,7 @@ class NewIconModal extends Modal {
 			const file = files[0];
 			// basic validation
 			if (!(file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg'))) {
-				alert('Please select a valid SVG file.');
+				new Notice('Please select a valid SVG file.');
 				return;
 			}
 			const reader = new FileReader();
@@ -1487,10 +1488,10 @@ class NewIconModal extends Modal {
 						previewDiv.textContent = '';
 					}
 				} else {
-					alert('Invalid SVG content');
+					new Notice('Invalid SVG content');
 				}
 			};
-			reader.onerror = () => alert('Failed to read file');
+			reader.onerror = () => new Notice('Failed to read file');
 			reader.readAsText(file);
 		};
 		document.body.appendChild(hiddenInput);
@@ -1511,8 +1512,8 @@ class NewIconModal extends Modal {
 		addBtn.onclick = () => {
 			const name = (nameInput as HTMLInputElement).value.trim();
 			let target = (targetInput as HTMLInputElement).value.trim();
-			if (!name) { alert('Name is required'); return; }
-			if (!target) { alert('Target is required'); return; }
+			if (!name) { new Notice('Name is required'); return; }
+			if (!target) { new Notice('Target is required'); return; }
 			// Normalize website target by removing leading protocol and trailing slash
 			if (this._defaultLinkType === 'url') {
 				target = target.replace(/^https?:\/\//i, '').replace(/\/$/, '');
