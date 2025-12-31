@@ -421,6 +421,9 @@ export default class ExternalLinksIcon extends Plugin {
 	settings!: ExternalLinksIconSettings;
 	private styleElement: HTMLStyleElement | null = null;
 	private generatedCss: string = '';
+	private mutationObserver: MutationObserver | null = null;
+	private readonly SCAN_DEBOUNCE_KEY = 'scan-links';
+	private observedRoots: Element[] = []; // roots we observe / scan within
 
 	/**
 	 * 插件加载
@@ -430,6 +433,34 @@ export default class ExternalLinksIcon extends Plugin {
 			await this.loadSettings();
 			this.addSettingTab(new ExternalLinksIconSettingTab(this.app, this));
 			this.applyIconStyles();
+			// Setup a MutationObserver to annotate links dynamically when DOM changes occur
+			try {
+				this.mutationObserver = new MutationObserver(() => this.scheduleScan());
+			// Observe only specific content containers to reduce noisy observations.
+			// Common Obsidian view classes: preview/source views and generic view-content.
+			const observeSelectors = ['.markdown-preview-view', '.markdown-source-view', '.view-content', '.workspace-leaf-content'];
+			const roots = Array.from(document.querySelectorAll(observeSelectors.join(',')));
+			if (roots.length) {
+				this.observedRoots = roots;
+				roots.forEach(r => {
+					try { this.mutationObserver!.observe(r, { childList: true, subtree: true }); } catch (e) { /* ignore root observe errors */ }
+				});
+				// Also observe body class changes (theme/layout toggles)
+				try { this.mutationObserver!.observe(document.body, { attributes: true, attributeFilter: ['class'] }); } catch (e) { /* ignore */ }
+			} else {
+				// Fallback: observe body but avoid observing attributes broadly to reduce noise.
+				this.observedRoots = [];
+				try { this.mutationObserver!.observe(document.body, { childList: true, subtree: true }); } catch (e) { /* ignore */ }
+			}
+			// Watch workspace events for leaf/layout changes to trigger scans reliably
+			this.registerEvent(this.app.workspace.on('active-leaf-change', () => this.scheduleScan()));
+			this.registerEvent(this.app.workspace.on('layout-change', () => this.scheduleScan()));
+
+				this.scheduleScan();
+			} catch (e) {
+				// If DOM isn't ready or observation isn't allowed, fallback to a one-off scan
+				this.scanAndAnnotateLinks();
+			}
 		} catch (error) {
 			console.error('External Links Icon plugin failed to load:', error);
 		}
@@ -508,9 +539,15 @@ export default class ExternalLinksIcon extends Plugin {
 	 */
 	private removeIconStyles(): void {
 		// Do not remove or manage a runtime <style> element. Generated CSS is
-		// stored in memory and can be used by future implementations that avoid
-		// creating DOM style elements.
+		// stored in memory and can be used by a future implementation that avoids
+		// creating DOM style nodes.
 		this.generatedCss = '';
+		// Remove any inserted inline icon elements
+		document.querySelectorAll('.external-links-icon-inline').forEach(el => el.remove());
+		if (this.mutationObserver) {
+			this.mutationObserver.disconnect();
+			this.mutationObserver = null;
+		}
 	}
 
 	/**
@@ -521,6 +558,10 @@ export default class ExternalLinksIcon extends Plugin {
 		// generate CSS into a string that can be reviewed or used by a future
 		// mechanism that does not rely on inserting DOM style nodes.
 		this.generatedCss = this.generateCSS();
+		// After settings or icons change, re-scan the document and inject per-link
+		// inline icon elements (this avoids creating a <style> element with
+		// per-icon background rules at runtime).
+		this.scheduleScan();
 	}
 
 	/**
@@ -644,6 +685,104 @@ export default class ExternalLinksIcon extends Plugin {
 			rules.push(`${p}::after { ${baseAfter} background-image: url("${encodedSvg}"); }`);
 		}
 		return rules.join('\n');
+	}
+
+	/**
+	 * Schedule a debounced scan of the document to annotate links with icon
+	 * elements. We reuse the existing debounceTimers map to avoid introducing
+	 * a new debounce implementation.
+	 */
+	private scanTimerId: number | null = null;
+
+	private scheduleScan(delay: number = 180): void {
+		if (this.scanTimerId) {
+			window.clearTimeout(this.scanTimerId);
+			this.scanTimerId = null;
+		}
+		this.scanTimerId = window.setTimeout(() => {
+			this.scanTimerId = null;
+			this.scanAndAnnotateLinks();
+		}, delay);
+	}
+
+	/**
+	 * Scan the document and annotate matching links with an inline icon
+	 * element (a <span><img/></span>). This avoids runtime style injection by
+	 * attaching actual elements with data-uris for SVG.
+	 */
+	private scanAndAnnotateLinks(): void {
+		try {
+			// Remove any previous inline icon elements and rebuild fresh.
+			document.querySelectorAll('.external-links-icon-inline').forEach(el => el.remove());
+
+			// Quick-exit: if none of the theme/feature body classes are present and
+			// there are no custom icons configured, skip scanning to save work.
+			const body = document.body;
+			const hasFancy = !!(body && body.classList && (
+				body.classList.contains('fancy-web-link') ||
+				body.classList.contains('fancy-url-scheme') ||
+				body.classList.contains('fancy-obsidian-web-link') ||
+				body.classList.contains('fancy-advanced-uri-link') ||
+				body.classList.contains('fancy-internal-obsidian-link') ||
+				body.classList.contains('fancy-external-obsidian-link') ||
+				body.classList.contains('fancy-both-obsidian-link')
+			));
+			if (!hasFancy && !(this.settings && Object.keys(this.settings.customIcons || {}).length)) {
+				return;
+			}
+
+			const applied = new Set<Element>();
+
+			// Combine built-in and custom icons in order
+			const icons = this.getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(this.getSortedIcons(this.settings.customIcons || {}));
+
+			for (const icon of icons) {
+				const selector = this.getIconSelector(icon).trim();
+				if (!selector) continue;
+				// If we have specific roots observed, scope the query inside them; otherwise query document-wide
+				const rootSources = (this.observedRoots && this.observedRoots.length) ? this.observedRoots : [document];
+				for (const root of rootSources) {
+					let elements: NodeListOf<Element> = (root === document ? document.querySelectorAll(selector) : (root as Element).querySelectorAll(selector));
+					if (!elements || elements.length === 0) continue;
+					for (const el of Array.from(elements)) {
+						if (applied.has(el)) continue; // earlier icon takes precedence
+						if (!(el instanceof HTMLElement)) continue;
+						// create icon span
+						const span = document.createElement('span');
+						span.className = 'external-links-icon-inline';
+						span.setAttribute('data-icon', icon.name);
+
+						// prepare SVG for current link container (respect theme)
+						const svgSource = (preferDarkThemeFromDocument() && icon.themeDarkSvgData) ? icon.themeDarkSvgData : icon.svgData || '';
+						const prepared = prepareSvgForSettings(svgSource, el as HTMLElement);
+						const img = document.createElement('img');
+						// Decorative image: hide from assistive tech and avoid focusability
+						img.alt = '';
+						img.setAttribute('aria-hidden', 'true');
+						img.setAttribute('role', 'presentation');
+						img.setAttribute('focusable', 'false');
+						img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+						span.appendChild(img);
+						span.setAttribute('aria-hidden', 'true');
+						span.setAttribute('role', 'presentation');
+						span.tabIndex = -1;
+
+						// Prefer inserting the icon as a sibling immediately after the link
+						// so link internals are not mutated and click areas remain stable.
+						try {
+							(el as HTMLElement).insertAdjacentElement('afterend', span);
+						} catch (e) {
+							// Fallback: append inside link (older behavior)
+							try { (el as HTMLElement).appendChild(span); } catch (e2) { continue; }
+						}
+
+						applied.add(el);
+					}
+				}
+			}
+		} catch (e) {
+			console.error('Failed to scan and annotate links for icons:', e);
+		}
 	}
 
 	/**

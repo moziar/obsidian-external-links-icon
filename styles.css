@@ -498,6 +498,34 @@ details.builtin-list summary {
 	margin: 0;
 }
 
+/* Inline icon element appended to links when a matching icon is found.
+   We render the SVG as an <img> with a data: URI to avoid injecting CSS
+   background-image rules at runtime. */
+.external-links-icon-inline {
+	display: inline-flex;
+	align-items: center;
+	margin-left: 0.3em;
+	vertical-align: text-bottom;
+}
+.external-links-icon-inline img {
+	width: var(--external-link-icon-size, 0.8em);
+	height: var(--external-link-icon-size, 0.8em);
+	display: block;
+	pointer-events: none; /* avoid interfering with link clicks */
+	user-select: none;
+}
+
+/* If icon is inserted as a sibling, ensure it's horizontally aligned and
+   doesn't break line-height; also make it ignored by screen readers */
+.external-links-icon-inline {
+	display: inline-flex;
+	align-items: center;
+	margin-left: 0.3em;
+	vertical-align: text-bottom;
+	pointer-events: none;
+	user-select: none;
+}
+
 /* svg preview in modal */
 .external-links-icon-preview-div {
 	display: inline-block;
