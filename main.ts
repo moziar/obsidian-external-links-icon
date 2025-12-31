@@ -456,7 +456,7 @@ export default class ExternalLinksIcon extends Plugin {
 	private validateAndFixSettings(): void {
 		let order = 0;
 		for (const key in this.settings.customIcons) {
-			if (this.settings.customIcons.hasOwnProperty(key)) {
+			if (Object.prototype.hasOwnProperty.call(this.settings.customIcons, key)) {
 				const icon = this.settings.customIcons[key];
 				
 				// 修复缺失的 order 属性
@@ -705,7 +705,7 @@ export default class ExternalLinksIcon extends Plugin {
 	 */
 	private isSpecialWebIcon(iconName: string): boolean {
 		// 检查是否在 SPECIAL 配置中且不是 URL Scheme
-		return iconName in ICON_CATEGORIES.SPECIAL && !ICON_CATEGORIES.URL_SCHEME.includes(iconName as any);
+		return iconName in ICON_CATEGORIES.SPECIAL && !ICON_CATEGORIES.URL_SCHEME.includes(String(iconName));
 	}
 
 	/**
@@ -1177,7 +1177,10 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.setButtonText('Delete')
 			.setWarning()
 			.onClick(async () => {
-				if (confirm(`Are you sure you want to delete the icon "${icon.name}"?`)) {
+				const modal = new ConfirmModal(this.plugin.app, `Are you sure you want to delete the icon "${icon.name}"?`);
+				modal.open();
+				const confirmed = await modal.result;
+				if (confirmed) {
 					delete this.plugin.settings.customIcons[icon.name];
 					await this.plugin.saveSettings();
 					this.display();
@@ -1336,7 +1339,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 	/**
 	 * 添加新图标
 	 */
-	private addIcon(): void {
+	private async addIcon(): Promise<void> {
 		const timestamp = Date.now();
 		const newIconName = `new-icon-${timestamp}`;
 		const customIcons = this.plugin.settings.customIcons || {};
@@ -1354,7 +1357,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 		};
 
 		this.plugin.settings.customIcons = customIcons;
-		this.plugin.saveSettings();
+		await this.plugin.saveSettings();
 		this.display();
 	}
 
@@ -1367,6 +1370,39 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			window.clearTimeout(timerId);
 		});
 		this.debounceTimers.clear();
+	}
+}
+
+/**
+ * 简单确认模态，用于替换 window.confirm
+ */
+class ConfirmModal extends Modal {
+	private _message: string;
+	private _resolver: (value: boolean) => void = () => {};
+	public result: Promise<boolean>;
+
+	constructor(app: App, message: string) {
+		super(app);
+		this._message = message;
+		this.result = new Promise<boolean>((resolve) => { this._resolver = resolve; });
+	}
+
+	onOpen(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.createEl('div', { text: this._message });
+		const actions = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
+		const cancelBtn = actions.createEl('button', { text: 'Cancel', cls: 'external-links-icon-cancel-btn' });
+		const okBtn = actions.createEl('button', { text: 'Confirm', cls: 'external-links-icon-add-btn' });
+		cancelBtn.onclick = () => { this._resolver(false); this.close(); };
+		okBtn.onclick = () => { this._resolver(true); this.close(); };
+	}
+
+	onClose(): void {
+		// ensure resolver called if modal closed by other means
+		this._resolver(false);
+		const { contentEl } = this;
+		contentEl.empty();
 	}
 }
 
@@ -1428,7 +1464,7 @@ class NewIconModal extends Modal {
 			}
 			const reader = new FileReader();
 			reader.onload = () => {
-				const content = String(reader.result || '');
+				const content = (typeof reader.result === 'string') ? reader.result : '';
 				if (content.trim().startsWith('<svg') && content.includes('</svg>')) {
 					const sanitized = sanitizeSvg(content);
 					uploadedSvgData = sanitized;
