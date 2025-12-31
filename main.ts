@@ -1442,7 +1442,10 @@ class NewIconModal extends Modal {
 						
 						
 						
-						previewDiv.innerHTML = '';
+						// Clear preview safely instead of assigning to innerHTML
+					while (previewDiv.firstChild) {
+						previewDiv.removeChild(previewDiv.firstChild);
+					}
 						previewDiv.appendChild(img);
 					} catch {
 						previewDiv.textContent = '';
