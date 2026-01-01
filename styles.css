@@ -526,6 +526,13 @@ details.builtin-list summary {
 	user-select: none;
 }
 
+/* Hide Obsidian's default link suffix (::after) for links where a built-in
+   scheme icon is injected (we add the class `external-links-icon-hide-suffix`). */
+.external-link.external-links-icon-hide-suffix::after {
+	display: none !important;
+	content: none !important;
+	margin-left: 0 !important;
+}
 /* svg preview in modal */
 .external-links-icon-preview-div {
 	display: inline-block;

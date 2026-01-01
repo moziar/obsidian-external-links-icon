@@ -714,6 +714,8 @@ export default class ExternalLinksIcon extends Plugin {
 		try {
 			// Remove any previous inline icon elements and rebuild fresh.
 			document.querySelectorAll('.external-links-icon-inline').forEach(el => el.remove());
+			// Remove any suffix-hiding class previously added to links
+			document.querySelectorAll('.external-link.external-links-icon-hide-suffix').forEach(el => el.classList.remove('external-links-icon-hide-suffix'));
 
 			// Quick-exit: if none of the theme/feature body classes are present and
 			// there are no custom icons configured, skip scanning to save work.
@@ -730,7 +732,6 @@ export default class ExternalLinksIcon extends Plugin {
 			if (!hasFancy && !(this.settings && Object.keys(this.settings.customIcons || {}).length)) {
 				return;
 			}
-
 			const applied = new Set<Element>();
 
 			// Combine built-in and custom icons in order
@@ -768,15 +769,19 @@ export default class ExternalLinksIcon extends Plugin {
 						span.tabIndex = -1;
 
 						// Prefer inserting the icon as a sibling immediately after the link
-						// so link internals are not mutated and click areas remain stable.
-						try {
-							(el as HTMLElement).insertAdjacentElement('afterend', span);
-						} catch (e) {
-							// Fallback: append inside link (older behavior)
-							try { (el as HTMLElement).appendChild(span); } catch (e2) { continue; }
+					// so link internals are not mutated and click areas remain stable.
+					try {
+						(el as HTMLElement).insertAdjacentElement('afterend', span);
+						// If this icon is a built-in URL scheme, hide the default suffix on the link
+						if (icon.linkType === 'scheme' && (DEFAULT_SETTINGS.icons || {})[icon.name]) {
+							(el as HTMLElement).classList.add('external-links-icon-hide-suffix');
 						}
+					} catch (e) {
+						// Fallback: append inside link (older behavior)
+						try { (el as HTMLElement).appendChild(span); } catch (e2) { continue; }
+					}
 
-						applied.add(el);
+					applied.add(el);
 					}
 				}
 			}
