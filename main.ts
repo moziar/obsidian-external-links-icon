@@ -435,7 +435,13 @@ export default class ExternalLinksIcon extends Plugin {
 			this.applyIconStyles();
 			// Setup a MutationObserver to annotate links dynamically when DOM changes occur
 			try {
-				this.mutationObserver = new MutationObserver(() => this.scheduleScan());
+				this.mutationObserver = new MutationObserver((mutations) => {
+				// Ignore mutation batches composed entirely of nodes we added/removed
+				// (inline icon spans) to avoid self-triggered re-scans that produce
+				// flicker or layout thrash (e.g. <p> re-rendering repeatedly).
+				if (this.isOwnMutation(mutations)) return;
+				this.scheduleScan();
+			});
 			// Observe only specific content containers to reduce noisy observations.
 			// Common Obsidian view classes: preview/source views and generic view-content.
 			const observeSelectors = ['.markdown-preview-view', '.markdown-source-view', '.view-content', '.workspace-leaf-content'];
@@ -688,6 +694,40 @@ export default class ExternalLinksIcon extends Plugin {
 	}
 
 	/**
+	 * Determine whether the provided MutationRecords are only changes created
+	 * by this plugin (adding/removing our `.external-links-icon-inline` nodes).
+	 * If so, the observer can safely ignore them to avoid infinite scan loops.
+	 */
+	private isOwnMutation(mutations: MutationRecord[]): boolean {
+		for (const m of mutations) {
+			if (m.type === 'childList') {
+				for (const n of Array.from(m.addedNodes)) {
+					if (n.nodeType !== Node.ELEMENT_NODE) return false;
+					const el = n as Element;
+					// If the added node is our inline icon (or contains one), treat as own
+					if (el.matches && (el.matches('.external-links-icon-inline') || el.querySelector('.external-links-icon-inline'))) {
+						continue;
+					}
+					// Any other added node => not our own mutation
+					return false;
+				}
+				for (const n of Array.from(m.removedNodes)) {
+					if (n.nodeType !== Node.ELEMENT_NODE) return false;
+					const el = n as Element;
+					if (el.matches && (el.matches('.external-links-icon-inline') || el.querySelector('.external-links-icon-inline'))) {
+						continue;
+					}
+					return false;
+				}
+			} else {
+				// attributes or other mutation types: don't ignore (be conservative)
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * Schedule a debounced scan of the document to annotate links with icon
 	 * elements. We reuse the existing debounceTimers map to avoid introducing
 	 * a new debounce implementation.
@@ -717,25 +757,12 @@ export default class ExternalLinksIcon extends Plugin {
 			// Remove any suffix-hiding class previously added to links
 			document.querySelectorAll('.external-link.external-links-icon-hide-suffix').forEach(el => el.classList.remove('external-links-icon-hide-suffix'));
 
-			// Quick-exit: if none of the theme/feature body classes are present and
-			// there are no custom icons configured, skip scanning to save work.
-			const body = document.body;
-			const hasFancy = !!(body && body.classList && (
-				body.classList.contains('fancy-web-link') ||
-				body.classList.contains('fancy-url-scheme') ||
-				body.classList.contains('fancy-obsidian-web-link') ||
-				body.classList.contains('fancy-advanced-uri-link') ||
-				body.classList.contains('fancy-internal-obsidian-link') ||
-				body.classList.contains('fancy-external-obsidian-link') ||
-				body.classList.contains('fancy-both-obsidian-link')
-			));
-			if (!hasFancy && !(this.settings && Object.keys(this.settings.customIcons || {}).length)) {
-				return;
-			}
-			const applied = new Set<Element>();
-
 			// Combine built-in and custom icons in order
+			const applied = new Set<Element>();
 			const icons = this.getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(this.getSortedIcons(this.settings.customIcons || {}));
+
+			// If there are no icons configured anywhere (unlikely), skip scanning.
+			if (!icons.length) return;
 
 			for (const icon of icons) {
 				const selector = this.getIconSelector(icon).trim();

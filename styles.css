@@ -280,16 +280,6 @@ body.fancy-both-obsidian-link .external-link[href^="obsidian"] {
 	padding-right: 0;
 }
 
-body.fancy-internal-obsidian-link .internal-link:after,
-body.fancy-both-obsidian-link .internal-link:after,
-body.fancy-external-obsidian-link .external-link[href^="obsidian"]:after,
-body.fancy-both-obsidian-link .external-link[href^="obsidian"]:after {
-	margin-left: 2px;
-	display: inline-block;
-	width: .8em;
-	height: .8em;
-	content: " ";
-}
 
 /***
 Obsidian 高级 URI 链接
@@ -298,14 +288,6 @@ Obsidian 高级 URI 链接
 body.fancy-advanced-uri-link .external-link[href^="obsidian://adv-uri"][href*="settingid"] {
 	background: none;
 	padding-right: 0;
-}
-
-body.fancy-advanced-uri-link .external-link[href^="obsidian://adv-uri"][href*="settingid"]:after {
-	margin-left: 2px;
-	display: inline-block;
-	width: .8em;
-	height: .8em;
-	content: " ";
 }
 
 /* @settings
@@ -526,12 +508,12 @@ details.builtin-list summary {
 	user-select: none;
 }
 
-/* Hide Obsidian's default link suffix (::after) for links where a built-in
+/* Hide Obsidian's default link suffix for links where a built-in
    scheme icon is injected (we add the class `external-links-icon-hide-suffix`). */
-.external-link.external-links-icon-hide-suffix::after {
-	display: none !important;
-	content: none !important;
-	margin-left: 0 !important;
+.external-link.external-links-icon-hide-suffix,
+.internal-link.external-links-icon-hide-suffix {
+	background: none;
+	padding-right: 0;
 }
 /* svg preview in modal */
 .external-links-icon-preview-div {
