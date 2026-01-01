@@ -799,9 +799,13 @@ export default class ExternalLinksIcon extends Plugin {
 					// so link internals are not mutated and click areas remain stable.
 					try {
 						(el as HTMLElement).insertAdjacentElement('afterend', span);
-						// If this icon is a built-in URL scheme, hide the default suffix on the link
-						if (icon.linkType === 'scheme' && (DEFAULT_SETTINGS.icons || {})[icon.name]) {
-							(el as HTMLElement).classList.add('external-links-icon-hide-suffix');
+						// If this icon is a URL scheme (built-in or custom), hide the default suffix on the link
+						if (icon.linkType === 'scheme') {
+							const isBuiltInScheme = Boolean((DEFAULT_SETTINGS.icons || {})[icon.name]);
+							const isCustomScheme = Boolean(this.settings?.customIcons?.[icon.name]);
+							if (isBuiltInScheme || isCustomScheme) {
+								(el as HTMLElement).classList.add('external-links-icon-hide-suffix');
+							}
 						}
 					} catch (e) {
 						// Fallback: append inside link (older behavior)
