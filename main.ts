@@ -1,4 +1,4 @@
-import { Plugin, PluginSettingTab, Setting, App, Modal } from 'obsidian';
+import { Plugin, PluginSettingTab, Setting, App, Modal, Notice } from 'obsidian';
 
 /**
  * Sanitize SVG content: remove XML prolog/doctype, script/style tags,
@@ -420,6 +420,10 @@ const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
 export default class ExternalLinksIcon extends Plugin {
 	settings!: ExternalLinksIconSettings;
 	private styleElement: HTMLStyleElement | null = null;
+	private generatedCss: string = '';
+	private mutationObserver: MutationObserver | null = null;
+	private readonly SCAN_DEBOUNCE_KEY = 'scan-links';
+	private observedRoots: Element[] = []; // roots we observe / scan within
 
 	/**
 	 * 插件加载
@@ -429,6 +433,40 @@ export default class ExternalLinksIcon extends Plugin {
 			await this.loadSettings();
 			this.addSettingTab(new ExternalLinksIconSettingTab(this.app, this));
 			this.applyIconStyles();
+			// Setup a MutationObserver to annotate links dynamically when DOM changes occur
+			try {
+				this.mutationObserver = new MutationObserver((mutations) => {
+				// Ignore mutation batches composed entirely of nodes we added/removed
+				// (inline icon spans) to avoid self-triggered re-scans that produce
+				// flicker or layout thrash (e.g. <p> re-rendering repeatedly).
+				if (this.isOwnMutation(mutations)) return;
+				this.scheduleScan();
+			});
+			// Observe only specific content containers to reduce noisy observations.
+			// Common Obsidian view classes: preview/source views and generic view-content.
+			const observeSelectors = ['.markdown-preview-view', '.markdown-source-view', '.view-content', '.workspace-leaf-content'];
+			const roots = Array.from(document.querySelectorAll(observeSelectors.join(',')));
+			if (roots.length) {
+				this.observedRoots = roots;
+				roots.forEach(r => {
+					try { this.mutationObserver!.observe(r, { childList: true, subtree: true }); } catch (e) { /* ignore root observe errors */ }
+				});
+				// Also observe body class changes (theme/layout toggles)
+				try { this.mutationObserver!.observe(document.body, { attributes: true, attributeFilter: ['class'] }); } catch (e) { /* ignore */ }
+			} else {
+				// Fallback: observe body but avoid observing attributes broadly to reduce noise.
+				this.observedRoots = [];
+				try { this.mutationObserver!.observe(document.body, { childList: true, subtree: true }); } catch (e) { /* ignore */ }
+			}
+			// Watch workspace events for leaf/layout changes to trigger scans reliably
+			this.registerEvent(this.app.workspace.on('active-leaf-change', () => this.scheduleScan()));
+			this.registerEvent(this.app.workspace.on('layout-change', () => this.scheduleScan()));
+
+				this.scheduleScan();
+			} catch (e) {
+				// If DOM isn't ready or observation isn't allowed, fallback to a one-off scan
+				this.scanAndAnnotateLinks();
+			}
 		} catch (error) {
 			console.error('External Links Icon plugin failed to load:', error);
 		}
@@ -455,7 +493,7 @@ export default class ExternalLinksIcon extends Plugin {
 	private validateAndFixSettings(): void {
 		let order = 0;
 		for (const key in this.settings.customIcons) {
-			if (this.settings.customIcons.hasOwnProperty(key)) {
+			if (Object.prototype.hasOwnProperty.call(this.settings.customIcons, key)) {
 				const icon = this.settings.customIcons[key];
 				
 				// 修复缺失的 order 属性
@@ -506,9 +544,15 @@ export default class ExternalLinksIcon extends Plugin {
 	 * 移除图标样式
 	 */
 	private removeIconStyles(): void {
-		if (this.styleElement) {
-			this.styleElement.remove();
-			this.styleElement = null;
+		// Do not remove or manage a runtime <style> element. Generated CSS is
+		// stored in memory and can be used by a future implementation that avoids
+		// creating DOM style nodes.
+		this.generatedCss = '';
+		// Remove any inserted inline icon elements
+		document.querySelectorAll('.external-links-icon-inline').forEach(el => el.remove());
+		if (this.mutationObserver) {
+			this.mutationObserver.disconnect();
+			this.mutationObserver = null;
 		}
 	}
 
@@ -516,14 +560,14 @@ export default class ExternalLinksIcon extends Plugin {
 	 * 应用图标样式
 	 */
 	private applyIconStyles(): void {
-		this.removeIconStyles();
-		
-		this.styleElement = document.createElement('style');
-		this.styleElement.id = CSS_CONSTANTS.STYLE_ID;
-		
-		const cssContent = this.generateCSS();
-		this.styleElement.textContent = cssContent;
-		document.head.appendChild(this.styleElement);
+		// Avoid creating and appending <style> elements at runtime. For now we
+		// generate CSS into a string that can be reviewed or used by a future
+		// mechanism that does not rely on inserting DOM style nodes.
+		this.generatedCss = this.generateCSS();
+		// After settings or icons change, re-scan the document and inject per-link
+		// inline icon elements (this avoids creating a <style> element with
+		// per-icon background rules at runtime).
+		this.scheduleScan();
 	}
 
 	/**
@@ -650,6 +694,134 @@ export default class ExternalLinksIcon extends Plugin {
 	}
 
 	/**
+	 * Determine whether the provided MutationRecords are only changes created
+	 * by this plugin (adding/removing our `.external-links-icon-inline` nodes).
+	 * If so, the observer can safely ignore them to avoid infinite scan loops.
+	 */
+	private isOwnMutation(mutations: MutationRecord[]): boolean {
+		for (const m of mutations) {
+			if (m.type === 'childList') {
+				for (const n of Array.from(m.addedNodes)) {
+					if (n.nodeType !== Node.ELEMENT_NODE) return false;
+					const el = n as Element;
+					// If the added node is our inline icon (or contains one), treat as own
+					if (el.matches && (el.matches('.external-links-icon-inline') || el.querySelector('.external-links-icon-inline'))) {
+						continue;
+					}
+					// Any other added node => not our own mutation
+					return false;
+				}
+				for (const n of Array.from(m.removedNodes)) {
+					if (n.nodeType !== Node.ELEMENT_NODE) return false;
+					const el = n as Element;
+					if (el.matches && (el.matches('.external-links-icon-inline') || el.querySelector('.external-links-icon-inline'))) {
+						continue;
+					}
+					return false;
+				}
+			} else {
+				// attributes or other mutation types: don't ignore (be conservative)
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Schedule a debounced scan of the document to annotate links with icon
+	 * elements. We reuse the existing debounceTimers map to avoid introducing
+	 * a new debounce implementation.
+	 */
+	private scanTimerId: number | null = null;
+
+	private scheduleScan(delay: number = 180): void {
+		if (this.scanTimerId) {
+			window.clearTimeout(this.scanTimerId);
+			this.scanTimerId = null;
+		}
+		this.scanTimerId = window.setTimeout(() => {
+			this.scanTimerId = null;
+			this.scanAndAnnotateLinks();
+		}, delay);
+	}
+
+	/**
+	 * Scan the document and annotate matching links with an inline icon
+	 * element (a <span><img/></span>). This avoids runtime style injection by
+	 * attaching actual elements with data-uris for SVG.
+	 */
+	private scanAndAnnotateLinks(): void {
+		try {
+			// Remove any previous inline icon elements and rebuild fresh.
+			document.querySelectorAll('.external-links-icon-inline').forEach(el => el.remove());
+			// Remove any suffix-hiding class previously added to links
+			document.querySelectorAll('.external-link.external-links-icon-hide-suffix').forEach(el => el.classList.remove('external-links-icon-hide-suffix'));
+
+			// Combine built-in and custom icons in order
+			const applied = new Set<Element>();
+			const icons = this.getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(this.getSortedIcons(this.settings.customIcons || {}));
+
+			// If there are no icons configured anywhere (unlikely), skip scanning.
+			if (!icons.length) return;
+
+			for (const icon of icons) {
+				const selector = this.getIconSelector(icon).trim();
+				if (!selector) continue;
+				// If we have specific roots observed, scope the query inside them; otherwise query document-wide
+				const rootSources = (this.observedRoots && this.observedRoots.length) ? this.observedRoots : [document];
+				for (const root of rootSources) {
+					let elements: NodeListOf<Element> = (root === document ? document.querySelectorAll(selector) : (root as Element).querySelectorAll(selector));
+					if (!elements || elements.length === 0) continue;
+					for (const el of Array.from(elements)) {
+						if (applied.has(el)) continue; // earlier icon takes precedence
+						if (!(el instanceof HTMLElement)) continue;
+						// create icon span
+						const span = document.createElement('span');
+						span.className = 'external-links-icon-inline';
+						span.setAttribute('data-icon', icon.name);
+
+						// prepare SVG for current link container (respect theme)
+						const svgSource = (preferDarkThemeFromDocument() && icon.themeDarkSvgData) ? icon.themeDarkSvgData : icon.svgData || '';
+						const prepared = prepareSvgForSettings(svgSource, el as HTMLElement);
+						const img = document.createElement('img');
+						// Decorative image: hide from assistive tech and avoid focusability
+						img.alt = '';
+						img.setAttribute('aria-hidden', 'true');
+						img.setAttribute('role', 'presentation');
+						img.setAttribute('focusable', 'false');
+						img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+						span.appendChild(img);
+						span.setAttribute('aria-hidden', 'true');
+						span.setAttribute('role', 'presentation');
+						span.tabIndex = -1;
+
+						// Prefer inserting the icon as a sibling immediately after the link
+					// so link internals are not mutated and click areas remain stable.
+					try {
+						(el as HTMLElement).insertAdjacentElement('afterend', span);
+						// If this icon is a URL scheme (built-in or custom), hide the default suffix on the link
+						if (icon.linkType === 'scheme') {
+							const isBuiltInScheme = Boolean((DEFAULT_SETTINGS.icons || {})[icon.name]);
+							const isCustomScheme = Boolean(this.settings?.customIcons?.[icon.name]);
+							if (isBuiltInScheme || isCustomScheme) {
+								(el as HTMLElement).classList.add('external-links-icon-hide-suffix');
+							}
+						}
+					} catch (e) {
+						// Fallback: append inside link (older behavior)
+						try { (el as HTMLElement).appendChild(span); } catch (e2) { continue; }
+					}
+
+					applied.add(el);
+					}
+				}
+			}
+		} catch (e) {
+			console.error('Failed to scan and annotate links for icons:', e);
+		}
+	}
+
+	/**
 	 * 获取图标的 CSS 选择器
 	 */
 	private getIconSelector(icon: IconItem): string {
@@ -708,7 +880,7 @@ export default class ExternalLinksIcon extends Plugin {
 	 */
 	private isSpecialWebIcon(iconName: string): boolean {
 		// 检查是否在 SPECIAL 配置中且不是 URL Scheme
-		return iconName in ICON_CATEGORIES.SPECIAL && !ICON_CATEGORIES.URL_SCHEME.includes(iconName as any);
+		return iconName in ICON_CATEGORIES.SPECIAL && !ICON_CATEGORIES.URL_SCHEME.includes(String(iconName));
 	}
 
 	/**
@@ -800,10 +972,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 	const builtInWrap = containerEl.createDiv({ cls: 'website-builtins' });
 	const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
 	builtinsDetails.createEl('summary', { text: 'Built-in' });
-	const builtinRow = builtinsDetails.createDiv();
-	builtinRow.style.display = 'flex';
-	builtinRow.style.flexWrap = 'wrap';
-	builtinRow.style.gap = '8px';
+	const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
 
 
 		// Render built-in website icons from DEFAULT_SETTINGS only (built-ins are read-only in Settings)
@@ -814,17 +983,8 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.filter((ic: IconItem) => ic.linkType === 'url');
 		builtinIcons.forEach((icon: IconItem) => {
 			const box = builtinRow.createDiv({ cls: 'website-item' });
-			box.style.display = 'flex';
-			box.style.alignItems = 'center';
-			box.style.gap = '8px';
-			box.style.padding = '6px';
-			box.style.border = '1px solid var(--interactive-muted)';
-			box.style.borderRadius = '4px';
 
-			const iconEl = box.createDiv();
-			iconEl.style.width = '20px';
-			iconEl.style.height = '20px';
-			iconEl.style.flexShrink = '0';
+			const iconEl = box.createDiv({ cls: 'item-icon' });
 			try {
 				// Prefer explicit document theme: when document indicates light, always use svgData;
 				// when document indicates dark, prefer themeDarkSvgData if available.
@@ -839,12 +999,6 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 				const prepared = prepareSvgForSettings(svgSource, iconEl);
 				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 				img.alt = icon.name || '';
-				img.style.width = '100%';
-				img.style.height = '100%';
-				img.style.objectFit = 'contain';
-				img.style.display = 'block';
-				img.style.boxShadow = 'none';
-				img.style.margin = '0';
 				iconEl.appendChild(img);
 			} catch (e) {
 				console.warn('Failed to render builtin website preview', e);
@@ -878,10 +1032,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 	const builtInWrap = containerEl.createDiv({ cls: 'scheme-builtins' });
 	const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
 	builtinsDetails.createEl('summary', { text: 'Built-in' });
-	const builtinRow = builtinsDetails.createDiv();
-	builtinRow.style.display = 'flex';
-	builtinRow.style.flexWrap = 'wrap';
-	builtinRow.style.gap = '8px';
+	const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
 
 
 		// For built-in scheme icons use DEFAULT_SETTINGS first (built-ins are read-only in Settings)
@@ -889,16 +1040,8 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			const icon = (DEFAULT_SETTINGS.icons || {})[key] || (this.plugin.settings.icons || {})[key];
 			if (icon) {
 				const box = builtinRow.createDiv({ cls: 'scheme-item' });
-				box.style.display = 'flex';
-				box.style.alignItems = 'center';
-				box.style.gap = '8px';
-				box.style.padding = '6px';
-				box.style.border = '1px solid var(--interactive-muted)';
-				box.style.borderRadius = '4px';
 
-				const iconEl = box.createDiv();
-				iconEl.style.width = '20px';
-				iconEl.style.height = '20px';
+				const iconEl = box.createDiv({ cls: 'item-icon' });
 				try {
 					const preferDark = preferDarkThemeFromDocument();
 					// Explicitly prefer the light `svgData` when the document indicates light theme
@@ -913,12 +1056,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 					const prepared = prepareSvgForSettings(svgSource, iconEl);
 					img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 					img.alt = icon.name || '';
-					img.style.width = '100%';
-					img.style.height = '100%';
-					img.style.objectFit = 'contain';
-					img.style.display = 'block';
-					img.style.boxShadow = 'none';
-					img.style.margin = '0';
+
 					iconEl.appendChild(img);
 				} catch (e) {
 					console.warn('Failed to render builtin scheme preview', e);
@@ -972,8 +1110,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const { linkType, name, target, svgData } = data;
 		const customIcons = this.plugin.settings.customIcons || {};
 		if (customIcons[name]) {
-			alert(`Icon name "${name}" already exists. Please choose a unique name.`);
-			return;
+				new Notice(`Icon name "${name}" already exists. Please choose a unique name.`);
 		}
 
 		// 规范化 target：如果是 url，去掉协议和尾部斜杠
@@ -1045,10 +1182,8 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 	 */
 	private addIconPreview(settingItem: Setting, icon: IconItem): void {
 		const previewContainer = settingItem.nameEl.createDiv({ cls: 'svg-preview-container' });
-		previewContainer.style.cssText = 'display: flex; align-items: center; gap: 8px;';
 
-		const previewIcon = previewContainer.createDiv();
-		previewIcon.style.cssText = 'width: 16px; height: 16px; flex-shrink: 0;';
+		const previewIcon = previewContainer.createDiv({ cls: 'external-links-icon-preview-div small' });
 
 		// If this icon is a built-in, prefer the DEFAULT_SETTINGS version for Settings preview
 		const builtinOverride = (DEFAULT_SETTINGS.icons || {})[icon.name];
@@ -1074,12 +1209,6 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			const img = document.createElement('img');
 			img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 			img.alt = icon.name || '';
-			img.style.width = '100%';
-			img.style.height = '100%';
-			img.style.objectFit = 'contain';
-			img.style.display = 'block';
-			img.style.boxShadow = 'none';
-			img.style.margin = '0';
 			previewIcon.appendChild(img);
 			// no debug badge
 		} catch (error) {
@@ -1166,10 +1295,12 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.addOption('scheme', 'URL Scheme')
 			.setValue(icon.linkType || 'url')
 			.onChange(async (value: string) => {
-				icon.linkType = value as LinkType;
-				await this.plugin.saveSettings();
-				// 重新显示以更新占位符
-				this.display();
+				if (value === 'url' || value === 'scheme') {
+					icon.linkType = value;
+					await this.plugin.saveSettings();
+					// 重新显示以更新占位符
+					this.display();
+				}
 			}));
 	}
 
@@ -1222,7 +1353,10 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.setButtonText('Delete')
 			.setWarning()
 			.onClick(async () => {
-				if (confirm(`Are you sure you want to delete the icon "${icon.name}"?`)) {
+				const modal = new ConfirmModal(this.plugin.app, `Are you sure you want to delete the icon "${icon.name}"?`);
+				modal.open();
+				const confirmed = await modal.result;
+				if (confirmed) {
 					delete this.plugin.settings.customIcons[icon.name];
 					await this.plugin.saveSettings();
 					this.display();
@@ -1315,7 +1449,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const input = document.createElement('input');
 		input.type = 'file';
 		input.accept = '.svg,image/svg+xml';
-		input.style.display = 'none';
+		input.classList.add('external-links-icon-hidden-input');
 
 		input.onchange = async (event) => {
 			try {
@@ -1324,7 +1458,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 				const file = files[0];
 				if (!this.isValidSvgFile(file)) {
-					alert('Please select a valid SVG file.');
+					new Notice('Please select a valid SVG file.');
 					return;
 				}
 
@@ -1335,11 +1469,11 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 					this.display();
 				} else {
-					alert('Invalid SVG file content.');
+					new Notice('Invalid SVG file content.');
 				}
 			} catch (error) {
 				console.error('Failed to upload SVG:', error);
-				alert('Failed to upload SVG file.');
+				new Notice('Failed to upload SVG file.');
 			}
 		};
 
@@ -1381,7 +1515,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 	/**
 	 * 添加新图标
 	 */
-	private addIcon(): void {
+	private async addIcon(): Promise<void> {
 		const timestamp = Date.now();
 		const newIconName = `new-icon-${timestamp}`;
 		const customIcons = this.plugin.settings.customIcons || {};
@@ -1399,7 +1533,7 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 		};
 
 		this.plugin.settings.customIcons = customIcons;
-		this.plugin.saveSettings();
+		await this.plugin.saveSettings();
 		this.display();
 	}
 
@@ -1412,6 +1546,39 @@ class ExternalLinksIconSettingTab extends PluginSettingTab {
 			window.clearTimeout(timerId);
 		});
 		this.debounceTimers.clear();
+	}
+}
+
+/**
+ * 简单确认模态，用于替换 window.confirm
+ */
+class ConfirmModal extends Modal {
+	private _message: string;
+	private _resolver: (value: boolean) => void = () => {};
+	public result: Promise<boolean>;
+
+	constructor(app: App, message: string) {
+		super(app);
+		this._message = message;
+		this.result = new Promise<boolean>((resolve) => { this._resolver = resolve; });
+	}
+
+	onOpen(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.createEl('div', { text: this._message });
+		const actions = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
+		const cancelBtn = actions.createEl('button', { text: 'Cancel', cls: 'external-links-icon-cancel-btn' });
+		const okBtn = actions.createEl('button', { text: 'Confirm', cls: 'external-links-icon-add-btn' });
+		cancelBtn.onclick = () => { this._resolver(false); this.close(); };
+		okBtn.onclick = () => { this._resolver(true); this.close(); };
+	}
+
+	onClose(): void {
+		// ensure resolver called if modal closed by other means
+		this._resolver(false);
+		const { contentEl } = this;
+		contentEl.empty();
 	}
 }
 
@@ -1436,55 +1603,44 @@ class NewIconModal extends Modal {
 		// 直接在 contentEl 上创建模态窗口内容，避免多层嵌套
 		contentEl.createEl('h3', { text: 'Add new icon' });
 		
-		const descEl = contentEl.createEl('div', { text: 'Provide icon information. Name must be unique.' });
-		descEl.style.marginBottom = '10px';
+		const descEl = contentEl.createEl('div', { text: 'Provide icon information. Name must be unique.', cls: 'external-links-icon-desc' });
 
 		// Icon name input
-		const nameInput = contentEl.createEl('input');
+		const nameInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
 		nameInput.placeholder = 'Icon name (unique)';
 		nameInput.type = 'text';
-		nameInput.style.marginBottom = '10px';
-		nameInput.style.width = '100%';
 
 		// Target input
-		const targetInput = contentEl.createEl('input');
+		const targetInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
 		targetInput.placeholder = 'Website (e.g. baidu.com) or scheme (e.g. zotero)';
 		targetInput.type = 'text';
-		targetInput.style.marginBottom = '10px';
-		targetInput.style.width = '100%';
 
 		// Upload SVG controls
 		let uploadedSvgData: string | undefined;
-		const uploadRow = contentEl.createDiv();
-		uploadRow.style.marginBottom = '10px';
-		uploadRow.style.display = 'flex';
-		uploadRow.style.alignItems = 'center';
-		uploadRow.style.gap = '10px';
+		const uploadRow = contentEl.createDiv({ cls: 'external-links-icon-upload-row' });
 
 		const uploadBtn = uploadRow.createEl('button', { text: 'Upload SVG' });
 		
 		const uploadName = uploadRow.createSpan({ text: 'No file chosen' });
 		
-		const previewDiv = uploadRow.createDiv();
-		previewDiv.style.width = '20px';
-		previewDiv.style.height = '20px';
+		const previewDiv = uploadRow.createDiv({ cls: 'external-links-icon-preview-div small' });
 
 		const hiddenInput = document.createElement('input');
 		hiddenInput.type = 'file';
 		hiddenInput.accept = '.svg,image/svg+xml';
-		hiddenInput.style.display = 'none';
+		hiddenInput.classList.add('external-links-icon-hidden-input');
 		hiddenInput.onchange = async (ev) => {
 			const files = (ev.target as HTMLInputElement).files;
 			if (!files || files.length === 0) return;
 			const file = files[0];
 			// basic validation
 			if (!(file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg'))) {
-				alert('Please select a valid SVG file.');
+				new Notice('Please select a valid SVG file.');
 				return;
 			}
 			const reader = new FileReader();
 			reader.onload = () => {
-				const content = String(reader.result || '');
+				const content = (typeof reader.result === 'string') ? reader.result : '';
 				if (content.trim().startsWith('<svg') && content.includes('</svg>')) {
 					const sanitized = sanitizeSvg(content);
 					uploadedSvgData = sanitized;
@@ -1494,20 +1650,23 @@ class NewIconModal extends Modal {
 						const img = document.createElement('img');
 						img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 						img.alt = file.name;
-						img.style.width = '100%';
-						img.style.height = '100%';
-						img.style.objectFit = 'contain';
-						img.style.display = 'block';
-						previewDiv.innerHTML = '';
+						
+						
+						
+						
+						// Clear preview safely instead of assigning to innerHTML
+					while (previewDiv.firstChild) {
+						previewDiv.removeChild(previewDiv.firstChild);
+					}
 						previewDiv.appendChild(img);
 					} catch {
 						previewDiv.textContent = '';
 					}
 				} else {
-					alert('Invalid SVG content');
+					new Notice('Invalid SVG content');
 				}
 			};
-			reader.onerror = () => alert('Failed to read file');
+			reader.onerror = () => new Notice('Failed to read file');
 			reader.readAsText(file);
 		};
 		document.body.appendChild(hiddenInput);
@@ -1519,11 +1678,7 @@ class NewIconModal extends Modal {
 		targetInput.placeholder = defaultType === 'url' ? 'Domain (e.g. baidu.com or https://baidu.com)' : 'Scheme identifier (e.g. zotero)';
 
 		// Action buttons
-		const buttonContainer = contentEl.createDiv();
-		buttonContainer.style.display = 'flex';
-		buttonContainer.style.justifyContent = 'flex-end';
-		buttonContainer.style.gap = '10px';
-		buttonContainer.style.marginTop = '20px';
+		const buttonContainer = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
 
 		const cancelBtn = buttonContainer.createEl('button', { text: 'Cancel' });
 		cancelBtn.onclick = () => { this.close(); };
@@ -1532,8 +1687,8 @@ class NewIconModal extends Modal {
 		addBtn.onclick = () => {
 			const name = (nameInput as HTMLInputElement).value.trim();
 			let target = (targetInput as HTMLInputElement).value.trim();
-			if (!name) { alert('Name is required'); return; }
-			if (!target) { alert('Target is required'); return; }
+			if (!name) { new Notice('Name is required'); return; }
+			if (!target) { new Notice('Target is required'); return; }
 			// Normalize website target by removing leading protocol and trailing slash
 			if (this._defaultLinkType === 'url') {
 				target = target.replace(/^https?:\/\//i, '').replace(/\/$/, '');
