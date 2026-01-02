@@ -19,7 +19,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: 'External links icon settings' });
+		new Setting(containerEl).setName('External links icon settings').setHeading();
 
 		this.createAddIconButton(containerEl);
 		containerEl.createEl('div', { text: 'Add website or url scheme icon. Name must be unique.' });
@@ -29,7 +29,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	}
 
 	private displayWebsiteSection(containerEl: HTMLElement): void {
-		containerEl.createEl('h3', { text: 'Website' });
+		new Setting(containerEl).setName('Website').setHeading();
 		containerEl.createEl('div', { text: 'Website icons are matched by domain. When adding a website-type icon, provide a unique name and the domain (e.g. "baidu.com").' });
 
 		const builtInWrap = containerEl.createDiv({ cls: 'website-builtins' });
@@ -69,7 +69,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const customIcons = this.getSortedCustomIcons().filter(ic => ic.linkType === 'url');
 		if (customIcons.length > 0) {
 			const customWrap = containerEl.createDiv({ cls: 'website-custom' });
-			customWrap.createEl('h4', { text: 'Custom' });
+			new Setting(customWrap).setName('Custom').setHeading();
 			customIcons.forEach((icon, idx) => {
 				this.createIconSetting(customWrap, icon, idx);
 			});
@@ -79,7 +79,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	}
 
 	private displayURLSchemeSection(containerEl: HTMLElement): void {
-		containerEl.createEl('h3', { text: 'URL scheme' });
+		new Setting(containerEl).setName('URL scheme').setHeading();
 		containerEl.createEl('div', { text: 'URL scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. "zotero").' });
 
 		const builtInWrap = containerEl.createDiv({ cls: 'scheme-builtins' });
@@ -118,7 +118,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const customSchemeIcons = this.getSortedCustomIcons().filter(ic => ic.linkType === 'scheme');
 		if (customSchemeIcons.length > 0) {
 			const customWrap = containerEl.createDiv({ cls: 'scheme-custom' });
-			customWrap.createEl('h4', { text: 'Custom' });
+			new Setting(customWrap).setName('Custom').setHeading();
 			customSchemeIcons.forEach((icon, idx) => {
 				this.createIconSetting(customWrap, icon, idx);
 			});
