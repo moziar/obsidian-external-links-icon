@@ -118,7 +118,6 @@
 	height: 24px;
 	overflow: hidden;
 	flex-shrink: 0;
-	background-color: var(--background-primary);
 	border-radius: 2px;
 	display: flex;
 	align-items: center;
