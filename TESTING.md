@@ -12,16 +12,12 @@ Perform the following checks inside Obsidian with this plugin built and loaded (
 
 ### 1) Basic injection behavior
 - Open a note containing various external links (example: `https://github.com`, `https://baidu.com`, `obsidian://open`, `zotero://...`).
-- Ensure appropriate icons appear **immediately after** the links (not inside link text) as inline decorative elements.
-- Verify icons are inserted as siblings (not altering link innerHTML) and have the class `.external-links-icon-inline`.
-- Confirm that clicking the link still opens the URL as expected (icon should not intercept clicks).
+- Ensure appropriate icons appear visually adjacent to matching links (not inside link text), rendered via the CSS `::after` pseudo-element provided by the plugin's generated CSS rules.
+- Confirm that clicking the link still opens the URL as expected (icons are decorative and do not intercept clicks).
 
 ### 2) Accessibility
-- Inspect an injected icon DOM node and verify:
-  - `aria-hidden="true"`
-  - `role="presentation"`
-  - `tabindex="-1"` (not focusable)
-- Confirm keyboard navigation flows to the link (icons are skipped).
+- Confirm keyboard navigation flows to the link (icons are skipped) and that icon graphics do not introduce focusable elements into the tab order.
+- For any custom UI previews (Settings/modals), ensure uploaded SVGs include appropriate viewBox and do not contain interactive elements.
 
 ### 3) Theme & preview handling
 - Toggle Obsidian theme (dark/light) and confirm appropriate icon appearance for theme-specific icons (if provided).
