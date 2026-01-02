@@ -10,6 +10,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	plugin: ExternalLinksIcon;
 	private debounceTimers: Map<string, number> = new Map();
 
+	// Theme change detection
+	private themeMediaQuery: MediaQueryList | null = null;
+	private mqHandler: ((e: MediaQueryListEvent) => void) | null = null;
+	private bodyObserver: MutationObserver | null = null;
+	private themeChangeDebounce: number = 0;
+
 	constructor(app: App, plugin: ExternalLinksIcon) {
 		super(app, plugin);
 		this.plugin = plugin;
@@ -26,6 +32,11 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 		this.displayWebsiteSection(containerEl);
 		this.displayURLSchemeSection(containerEl);
+
+		// Ensure theme-change listeners are active so previews update when theme toggles
+		this.ensureThemeListeners();
+		// Update previews to current theme state (keeps UI consistent after non-render theme switches)
+		try { this.updatePreviewIcons(preferDarkThemeFromDocument()); } catch (e) { /* ignore */ }
 	}
 
 	private displayWebsiteSection(containerEl: HTMLElement): void {
@@ -54,6 +65,10 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					svgSource = icon.themeDarkSvgData || icon.svgData || '';
 				}
 				const img = document.createElement('img');
+				// metadata to support in-place theme updates
+				img.dataset.iconName = icon.name || '';
+				img.dataset.iconLinkType = 'url';
+				img.dataset.builtin = 'true';
 				const prepared = prepareSvgForSettings(svgSource, iconEl);
 				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 				img.alt = icon.name || '';
@@ -101,8 +116,10 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					} else {
 						svgSource = icon.themeDarkSvgData || icon.svgData || '';
 					}
-					const img = document.createElement('img');
-					const prepared = prepareSvgForSettings(svgSource, iconEl);
+					const img = document.createElement('img');				// metadata to support in-place theme updates
+				img.dataset.iconName = icon.name || '';
+				img.dataset.iconLinkType = 'scheme';
+				img.dataset.builtin = 'true';					const prepared = prepareSvgForSettings(svgSource, iconEl);
 					img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 					img.alt = icon.name || '';
 
@@ -198,6 +215,114 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	}
 
 	/**
+	 * Setup listeners to detect theme changes and refresh Settings previews.
+	 */
+	private ensureThemeListeners(): void {
+		// Disconnect any existing listeners first to avoid duplicates
+		this.disconnectThemeListeners();
+
+		// Listen to prefers-color-scheme changes
+		try {
+			this.themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+			const mq = this.themeMediaQuery;
+			this.mqHandler = (() => this.scheduleThemeRefresh());
+			if (mq.addEventListener) mq.addEventListener('change', this.mqHandler as any);
+			else if ((mq as any).addListener) (mq as any).addListener(this.mqHandler as any);
+		} catch (e) {
+			// ignore
+		}
+
+		// Observe body class changes (Obsidian toggles theme classes on <body>)
+		try {
+			this.bodyObserver = new MutationObserver((mutations) => {
+				for (const m of mutations) {
+					if (m.type === 'attributes' && m.attributeName === 'class') {
+						this.scheduleThemeRefresh();
+						break;
+					}
+				}
+			});
+			if (document && document.body) {
+				this.bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+			}
+		} catch (e) {
+			// ignore
+		}
+	}
+
+	/**
+	 * Debounced refresh scheduler to avoid rapid re-renders
+	 */
+	private scheduleThemeRefresh(): void {
+		if (this.themeChangeDebounce) {
+			window.clearTimeout(this.themeChangeDebounce);
+		}
+		this.themeChangeDebounce = window.setTimeout(() => {
+			this.themeChangeDebounce = 0;
+			// Update only preview images so they reflect the current theme without a full re-render
+			try {
+				const preferDark = preferDarkThemeFromDocument();
+				this.updatePreviewIcons(preferDark);
+			} catch (e) { /* ignore */ }
+		}, 100);
+	}
+
+	/**
+	 * Disconnect any previously registered listeners
+	 */
+	private disconnectThemeListeners(): void {
+		if (this.themeMediaQuery) {
+			try {
+				const mq = this.themeMediaQuery;
+				if (this.mqHandler) {
+					if (mq.removeEventListener) mq.removeEventListener('change', this.mqHandler as any);
+					else if ((mq as any).removeListener) (mq as any).removeListener(this.mqHandler as any);
+				}
+			} catch (e) { /* ignore */ }
+			this.themeMediaQuery = null;
+			this.mqHandler = null;
+		}
+		if (this.bodyObserver) {
+			try { this.bodyObserver.disconnect(); } catch (e) { /* ignore */ }
+			this.bodyObserver = null;
+		}
+		if (this.themeChangeDebounce) {
+			window.clearTimeout(this.themeChangeDebounce);
+			this.themeChangeDebounce = 0;
+		}
+	}
+
+	/**
+	 * Update preview icons in-place according to theme preference.
+	 */
+	private updatePreviewIcons(preferDark?: boolean): void {
+		try {
+			if (typeof preferDark === 'undefined') preferDark = preferDarkThemeFromDocument();
+			const imgs = Array.from(this.containerEl.querySelectorAll('img[data-icon-name]')) as HTMLImageElement[];
+			imgs.forEach(img => {
+				const name = img.dataset.iconName || '';
+				const linkType = (img.dataset.iconLinkType || 'url') as 'url' | 'scheme';
+				const isBuiltin = img.dataset.builtin === 'true';
+				let icon: IconItem | undefined;
+				if (isBuiltin) icon = (DEFAULT_SETTINGS.icons || {})[name];
+				if (!icon) icon = (this.plugin.settings.customIcons || {})[name];
+				// fallback to defaults if still missing
+				if (!icon) icon = (DEFAULT_SETTINGS.icons || {})[name];
+				if (!icon) return;
+				let svgSource = '';
+				if (preferDark) svgSource = icon.themeDarkSvgData || icon.svgData || '';
+				else svgSource = icon.svgData || icon.themeDarkSvgData || '';
+				if (!svgSource) return;
+				const container = (img.parentElement && (img.parentElement as HTMLElement)) || (img as unknown as HTMLElement);
+				const prepared = prepareSvgForSettings(svgSource, container);
+				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+			});
+		} catch (e) {
+			// ignore errors while updating previews
+		}
+	}
+
+	/**
 	 * 获取按顺序排列的自定义图标
 	 */
 	private getSortedCustomIcons(): IconItem[] {
@@ -251,9 +376,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 		try {
 			const prepared = prepareSvgForSettings(svgToRender || effectiveIcon.svgData || '', previewIcon);
-			// (diagnostic logging removed)
 			// insert as an <img> so that IDs/defs inside the svg won't conflict with page
 			const img = document.createElement('img');
+			// metadata to support in-place theme updates
+			img.dataset.iconName = icon.name || '';
+			img.dataset.iconLinkType = icon.linkType || 'url';
+			img.dataset.builtin = (builtinOverride ? 'true' : 'false');
 			img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 			img.alt = icon.name || '';
 			previewIcon.appendChild(img);
@@ -557,4 +685,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			reader.readAsText(file);
 		});
 	}
-}
+	onClose(): void {
+		// Cleanup theme listeners when Settings tab is closed
+		this.disconnectThemeListeners();
+		try { this.containerEl.empty(); } catch (e) { /* ignore */ }
+	}}
