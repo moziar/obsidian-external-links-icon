@@ -25,11 +25,10 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		new Setting(containerEl).setName('External links icon settings').setHeading();
+		new Setting(containerEl).setName('External links icon').setHeading();
 
 		this.createAddIconButton(containerEl);
-		containerEl.createEl('div', { text: 'Add website or url scheme icon. Name must be unique.' });
-
+		containerEl.createEl('div', { text: 'Add website or URL scheme icon. The icon name must be unique.' });
 		this.displayWebsiteSection(containerEl);
 		this.displayURLSchemeSection(containerEl);
 
@@ -95,7 +94,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 	private displayURLSchemeSection(containerEl: HTMLElement): void {
 		new Setting(containerEl).setName('URL scheme').setHeading();
-		containerEl.createEl('div', { text: 'URL scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. "zotero").' });
+		containerEl.createEl('div', { text: 'Url scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. zotero).' });
 
 		const builtInWrap = containerEl.createDiv({ cls: 'scheme-builtins' });
 		const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
@@ -140,7 +139,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				this.createIconSetting(customWrap, icon, idx);
 			});
 		} else {
-			containerEl.createEl('div', { text: 'No custom url scheme icons yet.' });
+			containerEl.createEl('div', { text: 'No custom URL scheme icons yet.' });
 		}
 	}
 
@@ -160,7 +159,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		btnContainer.appendChild(addWebsiteBtn);
 
 		const addSchemeBtn = document.createElement('button');
-		addSchemeBtn.textContent = 'Add url scheme';
+		addSchemeBtn.textContent = 'Add URL scheme';
 		addSchemeBtn.onclick = () => {
 			const modal = new NewIconModal(this.app, (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => this.addIconWithData(data), 'scheme');
 			modal.open();
@@ -411,7 +410,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			// Scheme custom icons: only editable scheme identifier (protocol).
 			// Icon ID (name) is shown in the preview area and should not be editable here.
 			settingItem.addText(text => {
-				text.setPlaceholder('Scheme (e.g. zotero)')
+				text.setPlaceholder('Scheme identifier')
 					.setValue(icon.target || '')
 					.onChange((value) => {
 						this.debounceUpdateTarget(icon.name, value);

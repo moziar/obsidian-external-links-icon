@@ -46,14 +46,14 @@ export class NewIconModal extends Modal {
 		contentEl.empty();
 
 		contentEl.createEl('h3', { text: 'Add new icon' });
-		contentEl.createEl('div', { text: 'Provide icon information. Name must be unique.', cls: 'external-links-icon-desc' });
+		contentEl.createEl('div', { text: 'Provide icon information. Name must be unique. ',  cls: 'external-links-icon-desc' });
 
 		const nameInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' }) as HTMLInputElement;
 		nameInput.placeholder = 'Icon name (unique)';
 		nameInput.type = 'text';
 
 		const targetInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' }) as HTMLInputElement;
-		targetInput.placeholder = 'Website (e.g. baidu.com) or scheme (e.g. zotero)';
+		targetInput.placeholder = 'Website or scheme identifier';
 		targetInput.type = 'text';
 
 		let uploadedSvgData: string | undefined;
