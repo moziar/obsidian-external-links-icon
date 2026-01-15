@@ -428,14 +428,16 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			window.clearTimeout(timerId);
 		}
 
-		const newTimerId = window.setTimeout(async () => {
-			const icons = this.plugin.settings.customIcons || {};
-			if (icons[name]) {
-				icons[name].target = newTarget.trim();
-				await this.plugin.saveSettings();
-				this.display();
-			}
-			this.debounceTimers.delete(`target-${name}`);
+		const newTimerId = window.setTimeout(() => {
+			(async () => {
+				const icons = this.plugin.settings.customIcons || {};
+				if (icons[name]) {
+					icons[name].target = newTarget.trim();
+					await this.plugin.saveSettings();
+					this.display();
+				}
+				this.debounceTimers.delete(`target-${name}`);
+			})().catch(console.error);
 		}, 500);
 		this.debounceTimers.set(`target-${name}`, newTimerId);
 	}
@@ -449,12 +451,14 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			window.clearTimeout(timerId);
 		}
 		
-		const newTimerId = window.setTimeout(async () => {
-			if (newName !== oldName && newName.trim()) {
-				await this.renameIcon(oldName, newName.trim());
-				this.display();
-			}
-			this.debounceTimers.delete(oldName);
+		const newTimerId = window.setTimeout(() => {
+			(async () => {
+				if (newName !== oldName && newName.trim()) {
+					await this.renameIcon(oldName, newName.trim());
+					this.display();
+				}
+				this.debounceTimers.delete(oldName);
+			})().catch(console.error);
 		}, 500);
 		
 		this.debounceTimers.set(oldName, newTimerId);

@@ -31,9 +31,9 @@ export class ConfirmModal extends Modal {
 }
 
 export class NewIconModal extends Modal {
-	onSubmit: (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => void;
+	onSubmit: (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => void | Promise<void>;
 
-	constructor(app: App, onSubmit: (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => void, defaultLinkType?: LinkType) {
+	constructor(app: App, onSubmit: (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => void | Promise<void>, defaultLinkType?: LinkType) {
 		super(app);
 		this.onSubmit = onSubmit;
 		this._defaultLinkType = defaultLinkType || 'url';
@@ -117,7 +117,13 @@ export class NewIconModal extends Modal {
 			if (this._defaultLinkType === 'url') {
 				target = target.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 			}
-			this.onSubmit({ linkType: this._defaultLinkType, name, target, svgData: uploadedSvgData });
+			const result = this.onSubmit({ linkType: this._defaultLinkType, name, target, svgData: uploadedSvgData });
+			if (result instanceof Promise) {
+				result.catch((e) => {
+					console.error('Failed to add icon:', e);
+					new Notice('Failed to add icon');
+				});
+			}
 			this.close();
 		};
 	}
