@@ -23,8 +23,8 @@ export default class ExternalLinksIcon extends Plugin {
 			const Scanner = (await import('./scanner')).Scanner;
 			this.scanner = new Scanner(() => this.settings);
 			this.scanner.start();
-			this.registerEvent(this.app.workspace.on('active-leaf-change', () => this.scanner?.scheduleScan()));
-			this.registerEvent(this.app.workspace.on('layout-change', () => this.scanner?.scheduleScan()));
+			this.registerEvent(this.app.workspace.on('active-leaf-change', () => this.scanner?.scheduleScan(0)));
+			this.registerEvent(this.app.workspace.on('layout-change', () => this.scanner?.scheduleScan(40)));
 			this.scanner.scheduleScan();
 		} catch {
 			this.scanner?.scanAndAnnotateLinks();
