@@ -6,6 +6,7 @@ import { LinkType, IconItem, ExternalLinksIconSettings } from './types';
 import { ICON_CATEGORIES, CSS_SELECTORS, CSS_CONSTANTS, DEFAULT_SETTINGS } from './constants';
 import { encodeSvgData, isValidSvgData } from './utils';
 import { ExternalLinksIconSettingTab } from './settings';
+import { getIconSelector } from './icon-selector';
 
 // The main plugin implementation. Settings and UI have been moved into `src/settings.ts` and `src/ui.ts`.
 
@@ -119,7 +120,7 @@ export default class ExternalLinksIcon extends Plugin {
 		} catch { return this.generateSingleThemeCSS(icon, lightEncodedSvg); }
 	}
 
-	private generateSingleThemeCSS(icon: IconItem, encodedSvg: string): string { const selector = this.getIconSelector(icon).trim(); const baseAfter = `content: " "; display: inline-block; width: ${CSS_CONSTANTS.ICON_SIZE}; height: ${CSS_CONSTANTS.ICON_SIZE}; margin-left: ${CSS_CONSTANTS.ICON_MARGIN}; background-size: contain; background-repeat: no-repeat; background-position: center; vertical-align: middle;`; const parts = selector.split(',').map(s => s.trim()).filter(Boolean); const rules: string[] = []; for (const p of parts) { rules.push(`${p} { background: none; padding-right: 0; }`); rules.push(`${p}::after { ${baseAfter} background-image: url("${encodedSvg}"); }`); } return rules.join('\n'); }
+	private generateSingleThemeCSS(icon: IconItem, encodedSvg: string): string { const selector = getIconSelector(icon).trim(); const baseAfter = `content: " "; display: inline-block; width: ${CSS_CONSTANTS.ICON_SIZE}; height: ${CSS_CONSTANTS.ICON_SIZE}; margin-left: ${CSS_CONSTANTS.ICON_MARGIN}; background-size: contain; background-repeat: no-repeat; background-position: center; vertical-align: middle;`; const parts = selector.split(',').map(s => s.trim()).filter(Boolean); const rules: string[] = []; for (const p of parts) { rules.push(`${p} { background: none; padding-right: 0; }`); rules.push(`${p}::after { ${baseAfter} background-image: url("${encodedSvg}"); }`); } return rules.join('\n'); }
 
 	private getIconSelector(icon: IconItem): string {
 		if (this.isSpecialIcon(icon.name)) return ICON_CATEGORIES.SPECIAL[icon.name].selector.replace(/:?:after/g, '');
