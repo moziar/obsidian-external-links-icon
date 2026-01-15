@@ -67,7 +67,7 @@ export class NewIconModal extends Modal {
 		hiddenInput.type = 'file';
 		hiddenInput.accept = '.svg,image/svg+xml';
 		hiddenInput.classList.add('external-links-icon-hidden-input');
-		hiddenInput.onchange = async (ev) => {
+		hiddenInput.onchange = (ev) => {
 			const files = (ev.target as HTMLInputElement).files;
 			if (!files || files.length === 0) return;
 			const file = files[0];
