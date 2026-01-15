@@ -1,6 +1,6 @@
 import type { ExternalLinksIconSettings, IconItem } from './types';
 import { ICON_CATEGORIES, DEFAULT_SETTINGS } from './constants';
-import { encodeSvgData } from './utils';
+import { getCachedIconImages } from './utils';
 
 
 export type GetSettingsFn = () => ExternalLinksIconSettings;
@@ -124,9 +124,8 @@ export class Scanner {
 			const iconImages = new Map<string, { light: string; dark: string }>();
 			for (const icon of icons) {
 				try {
-					const encodedLight = encodeSvgData(icon.svgData);
-					const encodedDark = icon.themeDarkSvgData ? encodeSvgData(icon.themeDarkSvgData) : encodedLight;
-					iconImages.set(icon.name, { light: encodedLight, dark: encodedDark });
+					const images = getCachedIconImages(icon.name, icon.svgData, icon.themeDarkSvgData);
+					iconImages.set(icon.name, images);
 				} catch (err) {
 					console.warn('Failed to encode icon style for', icon.name, err);
 				}

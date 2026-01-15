@@ -1,4 +1,4 @@
-// Utility helpers
+const iconImageCache = new Map<string, { svgData: string; darkSvgData: string; light: string; dark: string }>();
 
 export function encodeSvgData(svgData: string): string {
 	if (!svgData) {
@@ -27,4 +27,26 @@ export function isValidSvgData(svgData: string): boolean {
 	if (!svgData) return false;
 	const s = svgData.trim();
 	return s.startsWith('<svg') || s.startsWith('data:image/svg+xml');
+}
+
+export function getCachedIconImages(
+	key: string,
+	svgData: string,
+	darkSvgData?: string
+): { light: string; dark: string } {
+	const normalizedSvg = svgData || '';
+	const normalizedDark = darkSvgData || '';
+	const existing = iconImageCache.get(key);
+	if (existing && existing.svgData === normalizedSvg && existing.darkSvgData === normalizedDark) {
+		return { light: existing.light, dark: existing.dark };
+	}
+	const encodedLight = encodeSvgData(normalizedSvg);
+	const encodedDark = normalizedDark ? encodeSvgData(normalizedDark) : encodedLight;
+	iconImageCache.set(key, {
+		svgData: normalizedSvg,
+		darkSvgData: normalizedDark,
+		light: encodedLight,
+		dark: encodedDark
+	});
+	return { light: encodedLight, dark: encodedDark };
 }
