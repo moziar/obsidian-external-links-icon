@@ -109,7 +109,7 @@ export class Scanner {
 				const selector = this.getIconSelector(icon).trim();
 				if (!selector) continue;
 				for (const root of rootSources) {
-					const elements = (root === document ? document.querySelectorAll(selector) : (root as Element).querySelectorAll(selector));
+					const elements = (root === document ? document.querySelectorAll(selector) : root.querySelectorAll(selector));
 					if (!elements || elements.length === 0) continue;
 					for (const el of Array.from(elements)) {
 						if (applied.has(el)) continue;
@@ -123,7 +123,7 @@ export class Scanner {
 					const isBuiltInScheme = Boolean((DEFAULT_SETTINGS.icons || {})[icon.name]);
 					const isCustomScheme = Boolean(settings?.customIcons?.[icon.name]);
 					if (isBuiltInScheme || isCustomScheme) {
-						(el as HTMLElement).classList.add('external-links-icon-hide-suffix');
+						el.classList.add('external-links-icon-hide-suffix');
 					}
 						}
 

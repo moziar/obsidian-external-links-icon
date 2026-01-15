@@ -77,7 +77,7 @@ export default class ExternalLinksIcon extends Plugin {
 		this.generatedCss = this.generateCSS();
 		// ensure style element exists and update its content
 		try {
-			let styleEl = document.getElementById(CSS_CONSTANTS.STYLE_ID) as HTMLStyleElement | null;
+			let styleEl = document.getElementById(CSS_CONSTANTS.STYLE_ID);
 			if (!styleEl) {
 				styleEl = document.createElement('style');
 				styleEl.id = CSS_CONSTANTS.STYLE_ID;

@@ -12,7 +12,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 	// Theme change detection
 	private themeMediaQuery: MediaQueryList | null = null;
-	private mqHandler: ((e: MediaQueryListEvent) => void) | null = null;
+	private mqHandler: EventListener | null = null;
 	private bodyObserver: MutationObserver | null = null;
 	private themeChangeDebounce: number = 0;
 
@@ -224,9 +224,9 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		try {
 			this.themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 			const mq = this.themeMediaQuery;
-			this.mqHandler = (() => this.scheduleThemeRefresh());
-			if (mq.addEventListener) mq.addEventListener('change', this.mqHandler as any);
-			else if ((mq as any).addListener) (mq as any).addListener(this.mqHandler as any);
+			this.mqHandler = () => this.scheduleThemeRefresh();
+			if (mq.addEventListener) mq.addEventListener('change', this.mqHandler);
+			else if (mq.addListener) mq.addListener(this.mqHandler);
 		} catch (e) {
 			// ignore
 		}
@@ -274,8 +274,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			try {
 				const mq = this.themeMediaQuery;
 				if (this.mqHandler) {
-					if (mq.removeEventListener) mq.removeEventListener('change', this.mqHandler as any);
-					else if ((mq as any).removeListener) (mq as any).removeListener(this.mqHandler as any);
+					if (mq.removeEventListener) mq.removeEventListener('change', this.mqHandler);
+					else if (mq.removeListener) mq.removeListener(this.mqHandler);
 				}
 			} catch (e) { /* ignore */ }
 			this.themeMediaQuery = null;
@@ -297,7 +297,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	private updatePreviewIcons(preferDark?: boolean): void {
 		try {
 			if (typeof preferDark === 'undefined') preferDark = preferDarkThemeFromDocument();
-			const imgs = Array.from(this.containerEl.querySelectorAll('img[data-icon-name]')) as HTMLImageElement[];
+			const imgs = Array.from(this.containerEl.querySelectorAll<HTMLImageElement>('img[data-icon-name]'));
 			imgs.forEach(img => {
 				const name = img.dataset.iconName || '';
 				const linkType = (img.dataset.iconLinkType || 'url') as 'url' | 'scheme';
@@ -312,7 +312,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				if (preferDark) svgSource = icon.themeDarkSvgData || icon.svgData || '';
 				else svgSource = icon.svgData || icon.themeDarkSvgData || '';
 				if (!svgSource) return;
-				const container = (img.parentElement && (img.parentElement as HTMLElement)) || (img as unknown as HTMLElement);
+				const container = img.parentElement || img;
 				const prepared = prepareSvgForSettings(svgSource, container);
 				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 			});
