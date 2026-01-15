@@ -13,7 +13,7 @@ export function encodeSvgData(svgData: string): string {
 	// Raw SVG
 	if (svgData.trim().startsWith('<svg')) {
 		try {
-			return `data:image/svg+xml,${encodeURIComponent(svgData.trim())}`;
+			return `data:image/svg+xml;utf8,${encodeURIComponent(svgData.trim())}`;
 		} catch (error) {
 			console.warn('Failed to encode SVG data:', error);
 			throw new Error('Invalid SVG data format');

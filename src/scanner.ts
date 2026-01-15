@@ -2,6 +2,8 @@ import type { ExternalLinksIconSettings, IconItem } from './types';
 import { ICON_CATEGORIES, CSS_SELECTORS, DEFAULT_SETTINGS } from './constants';
 import { getIconSelector } from './icon-selector';
 
+import { encodeSvgData } from './utils';
+
 
 export type GetSettingsFn = () => ExternalLinksIconSettings;
 
@@ -93,10 +95,15 @@ export class Scanner {
 	 */
 	scanAndAnnotateLinks(): void {
 		try {
-			// Remove any previous inline icon elements and rebuild fresh.
-			document.querySelectorAll('.external-links-icon-inline').forEach(el => el.remove());
-			// Remove any suffix-hiding class previously added to links
-			document.querySelectorAll('.external-link.external-links-icon-hide-suffix').forEach(el => el.classList.remove('external-links-icon-hide-suffix'));
+			// Clean up previous annotations
+			document.querySelectorAll('.external-links-icon-enabled').forEach(el => {
+				el.classList.remove('external-links-icon-enabled');
+				el.classList.remove('external-links-icon-hide-suffix');
+				if (el instanceof HTMLElement) {
+					el.style.removeProperty('--external-link-icon-image-light');
+					el.style.removeProperty('--external-link-icon-image-dark');
+				}
+			});
 
 			const settings = this.getSettings();
 			const applied = new Set<Element>();
@@ -114,20 +121,28 @@ export class Scanner {
 					for (const el of Array.from(elements)) {
 						if (applied.has(el)) continue;
 						if (!(el instanceof HTMLElement)) continue;
-// Inline span icon injection removed. Rendering is done via generated CSS ::after rules.
-				// Keep logic simple: we will add classes for scheme icons when needed and
-				// rely on the generated selectors to apply the ::after background-image.
 
-// For scheme icons, hide Obsidian's default suffix by adding a class.
-				if (icon.linkType === 'scheme') {
-					const isBuiltInScheme = Boolean((DEFAULT_SETTINGS.icons || {})[icon.name]);
-					const isCustomScheme = Boolean(settings?.customIcons?.[icon.name]);
-					if (isBuiltInScheme || isCustomScheme) {
-						el.classList.add('external-links-icon-hide-suffix');
-					}
+						try {
+							const encodedLight = encodeSvgData(icon.svgData);
+							const encodedDark = icon.themeDarkSvgData ? encodeSvgData(icon.themeDarkSvgData) : encodedLight;
+							
+							el.style.setProperty('--external-link-icon-image-light', `url("${encodedLight}")`);
+							el.style.setProperty('--external-link-icon-image-dark', `url("${encodedDark}")`);
+							el.classList.add('external-links-icon-enabled');
+
+							// For scheme icons, hide Obsidian's default suffix by adding a class.
+							if (icon.linkType === 'scheme') {
+								const isBuiltInScheme = Boolean((DEFAULT_SETTINGS.icons || {})[icon.name]);
+								const isCustomScheme = Boolean(settings?.customIcons?.[icon.name]);
+								if (isBuiltInScheme || isCustomScheme) {
+									el.classList.add('external-links-icon-hide-suffix');
+								}
+							}
+
+							applied.add(el);
+						} catch (err) {
+							console.warn('Failed to apply icon style for', icon.name, err);
 						}
-
-						applied.add(el);
 					}
 				}
 			}
