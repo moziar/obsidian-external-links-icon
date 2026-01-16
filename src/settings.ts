@@ -278,7 +278,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			const mq = this.themeMediaQuery;
 			this.mqHandler = () => this.scheduleThemeRefresh();
 			if (mq.addEventListener) mq.addEventListener('change', this.mqHandler);
-			else if (mq.addListener) mq.addListener(this.mqHandler);
 		} catch (e) {
 			// ignore
 		}
@@ -327,7 +326,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				const mq = this.themeMediaQuery;
 				if (this.mqHandler) {
 					if (mq.removeEventListener) mq.removeEventListener('change', this.mqHandler);
-					else if (mq.removeListener) mq.removeListener(this.mqHandler);
 				}
 			} catch (e) { /* ignore */ }
 			this.themeMediaQuery = null;
