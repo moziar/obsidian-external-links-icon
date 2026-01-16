@@ -1,7 +1,7 @@
 import { PluginSettingTab, Setting, App, Notice } from 'obsidian';
 import type ExternalLinksIcon from './main';
 import type { IconItem, LinkType } from './types';
-import { ICON_CATEGORIES, DEFAULT_SETTINGS, CSS_SELECTORS } from './constants';
+import { ICON_CATEGORIES, DEFAULT_SETTINGS } from './constants';
 import { preferDarkThemeFromDocument } from './svg';
 import { prepareSvgForSettings, sanitizeSvg } from './svg';
 import { ConfirmModal, NewIconModal } from './ui';
@@ -24,8 +24,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-
-		new Setting(containerEl).setName('External links icon').setHeading();
 
 		this.createAddIconButton(containerEl);
 		containerEl.createEl('div', { text: 'Add website or URL scheme icon. The icon name must be unique.' });
@@ -120,7 +118,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 	private displayURLSchemeSection(containerEl: HTMLElement): void {
 		new Setting(containerEl).setName('URL scheme').setHeading();
-		containerEl.createEl('div', { text: 'Url scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. zotero).' });
+		containerEl.createEl('div', { text: 'URL scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. zotero).' });
 
 		const builtInWrap = containerEl.createDiv({ cls: 'scheme-builtins' });
 		const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
@@ -280,7 +278,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			const mq = this.themeMediaQuery;
 			this.mqHandler = () => this.scheduleThemeRefresh();
 			if (mq.addEventListener) mq.addEventListener('change', this.mqHandler);
-			else if (mq.addListener) mq.addListener(this.mqHandler);
 		} catch (e) {
 			// ignore
 		}
@@ -329,7 +326,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				const mq = this.themeMediaQuery;
 				if (this.mqHandler) {
 					if (mq.removeEventListener) mq.removeEventListener('change', this.mqHandler);
-					else if (mq.removeListener) mq.removeListener(this.mqHandler);
 				}
 			} catch (e) { /* ignore */ }
 			this.themeMediaQuery = null;
@@ -355,7 +351,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			imgs.forEach(img => {
 				if (img.dataset.dualVariant === 'true') return;
 				const name = img.dataset.iconName || '';
-				const linkType = (img.dataset.iconLinkType || 'url') as 'url' | 'scheme';
 				const isBuiltin = img.dataset.builtin === 'true';
 				let icon: IconItem | undefined;
 				if (isBuiltin) icon = (DEFAULT_SETTINGS.icons || {})[name];

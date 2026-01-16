@@ -28,7 +28,7 @@ export function getIconSelector(icon: IconItem): string {
 	}
 	// This block handles cases where linkType might be missing (legacy data) or if types are looser than defined.
 	// We cast to 'any' to check for falsy linkType since TypeScript believes linkType is required.
-	if (isUrlSchemeIcon(icon.name) && !(icon as any).linkType) {
+	if (isUrlSchemeIcon(icon.name) && !(icon as Partial<IconItem>).linkType) {
 		const scheme = icon.target || icon.name;
 		return `${CSS_SELECTORS.URL_SCHEME}[href^="${scheme}://"]`;
 	}
@@ -36,7 +36,7 @@ export function getIconSelector(icon: IconItem): string {
 	// Fix for "Invalid type 'never' of template literal expression".
 	// TypeScript Control Flow Analysis determines that icon is 'never' here because 'linkType' is exhaustive ('url' | 'scheme').
 	// We cast to IconItem to ensure we can access properties even if unreachable by strict types.
-	return `${CSS_SELECTORS.CUSTOM_DATA}[data-icon="${(icon as IconItem).name}"]`;
+	return `${CSS_SELECTORS.CUSTOM_DATA}[data-icon="${icon.name}"]`;
 }
 
 function isSpecialIcon(iconName: string): iconName is keyof typeof ICON_CATEGORIES.SPECIAL {
@@ -52,5 +52,5 @@ function isUrlSchemeIcon(iconName: string): boolean {
 }
 
 function getWebDomain(iconName: string): string | undefined {
-	return ICON_CATEGORIES.WEB[iconName as keyof typeof ICON_CATEGORIES.WEB];
+	return ICON_CATEGORIES.WEB[iconName];
 }

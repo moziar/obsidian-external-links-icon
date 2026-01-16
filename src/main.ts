@@ -1,12 +1,9 @@
-import { Plugin, PluginSettingTab, Setting, App, Notice } from 'obsidian';
-
-import { sanitizeSvg, prepareSvgForSettings, preferDarkThemeFromDocument } from './svg';
+import { Plugin } from 'obsidian';
 
 import { ExternalLinksIconSettings } from './types';
 import { DEFAULT_SETTINGS } from './constants';
 import { isValidSvgData } from './utils';
 import { ExternalLinksIconSettingTab } from './settings';
-import { getIconSelector } from './icon-selector';
 
 // The main plugin implementation. Settings and UI have been moved into `src/settings.ts` and `src/ui.ts`.
 

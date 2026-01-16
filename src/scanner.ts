@@ -210,7 +210,7 @@ export class Scanner {
 				}
 				for (const el of Array.from(elements)) {
 					if (!(el instanceof HTMLElement) || !el.isConnected) {
-						elements.delete(el as HTMLElement);
+						elements.delete(el);
 						continue;
 					}
 					try {
@@ -306,7 +306,7 @@ export class Scanner {
 			if (!isExternal) return false;
 			if (!hrefLower.startsWith('http://') && !hrefLower.startsWith('https://')) return false;
 			const webMap = ICON_CATEGORIES.WEB;
-			const mapped = webMap[icon.name as keyof typeof webMap];
+			const mapped = webMap[icon.name];
 			const pattern = (mapped || icon.target || icon.name || '').toLowerCase();
 			if (!pattern) return false;
 			return hrefLower.indexOf(pattern) !== -1;
