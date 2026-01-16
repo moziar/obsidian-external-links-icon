@@ -28,7 +28,7 @@ export function getIconSelector(icon: IconItem): string {
 	}
 	// This block handles cases where linkType might be missing (legacy data) or if types are looser than defined.
 	// We cast to 'any' to check for falsy linkType since TypeScript believes linkType is required.
-	if (isUrlSchemeIcon(icon.name) && !(icon as any).linkType) {
+	if (isUrlSchemeIcon(icon.name) && !(icon as Partial<IconItem>).linkType) {
 		const scheme = icon.target || icon.name;
 		return `${CSS_SELECTORS.URL_SCHEME}[href^="${scheme}://"]`;
 	}
