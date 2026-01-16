@@ -25,8 +25,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		new Setting(containerEl).setName('External links icon').setHeading();
-
 		this.createAddIconButton(containerEl);
 		containerEl.createEl('div', { text: 'Add website or URL scheme icon. The icon name must be unique.' });
 		this.displayWebsiteSection(containerEl);
