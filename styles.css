@@ -11,13 +11,12 @@
 	所有真正应用了图标的链接，都会被扫描器加上
 	  .external-links-icon-enabled
 	并在元素行内样式上注入：
-	  --external-link-icon-image-light: url("data:image/svg+xml;utf8,...");
-	  --external-link-icon-image-dark:  url("data:image/svg+xml;utf8,...");
+	  --external-link-icon-image: url("data:image/svg+xml;utf8,...");
 
 	静态 CSS 只负责：
 	- 去掉主题自带的默认箭头样式
 	- 用 ::after 根据变量显示 SVG 图标
-*/
+	*/
 
 .external-link.external-links-icon-enabled,
 .internal-link.external-links-icon-enabled {
@@ -37,14 +36,7 @@
 	background-repeat: no-repeat;
 	background-position: center;
 	vertical-align: middle;
-	/* 默认使用浅色图标 */
-	background-image: var(--external-link-icon-image-light, none);
-}
-
-body.theme-dark .external-link.external-links-icon-enabled::after,
-body.theme-dark .internal-link.external-links-icon-enabled::after {
-	/* 深色主题优先使用深色图标，缺失时回退到浅色 */
-	background-image: var(--external-link-icon-image-dark, var(--external-link-icon-image-light, none));
+	background-image: var(--external-link-icon-image, none);
 }
 
 /***

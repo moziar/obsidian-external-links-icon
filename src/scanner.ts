@@ -1,6 +1,7 @@
 import type { ExternalLinksIconSettings, IconItem } from './types';
 import { ICON_CATEGORIES, DEFAULT_SETTINGS } from './constants';
-import { getCachedIconImages } from './utils';
+import { getCachedIconImage } from './utils';
+import { preferDarkThemeFromDocument } from './svg';
 
 
 export type GetSettingsFn = () => ExternalLinksIconSettings;
@@ -11,6 +12,7 @@ export class Scanner {
 	private mutationObserver: MutationObserver | null = null;
 	private observedRoots: Element[] = [];
 	private observeSelectors: string[];
+	private iconElementsByName: Map<string, Set<HTMLElement>> = new Map();
 
 	constructor(getSettings: GetSettingsFn, observeSelectors?: string[]) {
 		this.getSettings = getSettings;
@@ -93,13 +95,14 @@ export class Scanner {
 	 */
 	scanAndAnnotateLinks(): void {
 		try {
+			const preferDark = preferDarkThemeFromDocument();
+			this.iconElementsByName.clear();
 			// Clean up previous annotations
 			document.querySelectorAll('.external-links-icon-enabled').forEach(el => {
 				el.classList.remove('external-links-icon-enabled');
 				el.classList.remove('external-links-icon-hide-suffix');
 				if (el instanceof HTMLElement) {
-					el.style.removeProperty('--external-link-icon-image-light');
-					el.style.removeProperty('--external-link-icon-image-dark');
+					el.style.removeProperty('--external-link-icon-image');
 				}
 			});
 
@@ -121,11 +124,11 @@ export class Scanner {
 				else if (bodyClassList.contains('fancy-both-obsidian-link')) obsidianNoteMode = 'both';
 			}
 
-			const iconImages = new Map<string, { light: string; dark: string }>();
+			const iconImages = new Map<string, string>();
 			for (const icon of icons) {
 				try {
-					const images = getCachedIconImages(icon.name, icon.svgData, icon.themeDarkSvgData);
-					iconImages.set(icon.name, images);
+					const image = getCachedIconImage(icon.name, icon.svgData, icon.themeDarkSvgData, preferDark);
+					iconImages.set(icon.name, image);
 				} catch (err) {
 					console.warn('Failed to encode icon style for', icon.name, err);
 				}
@@ -153,12 +156,11 @@ export class Scanner {
 					}
 
 					if (!chosen) continue;
-					const images = iconImages.get(chosen.name);
-					if (!images) continue;
+					const image = iconImages.get(chosen.name);
+					if (!image) continue;
 
 					try {
-						el.style.setProperty('--external-link-icon-image-light', `url("${images.light}")`);
-						el.style.setProperty('--external-link-icon-image-dark', `url("${images.dark}")`);
+						el.style.setProperty('--external-link-icon-image', `url("${image}")`);
 						el.classList.add('external-links-icon-enabled');
 
 						if (chosen.linkType === 'scheme') {
@@ -170,6 +172,12 @@ export class Scanner {
 						}
 
 						applied.add(el);
+						let set = this.iconElementsByName.get(chosen.name);
+						if (!set) {
+							set = new Set<HTMLElement>();
+							this.iconElementsByName.set(chosen.name, set);
+						}
+						set.add(el);
 					} catch (err) {
 						console.warn('Failed to apply icon style for', chosen.name, err);
 					}
@@ -177,6 +185,43 @@ export class Scanner {
 			}
 		} catch (e) {
 			console.error('Failed to scan and annotate links for icons:', e);
+		}
+	}
+
+	refreshIconsForThemeChange(): void {
+		try {
+			if (!this.iconElementsByName.size) return;
+			const preferDark = preferDarkThemeFromDocument();
+			const settings = this.getSettings();
+			const allIcons: Record<string, IconItem> = Object.assign({}, DEFAULT_SETTINGS.icons || {}, settings.customIcons || {});
+			const imageCache = new Map<string, string>();
+			for (const [name, elements] of this.iconElementsByName) {
+				const icon = allIcons[name];
+				if (!icon) continue;
+				let image = imageCache.get(name);
+				if (!image) {
+					try {
+						image = getCachedIconImage(name, icon.svgData, icon.themeDarkSvgData, preferDark);
+						imageCache.set(name, image);
+					} catch (err) {
+						console.warn('Failed to encode icon style for theme refresh', name, err);
+						continue;
+					}
+				}
+				for (const el of Array.from(elements)) {
+					if (!(el instanceof HTMLElement) || !el.isConnected) {
+						elements.delete(el as HTMLElement);
+						continue;
+					}
+					try {
+						el.style.setProperty('--external-link-icon-image', `url("${image}")`);
+					} catch (err) {
+						console.warn('Failed to update icon style for theme refresh', name, err);
+					}
+				}
+			}
+		} catch (e) {
+			console.error('Failed to refresh link icons for theme change:', e);
 		}
 	}
 

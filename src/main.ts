@@ -2,9 +2,9 @@ import { Plugin, PluginSettingTab, Setting, App, Notice } from 'obsidian';
 
 import { sanitizeSvg, prepareSvgForSettings, preferDarkThemeFromDocument } from './svg';
 
-import { LinkType, IconItem, ExternalLinksIconSettings } from './types';
-import { ICON_CATEGORIES, CSS_SELECTORS, CSS_CONSTANTS, DEFAULT_SETTINGS } from './constants';
-import { encodeSvgData, isValidSvgData } from './utils';
+import { ExternalLinksIconSettings } from './types';
+import { DEFAULT_SETTINGS } from './constants';
+import { isValidSvgData } from './utils';
 import { ExternalLinksIconSettingTab } from './settings';
 import { getIconSelector } from './icon-selector';
 
@@ -25,6 +25,7 @@ export default class ExternalLinksIcon extends Plugin {
 			this.scanner.start();
 			this.registerEvent(this.app.workspace.on('active-leaf-change', () => this.scanner?.scheduleScan(0)));
 			this.registerEvent(this.app.workspace.on('layout-change', () => this.scanner?.scheduleScan(40)));
+			this.registerEvent(this.app.workspace.on('css-change', () => this.scanner?.refreshIconsForThemeChange()))
 			this.scanner.scheduleScan();
 		} catch {
 			this.scanner?.scanAndAnnotateLinks();
