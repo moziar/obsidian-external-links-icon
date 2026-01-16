@@ -56,22 +56,48 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 			const iconEl = box.createDiv({ cls: 'item-icon' });
 			try {
-				const preferDark = preferDarkThemeFromDocument();
-				let svgSource: string;
-				if (!preferDark) {
-					svgSource = icon.svgData || icon.themeDarkSvgData || '';
+				const hasDual = !!(icon.svgData && icon.themeDarkSvgData);
+				if (hasDual) {
+					const lightPrepared = prepareSvgForSettings(icon.svgData || '', iconEl);
+					const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', iconEl);
+
+					const imgLight = document.createElement('img');
+					imgLight.dataset.iconName = icon.name || '';
+					imgLight.dataset.iconLinkType = 'url';
+					imgLight.dataset.builtin = 'true';
+					imgLight.dataset.iconVariant = 'light';
+					imgLight.dataset.dualVariant = 'true';
+					imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
+					imgLight.alt = icon.name || '';
+
+					const imgDark = document.createElement('img');
+					imgDark.dataset.iconName = icon.name || '';
+					imgDark.dataset.iconLinkType = 'url';
+					imgDark.dataset.builtin = 'true';
+					imgDark.dataset.iconVariant = 'dark';
+					imgDark.dataset.dualVariant = 'true';
+					imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
+					imgDark.alt = icon.name || '';
+
+					iconEl.appendChild(imgLight);
+					iconEl.appendChild(imgDark);
 				} else {
-					svgSource = icon.themeDarkSvgData || icon.svgData || '';
+					const preferDark = preferDarkThemeFromDocument();
+					let svgSource: string;
+					if (!preferDark) {
+						svgSource = icon.svgData || icon.themeDarkSvgData || '';
+					} else {
+						svgSource = icon.themeDarkSvgData || icon.svgData || '';
+					}
+					const img = document.createElement('img');
+					img.dataset.iconName = icon.name || '';
+					img.dataset.iconLinkType = 'url';
+					img.dataset.builtin = 'true';
+					const prepared = prepareSvgForSettings(svgSource, iconEl);
+					img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+					img.alt = icon.name || '';
+					iconEl.appendChild(img);
 				}
-				const img = document.createElement('img');
-				// metadata to support in-place theme updates
-				img.dataset.iconName = icon.name || '';
-				img.dataset.iconLinkType = 'url';
-				img.dataset.builtin = 'true';
-				const prepared = prepareSvgForSettings(svgSource, iconEl);
-				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-				img.alt = icon.name || '';
-				iconEl.appendChild(img);
 			} catch (e) {
 				console.warn('Failed to render builtin website preview', e);
 				iconEl.textContent = '🔗';
@@ -108,21 +134,49 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 				const iconEl = box.createDiv({ cls: 'item-icon' });
 				try {
-					const preferDark = preferDarkThemeFromDocument();
-					let svgSource: string;
-					if (!preferDark) {
-						svgSource = icon.svgData || icon.themeDarkSvgData || '';
-					} else {
-						svgSource = icon.themeDarkSvgData || icon.svgData || '';
-					}
-					const img = document.createElement('img');				// metadata to support in-place theme updates
-				img.dataset.iconName = icon.name || '';
-				img.dataset.iconLinkType = 'scheme';
-				img.dataset.builtin = 'true';					const prepared = prepareSvgForSettings(svgSource, iconEl);
-					img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-					img.alt = icon.name || '';
+					const hasDual = !!(icon.svgData && icon.themeDarkSvgData);
+					if (hasDual) {
+						const lightPrepared = prepareSvgForSettings(icon.svgData || '', iconEl);
+						const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', iconEl);
 
-					iconEl.appendChild(img);
+						const imgLight = document.createElement('img');
+						imgLight.dataset.iconName = icon.name || '';
+						imgLight.dataset.iconLinkType = 'scheme';
+						imgLight.dataset.builtin = 'true';
+						imgLight.dataset.iconVariant = 'light';
+						imgLight.dataset.dualVariant = 'true';
+						imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
+						imgLight.alt = icon.name || '';
+
+						const imgDark = document.createElement('img');
+						imgDark.dataset.iconName = icon.name || '';
+						imgDark.dataset.iconLinkType = 'scheme';
+						imgDark.dataset.builtin = 'true';
+						imgDark.dataset.iconVariant = 'dark';
+						imgDark.dataset.dualVariant = 'true';
+						imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
+						imgDark.alt = icon.name || '';
+
+						iconEl.appendChild(imgLight);
+						iconEl.appendChild(imgDark);
+					} else {
+						const preferDark = preferDarkThemeFromDocument();
+						let svgSource: string;
+						if (!preferDark) {
+							svgSource = icon.svgData || icon.themeDarkSvgData || '';
+						} else {
+							svgSource = icon.themeDarkSvgData || icon.svgData || '';
+						}
+						const img = document.createElement('img');
+						img.dataset.iconName = icon.name || '';
+						img.dataset.iconLinkType = 'scheme';
+						img.dataset.builtin = 'true';
+						const prepared = prepareSvgForSettings(svgSource, iconEl);
+						img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+						img.alt = icon.name || '';
+
+						iconEl.appendChild(img);
+					}
 				} catch (e) {
 					console.warn('Failed to render builtin scheme preview', e);
 					iconEl.textContent = '🔗';
@@ -299,6 +353,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			if (typeof preferDark === 'undefined') preferDark = preferDarkThemeFromDocument();
 			const imgs = Array.from(this.containerEl.querySelectorAll<HTMLImageElement>('img[data-icon-name]'));
 			imgs.forEach(img => {
+				if (img.dataset.dualVariant === 'true') return;
 				const name = img.dataset.iconName || '';
 				const linkType = (img.dataset.iconLinkType || 'url') as 'url' | 'scheme';
 				const isBuiltin = img.dataset.builtin === 'true';
@@ -359,32 +414,49 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		// If this icon is a built-in, prefer the DEFAULT_SETTINGS version for Settings preview
 		const builtinOverride = (DEFAULT_SETTINGS.icons || {})[icon.name];
 		const effectiveIcon = builtinOverride ? builtinOverride : icon;
-
-		// Prefer theme-specific dark svg if document indicates dark theme.
-		// Explicitly prefer the light `svgData` when the document indicates light theme to avoid
-		// accidentally selecting a dark variant when the Settings page is in light mode.
-		const preferDark = preferDarkThemeFromDocument();
-		let svgToRender: string;
-		if (!preferDark) {
-			// Document explicitly light: always use svgData (fallback to themeDarkSvgData only if svgData absent)
-			svgToRender = effectiveIcon.svgData || effectiveIcon.themeDarkSvgData || '';
-		} else {
-			// Document dark or system prefers dark: use themeDarkSvgData when available
-			svgToRender = effectiveIcon.themeDarkSvgData || effectiveIcon.svgData || '';
-		}
-
 		try {
-			const prepared = prepareSvgForSettings(svgToRender || effectiveIcon.svgData || '', previewIcon);
-			// insert as an <img> so that IDs/defs inside the svg won't conflict with page
-			const img = document.createElement('img');
-			// metadata to support in-place theme updates
-			img.dataset.iconName = icon.name || '';
-			img.dataset.iconLinkType = icon.linkType || 'url';
-			img.dataset.builtin = (builtinOverride ? 'true' : 'false');
-			img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-			img.alt = icon.name || '';
-			previewIcon.appendChild(img);
-			// no debug badge
+			const hasDual = !!(effectiveIcon.svgData && effectiveIcon.themeDarkSvgData);
+			if (hasDual) {
+				const lightPrepared = prepareSvgForSettings(effectiveIcon.svgData || '', previewIcon);
+				const darkPrepared = prepareSvgForSettings(effectiveIcon.themeDarkSvgData || '', previewIcon);
+
+				const imgLight = document.createElement('img');
+				imgLight.dataset.iconName = icon.name || '';
+				imgLight.dataset.iconLinkType = icon.linkType || 'url';
+				imgLight.dataset.builtin = (builtinOverride ? 'true' : 'false');
+				imgLight.dataset.iconVariant = 'light';
+				imgLight.dataset.dualVariant = 'true';
+				imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
+				imgLight.alt = icon.name || '';
+
+				const imgDark = document.createElement('img');
+				imgDark.dataset.iconName = icon.name || '';
+				imgDark.dataset.iconLinkType = icon.linkType || 'url';
+				imgDark.dataset.builtin = (builtinOverride ? 'true' : 'false');
+				imgDark.dataset.iconVariant = 'dark';
+				imgDark.dataset.dualVariant = 'true';
+				imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
+				imgDark.alt = icon.name || '';
+
+				previewIcon.appendChild(imgLight);
+				previewIcon.appendChild(imgDark);
+			} else {
+				const preferDark = preferDarkThemeFromDocument();
+				let svgToRender: string;
+				if (!preferDark) {
+					svgToRender = effectiveIcon.svgData || effectiveIcon.themeDarkSvgData || '';
+				} else {
+					svgToRender = effectiveIcon.themeDarkSvgData || effectiveIcon.svgData || '';
+				}
+				const prepared = prepareSvgForSettings(svgToRender || effectiveIcon.svgData || '', previewIcon);
+				const img = document.createElement('img');
+				img.dataset.iconName = icon.name || '';
+				img.dataset.iconLinkType = icon.linkType || 'url';
+				img.dataset.builtin = (builtinOverride ? 'true' : 'false');
+				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+				img.alt = icon.name || '';
+				previewIcon.appendChild(img);
+			}
 		} catch (error) {
 			console.warn('Failed to render icon preview:', error);
 			previewIcon.textContent = '🔧'; // fallback glyph
