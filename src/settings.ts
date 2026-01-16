@@ -1,7 +1,7 @@
 import { PluginSettingTab, Setting, App, Notice } from 'obsidian';
 import type ExternalLinksIcon from './main';
 import type { IconItem, LinkType } from './types';
-import { ICON_CATEGORIES, DEFAULT_SETTINGS, CSS_SELECTORS } from './constants';
+import { ICON_CATEGORIES, DEFAULT_SETTINGS } from './constants';
 import { preferDarkThemeFromDocument } from './svg';
 import { prepareSvgForSettings, sanitizeSvg } from './svg';
 import { ConfirmModal, NewIconModal } from './ui';
@@ -351,7 +351,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			imgs.forEach(img => {
 				if (img.dataset.dualVariant === 'true') return;
 				const name = img.dataset.iconName || '';
-				const linkType = (img.dataset.iconLinkType || 'url') as 'url' | 'scheme';
 				const isBuiltin = img.dataset.builtin === 'true';
 				let icon: IconItem | undefined;
 				if (isBuiltin) icon = (DEFAULT_SETTINGS.icons || {})[name];
