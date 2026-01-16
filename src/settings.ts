@@ -12,7 +12,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 	// Theme change detection
 	private themeMediaQuery: MediaQueryList | null = null;
-	private mqHandler: ((e: MediaQueryListEvent) => void) | null = null;
+	private mqHandler: EventListener | null = null;
 	private bodyObserver: MutationObserver | null = null;
 	private themeChangeDebounce: number = 0;
 
@@ -25,11 +25,10 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		new Setting(containerEl).setName('External links icon settings').setHeading();
+		new Setting(containerEl).setName('External links icon').setHeading();
 
 		this.createAddIconButton(containerEl);
-		containerEl.createEl('div', { text: 'Add website or url scheme icon. Name must be unique.' });
-
+		containerEl.createEl('div', { text: 'Add website or URL scheme icon. The icon name must be unique.' });
 		this.displayWebsiteSection(containerEl);
 		this.displayURLSchemeSection(containerEl);
 
@@ -57,22 +56,48 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 			const iconEl = box.createDiv({ cls: 'item-icon' });
 			try {
-				const preferDark = preferDarkThemeFromDocument();
-				let svgSource: string;
-				if (!preferDark) {
-					svgSource = icon.svgData || icon.themeDarkSvgData || '';
+				const hasDual = !!(icon.svgData && icon.themeDarkSvgData);
+				if (hasDual) {
+					const lightPrepared = prepareSvgForSettings(icon.svgData || '', iconEl);
+					const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', iconEl);
+
+					const imgLight = document.createElement('img');
+					imgLight.dataset.iconName = icon.name || '';
+					imgLight.dataset.iconLinkType = 'url';
+					imgLight.dataset.builtin = 'true';
+					imgLight.dataset.iconVariant = 'light';
+					imgLight.dataset.dualVariant = 'true';
+					imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
+					imgLight.alt = icon.name || '';
+
+					const imgDark = document.createElement('img');
+					imgDark.dataset.iconName = icon.name || '';
+					imgDark.dataset.iconLinkType = 'url';
+					imgDark.dataset.builtin = 'true';
+					imgDark.dataset.iconVariant = 'dark';
+					imgDark.dataset.dualVariant = 'true';
+					imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
+					imgDark.alt = icon.name || '';
+
+					iconEl.appendChild(imgLight);
+					iconEl.appendChild(imgDark);
 				} else {
-					svgSource = icon.themeDarkSvgData || icon.svgData || '';
+					const preferDark = preferDarkThemeFromDocument();
+					let svgSource: string;
+					if (!preferDark) {
+						svgSource = icon.svgData || icon.themeDarkSvgData || '';
+					} else {
+						svgSource = icon.themeDarkSvgData || icon.svgData || '';
+					}
+					const img = document.createElement('img');
+					img.dataset.iconName = icon.name || '';
+					img.dataset.iconLinkType = 'url';
+					img.dataset.builtin = 'true';
+					const prepared = prepareSvgForSettings(svgSource, iconEl);
+					img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+					img.alt = icon.name || '';
+					iconEl.appendChild(img);
 				}
-				const img = document.createElement('img');
-				// metadata to support in-place theme updates
-				img.dataset.iconName = icon.name || '';
-				img.dataset.iconLinkType = 'url';
-				img.dataset.builtin = 'true';
-				const prepared = prepareSvgForSettings(svgSource, iconEl);
-				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-				img.alt = icon.name || '';
-				iconEl.appendChild(img);
 			} catch (e) {
 				console.warn('Failed to render builtin website preview', e);
 				iconEl.textContent = '🔗';
@@ -95,7 +120,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 	private displayURLSchemeSection(containerEl: HTMLElement): void {
 		new Setting(containerEl).setName('URL scheme').setHeading();
-		containerEl.createEl('div', { text: 'URL scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. "zotero").' });
+		containerEl.createEl('div', { text: 'Url scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. zotero).' });
 
 		const builtInWrap = containerEl.createDiv({ cls: 'scheme-builtins' });
 		const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
@@ -109,21 +134,49 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 				const iconEl = box.createDiv({ cls: 'item-icon' });
 				try {
-					const preferDark = preferDarkThemeFromDocument();
-					let svgSource: string;
-					if (!preferDark) {
-						svgSource = icon.svgData || icon.themeDarkSvgData || '';
-					} else {
-						svgSource = icon.themeDarkSvgData || icon.svgData || '';
-					}
-					const img = document.createElement('img');				// metadata to support in-place theme updates
-				img.dataset.iconName = icon.name || '';
-				img.dataset.iconLinkType = 'scheme';
-				img.dataset.builtin = 'true';					const prepared = prepareSvgForSettings(svgSource, iconEl);
-					img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-					img.alt = icon.name || '';
+					const hasDual = !!(icon.svgData && icon.themeDarkSvgData);
+					if (hasDual) {
+						const lightPrepared = prepareSvgForSettings(icon.svgData || '', iconEl);
+						const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', iconEl);
 
-					iconEl.appendChild(img);
+						const imgLight = document.createElement('img');
+						imgLight.dataset.iconName = icon.name || '';
+						imgLight.dataset.iconLinkType = 'scheme';
+						imgLight.dataset.builtin = 'true';
+						imgLight.dataset.iconVariant = 'light';
+						imgLight.dataset.dualVariant = 'true';
+						imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
+						imgLight.alt = icon.name || '';
+
+						const imgDark = document.createElement('img');
+						imgDark.dataset.iconName = icon.name || '';
+						imgDark.dataset.iconLinkType = 'scheme';
+						imgDark.dataset.builtin = 'true';
+						imgDark.dataset.iconVariant = 'dark';
+						imgDark.dataset.dualVariant = 'true';
+						imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
+						imgDark.alt = icon.name || '';
+
+						iconEl.appendChild(imgLight);
+						iconEl.appendChild(imgDark);
+					} else {
+						const preferDark = preferDarkThemeFromDocument();
+						let svgSource: string;
+						if (!preferDark) {
+							svgSource = icon.svgData || icon.themeDarkSvgData || '';
+						} else {
+							svgSource = icon.themeDarkSvgData || icon.svgData || '';
+						}
+						const img = document.createElement('img');
+						img.dataset.iconName = icon.name || '';
+						img.dataset.iconLinkType = 'scheme';
+						img.dataset.builtin = 'true';
+						const prepared = prepareSvgForSettings(svgSource, iconEl);
+						img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+						img.alt = icon.name || '';
+
+						iconEl.appendChild(img);
+					}
 				} catch (e) {
 					console.warn('Failed to render builtin scheme preview', e);
 					iconEl.textContent = '🔗';
@@ -140,7 +193,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				this.createIconSetting(customWrap, icon, idx);
 			});
 		} else {
-			containerEl.createEl('div', { text: 'No custom url scheme icons yet.' });
+			containerEl.createEl('div', { text: 'No custom URL scheme icons yet.' });
 		}
 	}
 
@@ -160,7 +213,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		btnContainer.appendChild(addWebsiteBtn);
 
 		const addSchemeBtn = document.createElement('button');
-		addSchemeBtn.textContent = 'Add url scheme';
+		addSchemeBtn.textContent = 'Add URL scheme';
 		addSchemeBtn.onclick = () => {
 			const modal = new NewIconModal(this.app, (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => this.addIconWithData(data), 'scheme');
 			modal.open();
@@ -225,9 +278,9 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		try {
 			this.themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 			const mq = this.themeMediaQuery;
-			this.mqHandler = (() => this.scheduleThemeRefresh());
-			if (mq.addEventListener) mq.addEventListener('change', this.mqHandler as any);
-			else if ((mq as any).addListener) (mq as any).addListener(this.mqHandler as any);
+			this.mqHandler = () => this.scheduleThemeRefresh();
+			if (mq.addEventListener) mq.addEventListener('change', this.mqHandler);
+			else if (mq.addListener) mq.addListener(this.mqHandler);
 		} catch (e) {
 			// ignore
 		}
@@ -275,8 +328,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			try {
 				const mq = this.themeMediaQuery;
 				if (this.mqHandler) {
-					if (mq.removeEventListener) mq.removeEventListener('change', this.mqHandler as any);
-					else if ((mq as any).removeListener) (mq as any).removeListener(this.mqHandler as any);
+					if (mq.removeEventListener) mq.removeEventListener('change', this.mqHandler);
+					else if (mq.removeListener) mq.removeListener(this.mqHandler);
 				}
 			} catch (e) { /* ignore */ }
 			this.themeMediaQuery = null;
@@ -298,8 +351,9 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	private updatePreviewIcons(preferDark?: boolean): void {
 		try {
 			if (typeof preferDark === 'undefined') preferDark = preferDarkThemeFromDocument();
-			const imgs = Array.from(this.containerEl.querySelectorAll('img[data-icon-name]')) as HTMLImageElement[];
+			const imgs = Array.from(this.containerEl.querySelectorAll<HTMLImageElement>('img[data-icon-name]'));
 			imgs.forEach(img => {
+				if (img.dataset.dualVariant === 'true') return;
 				const name = img.dataset.iconName || '';
 				const linkType = (img.dataset.iconLinkType || 'url') as 'url' | 'scheme';
 				const isBuiltin = img.dataset.builtin === 'true';
@@ -313,7 +367,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				if (preferDark) svgSource = icon.themeDarkSvgData || icon.svgData || '';
 				else svgSource = icon.svgData || icon.themeDarkSvgData || '';
 				if (!svgSource) return;
-				const container = (img.parentElement && (img.parentElement as HTMLElement)) || (img as unknown as HTMLElement);
+				const container = img.parentElement || img;
 				const prepared = prepareSvgForSettings(svgSource, container);
 				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 			});
@@ -360,32 +414,49 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		// If this icon is a built-in, prefer the DEFAULT_SETTINGS version for Settings preview
 		const builtinOverride = (DEFAULT_SETTINGS.icons || {})[icon.name];
 		const effectiveIcon = builtinOverride ? builtinOverride : icon;
-
-		// Prefer theme-specific dark svg if document indicates dark theme.
-		// Explicitly prefer the light `svgData` when the document indicates light theme to avoid
-		// accidentally selecting a dark variant when the Settings page is in light mode.
-		const preferDark = preferDarkThemeFromDocument();
-		let svgToRender: string;
-		if (!preferDark) {
-			// Document explicitly light: always use svgData (fallback to themeDarkSvgData only if svgData absent)
-			svgToRender = effectiveIcon.svgData || effectiveIcon.themeDarkSvgData || '';
-		} else {
-			// Document dark or system prefers dark: use themeDarkSvgData when available
-			svgToRender = effectiveIcon.themeDarkSvgData || effectiveIcon.svgData || '';
-		}
-
 		try {
-			const prepared = prepareSvgForSettings(svgToRender || effectiveIcon.svgData || '', previewIcon);
-			// insert as an <img> so that IDs/defs inside the svg won't conflict with page
-			const img = document.createElement('img');
-			// metadata to support in-place theme updates
-			img.dataset.iconName = icon.name || '';
-			img.dataset.iconLinkType = icon.linkType || 'url';
-			img.dataset.builtin = (builtinOverride ? 'true' : 'false');
-			img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-			img.alt = icon.name || '';
-			previewIcon.appendChild(img);
-			// no debug badge
+			const hasDual = !!(effectiveIcon.svgData && effectiveIcon.themeDarkSvgData);
+			if (hasDual) {
+				const lightPrepared = prepareSvgForSettings(effectiveIcon.svgData || '', previewIcon);
+				const darkPrepared = prepareSvgForSettings(effectiveIcon.themeDarkSvgData || '', previewIcon);
+
+				const imgLight = document.createElement('img');
+				imgLight.dataset.iconName = icon.name || '';
+				imgLight.dataset.iconLinkType = icon.linkType || 'url';
+				imgLight.dataset.builtin = (builtinOverride ? 'true' : 'false');
+				imgLight.dataset.iconVariant = 'light';
+				imgLight.dataset.dualVariant = 'true';
+				imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
+				imgLight.alt = icon.name || '';
+
+				const imgDark = document.createElement('img');
+				imgDark.dataset.iconName = icon.name || '';
+				imgDark.dataset.iconLinkType = icon.linkType || 'url';
+				imgDark.dataset.builtin = (builtinOverride ? 'true' : 'false');
+				imgDark.dataset.iconVariant = 'dark';
+				imgDark.dataset.dualVariant = 'true';
+				imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
+				imgDark.alt = icon.name || '';
+
+				previewIcon.appendChild(imgLight);
+				previewIcon.appendChild(imgDark);
+			} else {
+				const preferDark = preferDarkThemeFromDocument();
+				let svgToRender: string;
+				if (!preferDark) {
+					svgToRender = effectiveIcon.svgData || effectiveIcon.themeDarkSvgData || '';
+				} else {
+					svgToRender = effectiveIcon.themeDarkSvgData || effectiveIcon.svgData || '';
+				}
+				const prepared = prepareSvgForSettings(svgToRender || effectiveIcon.svgData || '', previewIcon);
+				const img = document.createElement('img');
+				img.dataset.iconName = icon.name || '';
+				img.dataset.iconLinkType = icon.linkType || 'url';
+				img.dataset.builtin = (builtinOverride ? 'true' : 'false');
+				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+				img.alt = icon.name || '';
+				previewIcon.appendChild(img);
+			}
 		} catch (error) {
 			console.warn('Failed to render icon preview:', error);
 			previewIcon.textContent = '🔧'; // fallback glyph
@@ -411,7 +482,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			// Scheme custom icons: only editable scheme identifier (protocol).
 			// Icon ID (name) is shown in the preview area and should not be editable here.
 			settingItem.addText(text => {
-				text.setPlaceholder('Scheme (e.g. zotero)')
+				text.setPlaceholder('Scheme identifier')
 					.setValue(icon.target || '')
 					.onChange((value) => {
 						this.debounceUpdateTarget(icon.name, value);
@@ -429,14 +500,16 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			window.clearTimeout(timerId);
 		}
 
-		const newTimerId = window.setTimeout(async () => {
-			const icons = this.plugin.settings.customIcons || {};
-			if (icons[name]) {
-				icons[name].target = newTarget.trim();
-				await this.plugin.saveSettings();
-				this.display();
-			}
-			this.debounceTimers.delete(`target-${name}`);
+		const newTimerId = window.setTimeout(() => {
+			(async () => {
+				const icons = this.plugin.settings.customIcons || {};
+				if (icons[name]) {
+					icons[name].target = newTarget.trim();
+					await this.plugin.saveSettings();
+					this.display();
+				}
+				this.debounceTimers.delete(`target-${name}`);
+			})().catch(console.error);
 		}, 500);
 		this.debounceTimers.set(`target-${name}`, newTimerId);
 	}
@@ -450,12 +523,14 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			window.clearTimeout(timerId);
 		}
 		
-		const newTimerId = window.setTimeout(async () => {
-			if (newName !== oldName && newName.trim()) {
-				await this.renameIcon(oldName, newName.trim());
-				this.display();
-			}
-			this.debounceTimers.delete(oldName);
+		const newTimerId = window.setTimeout(() => {
+			(async () => {
+				if (newName !== oldName && newName.trim()) {
+					await this.renameIcon(oldName, newName.trim());
+					this.display();
+				}
+				this.debounceTimers.delete(oldName);
+			})().catch(console.error);
 		}, 500);
 		
 		this.debounceTimers.set(oldName, newTimerId);

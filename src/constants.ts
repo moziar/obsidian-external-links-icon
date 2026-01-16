@@ -53,8 +53,8 @@ export const ICON_CATEGORIES: IconCategories = {
 };
 
 export const CSS_SELECTORS = {
-	URL_SCHEME: 'body.fancy-url-scheme .external-link',
-	WEB_LINK: 'body.fancy-web-link .external-link[href^="https://"]',
+	URL_SCHEME: '.external-link',
+	WEB_LINK: '.external-link[href^="http"]',
 	CUSTOM_DATA: '.external-link'
 } as const;
 

@@ -31,9 +31,9 @@ export class ConfirmModal extends Modal {
 }
 
 export class NewIconModal extends Modal {
-	onSubmit: (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => void;
+	onSubmit: (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => void | Promise<void>;
 
-	constructor(app: App, onSubmit: (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => void, defaultLinkType?: LinkType) {
+	constructor(app: App, onSubmit: (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => void | Promise<void>, defaultLinkType?: LinkType) {
 		super(app);
 		this.onSubmit = onSubmit;
 		this._defaultLinkType = defaultLinkType || 'url';
@@ -46,14 +46,14 @@ export class NewIconModal extends Modal {
 		contentEl.empty();
 
 		contentEl.createEl('h3', { text: 'Add new icon' });
-		contentEl.createEl('div', { text: 'Provide icon information. Name must be unique.', cls: 'external-links-icon-desc' });
+		contentEl.createEl('div', { text: 'Provide icon information. Name must be unique. ',  cls: 'external-links-icon-desc' });
 
-		const nameInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' }) as HTMLInputElement;
+		const nameInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
 		nameInput.placeholder = 'Icon name (unique)';
 		nameInput.type = 'text';
 
-		const targetInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' }) as HTMLInputElement;
-		targetInput.placeholder = 'Website (e.g. baidu.com) or scheme (e.g. zotero)';
+		const targetInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
+		targetInput.placeholder = 'Website or scheme identifier';
 		targetInput.type = 'text';
 
 		let uploadedSvgData: string | undefined;
@@ -67,7 +67,7 @@ export class NewIconModal extends Modal {
 		hiddenInput.type = 'file';
 		hiddenInput.accept = '.svg,image/svg+xml';
 		hiddenInput.classList.add('external-links-icon-hidden-input');
-		hiddenInput.onchange = async (ev) => {
+		hiddenInput.onchange = (ev) => {
 			const files = (ev.target as HTMLInputElement).files;
 			if (!files || files.length === 0) return;
 			const file = files[0];
@@ -117,7 +117,13 @@ export class NewIconModal extends Modal {
 			if (this._defaultLinkType === 'url') {
 				target = target.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 			}
-			this.onSubmit({ linkType: this._defaultLinkType, name, target, svgData: uploadedSvgData });
+			const result = this.onSubmit({ linkType: this._defaultLinkType, name, target, svgData: uploadedSvgData });
+			if (result instanceof Promise) {
+				result.catch((e) => {
+					console.error('Failed to add icon:', e);
+					new Notice('Failed to add icon');
+				});
+			}
 			this.close();
 		};
 	}

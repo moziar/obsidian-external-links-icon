@@ -10,7 +10,8 @@
 		"test:manual": "echo 'See TESTING.md for manual verification steps'",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "npx eslint src/**/*.ts",
-		"lint:fix": "npx eslint src/**/*.ts --fix"
+		"lint:fix": "npx eslint src/**/*.ts --fix",
+		"optimize-icons": "node scripts/optimize-icons.mjs"
 	},
 	"keywords": [],
 	"author": "Moz",
@@ -24,6 +25,7 @@
 		"eslint": "^9.0.0",
 		"eslint-plugin-obsidianmd": "^0.1.9",
 		"obsidian": "latest",
+		"svgo": "^4.0.0",
 		"tslib": "2.4.0",
 		"typescript": "^5.0.0"
 	}
