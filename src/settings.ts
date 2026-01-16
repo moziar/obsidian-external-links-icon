@@ -118,7 +118,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 	private displayURLSchemeSection(containerEl: HTMLElement): void {
 		new Setting(containerEl).setName('URL scheme').setHeading();
-		containerEl.createEl('div', { text: 'Url scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. zotero).' });
+		containerEl.createEl('div', { text: 'URL scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. zotero).' });
 
 		const builtInWrap = containerEl.createDiv({ cls: 'scheme-builtins' });
 		const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
