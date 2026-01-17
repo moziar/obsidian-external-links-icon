@@ -38,7 +38,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 	private displayWebsiteSection(containerEl: HTMLElement): void {
 		new Setting(containerEl).setName('Website').setHeading();
-		containerEl.createEl('div', { text: 'Website icons are matched by domain. When adding a website-type icon, provide a unique name and the domain (e.g. "baidu.com").' });
+		containerEl.createEl('div', { text: 'Website icons are matched by domain. When adding a website-type icon, provide a unique name and the domain (e.g. "github.com").' });
 
 		const builtInWrap = containerEl.createDiv({ cls: 'website-builtins' });
 		const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
@@ -118,7 +118,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 	private displayURLSchemeSection(containerEl: HTMLElement): void {
 		new Setting(containerEl).setName('URL scheme').setHeading();
-		containerEl.createEl('div', { text: 'URL scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. zotero).' });
+		containerEl.createEl('div', { text: 'URL scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. "webcal").' });
 
 		const builtInWrap = containerEl.createDiv({ cls: 'scheme-builtins' });
 		const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
