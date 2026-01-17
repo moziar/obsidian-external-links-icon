@@ -33,12 +33,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		// Ensure theme-change listeners are active so previews update when theme toggles
 		this.ensureThemeListeners();
 		// Update previews to current theme state (keeps UI consistent after non-render theme switches)
-		try { this.updatePreviewIcons(preferDarkThemeFromDocument()); } catch (e) { /* ignore */ }
+		try { this.updatePreviewIcons(preferDarkThemeFromDocument()); } catch (_) { /* ignore */ }
 	}
 
 	private displayWebsiteSection(containerEl: HTMLElement): void {
 		new Setting(containerEl).setName('Website').setHeading();
-		containerEl.createEl('div', { text: 'Website icons are matched by domain. When adding a website-type icon, provide a unique name and the domain (e.g. "github.com").' });
+		containerEl.createEl('div', { text: 'Website icons are matched by domain. When adding a website-type icon, provide a unique name and the domain (e.g. "example.com").' });
 
 		const builtInWrap = containerEl.createDiv({ cls: 'website-builtins' });
 		const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
@@ -108,8 +108,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		if (customIcons.length > 0) {
 			const customWrap = containerEl.createDiv({ cls: 'website-custom' });
 			new Setting(customWrap).setName('Custom').setHeading();
-			customIcons.forEach((icon, idx) => {
-				this.createIconSetting(customWrap, icon, idx);
+			customIcons.forEach((icon) => {
+				this.createIconSetting(customWrap, icon);
 			});
 		} else {
 			containerEl.createEl('div', { text: 'No custom website icons yet.' });
@@ -187,8 +187,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		if (customSchemeIcons.length > 0) {
 			const customWrap = containerEl.createDiv({ cls: 'scheme-custom' });
 			new Setting(customWrap).setName('Custom').setHeading();
-			customSchemeIcons.forEach((icon, idx) => {
-				this.createIconSetting(customWrap, icon, idx);
+			customSchemeIcons.forEach((icon) => {
+				this.createIconSetting(customWrap, icon);
 			});
 		} else {
 			containerEl.createEl('div', { text: 'No custom URL scheme icons yet.' });
@@ -260,8 +260,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 		// 显示自定义图标
 		const sortedCustomIcons = this.getSortedCustomIcons();
-		sortedCustomIcons.forEach((icon, index) => {
-			this.createIconSetting(containerEl, icon, index);
+		sortedCustomIcons.forEach((icon) => {
+			this.createIconSetting(containerEl, icon);
 		});
 	}
 
@@ -278,9 +278,9 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			const mq = this.themeMediaQuery;
 			this.mqHandler = () => this.scheduleThemeRefresh();
 			if (mq.addEventListener) mq.addEventListener('change', this.mqHandler);
-		} catch (e) {
-			// ignore
-		}
+		} catch (_) {
+				// ignore
+			}
 
 		// Observe body class changes (Obsidian toggles theme classes on <body>)
 		try {
@@ -295,7 +295,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			if (document && document.body) {
 				this.bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 			}
-		} catch (e) {
+		} catch (_) {
 			// ignore
 		}
 	}
@@ -313,7 +313,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			try {
 				const preferDark = preferDarkThemeFromDocument();
 				this.updatePreviewIcons(preferDark);
-			} catch (e) { /* ignore */ }
+			} catch (_) { /* ignore */ }
 		}, 100);
 	}
 
@@ -327,12 +327,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				if (this.mqHandler) {
 					if (mq.removeEventListener) mq.removeEventListener('change', this.mqHandler);
 				}
-			} catch (e) { /* ignore */ }
+			} catch (_) { /* ignore */ }
 			this.themeMediaQuery = null;
 			this.mqHandler = null;
 		}
 		if (this.bodyObserver) {
-			try { this.bodyObserver.disconnect(); } catch (e) { /* ignore */ }
+			try { this.bodyObserver.disconnect(); } catch (_) { /* ignore */ }
 			this.bodyObserver = null;
 		}
 		if (this.themeChangeDebounce) {
@@ -366,7 +366,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				const prepared = prepareSvgForSettings(svgSource, container);
 				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 			});
-		} catch (e) {
+		} catch (_) {
 			// ignore errors while updating previews
 		}
 	}
@@ -382,7 +382,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	/**
 	 * 创建单个图标设置项
 	 */
-	private createIconSetting(containerEl: HTMLElement, icon: IconItem, index: number): void {
+	private createIconSetting(containerEl: HTMLElement, icon: IconItem): void {
 		const settingItem = new Setting(containerEl).setClass('icon-setting-item');
 
 		// SVG 预览和名称
@@ -395,7 +395,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		this.addUploadButton(settingItem, icon);
 		
 		// 移动和删除按钮
-		this.addControlButtons(settingItem, icon, index);
+		this.addControlButtons(settingItem, icon);
 	}
 
 	/**
@@ -562,7 +562,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	/**
 	 * 添加控制按钮（上移、下移、删除）
 	 */
-	private addControlButtons(settingItem: Setting, icon: IconItem, index: number): void {
+	private addControlButtons(settingItem: Setting, icon: IconItem): void {
 		// Compute ordering within the same linkType group so move buttons reflect group boundaries
 		const allCustom = Object.values(this.plugin.settings.customIcons || {});
 		const groupSorted = allCustom
@@ -758,5 +758,5 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	onClose(): void {
 		// Cleanup theme listeners when Settings tab is closed
 		this.disconnectThemeListeners();
-		try { this.containerEl.empty(); } catch (e) { /* ignore */ }
+		try { this.containerEl.empty(); } catch (_) { /* ignore */ }
 	}}

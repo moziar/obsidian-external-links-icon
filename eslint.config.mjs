@@ -1,47 +1,57 @@
-import tsparser from "@typescript-eslint/parser";
+import js from "@eslint/js";
+import tseslint from "typescript-eslint";
 import obsidianmd from "eslint-plugin-obsidianmd";
+import globals from "globals";
 
-// 使用正确的规则名称
-export default [
+export default tseslint.config(
   {
-    // 定义要忽略的文件
-    ignores: ["dist/**/*", "build/**/*", "node_modules/**/*", "main.js"],
+    ignores: ["dist/", "node_modules/", "main.js", "**/*.js", "**/*.mjs", "coverage/", "scripts/"],
   },
+  
+  // 1. JS 基础
+  js.configs.recommended,
+  
+  // 2. TS 推荐配置
+  ...tseslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
+  
+  // 3. Obsidian 推荐配置
+  ...obsidianmd.configs.recommended,
+  
+  // 4. 项目特定配置和覆盖
   {
-    plugins: {
-      obsidianmd
-    },
-    rules: {
-      // 使用核心规则
-      "obsidianmd/prefer-file-manager-trash-file": "error",
-      "obsidianmd/no-plugin-as-component": "warn",
-      "obsidianmd/detach-leaves": "warn",
-      "obsidianmd/sample-names": "off",  // 关闭示例规则
-      "obsidianmd/no-sample-code": "warn",
-      "obsidianmd/no-static-styles-assignment": "error",
-      "obsidianmd/validate-manifest": "warn",
-      "obsidianmd/validate-license": "warn",
-      "obsidianmd/regex-lookbehind": "warn",
-      "obsidianmd/no-forbidden-elements": "off", 
-      "obsidianmd/no-view-references-in-plugin": "error",
-      "obsidianmd/hardcoded-config-path": "error",
-      "obsidianmd/platform": "warn",
-      "obsidianmd/prefer-abstract-input-suggest": "warn",
-      "obsidianmd/object-assign": "warn",
-    }
-  },
-  {
-    files: ["**/*.ts"],
+    files: ["src/**/*.ts"],
     languageOptions: {
-      parser: tsparser,
-      parserOptions: { 
-        project: "./tsconfig.json",
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.es2021
+      },
+      parserOptions: {
+        project: ["./tsconfig.json"],
+        tsconfigRootDir: process.cwd(),
       },
     },
-    
-    // 针对项目特定的规则配置
     rules: {
-      // 可以根据需要添加更多 TypeScript 相关规则
+      // TypeScript 规则覆盖
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
+        }
+      ],
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/no-unsafe-argument": "warn",
+      "@typescript-eslint/no-unsafe-assignment": "warn",
+      "@typescript-eslint/no-unsafe-call": "warn",
+      "@typescript-eslint/no-unsafe-member-access": "warn",
+      "@typescript-eslint/no-unsafe-return": "warn",
+      
+      // Obsidian 规则覆盖
+      "obsidianmd/sample-names": "off",
     },
-  },
-];
+  }
+);
