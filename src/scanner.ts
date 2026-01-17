@@ -30,12 +30,12 @@ export class Scanner {
 		if (roots.length) {
 			this.observedRoots = roots;
 			roots.forEach(r => {
-				try { this.mutationObserver?.observe(r, { childList: true, subtree: true }); } catch (e) { /* ignore root observe errors */ }
+				try { this.mutationObserver?.observe(r, { childList: true, subtree: true }); } catch (_) { /* ignore root observe errors */ }
 			});
-			try { this.mutationObserver?.observe(document.body, { attributes: true, attributeFilter: ['class'] }); } catch (e) { /* ignore */ }
+			try { this.mutationObserver?.observe(document.body, { attributes: true, attributeFilter: ['class'] }); } catch (_) { /* ignore */ }
 		} else {
 			this.observedRoots = [];
-			try { this.mutationObserver?.observe(document.body, { childList: true, subtree: true }); } catch (e) { /* ignore */ }
+			try { this.mutationObserver?.observe(document.body, { childList: true, subtree: true }); } catch (_) { /* ignore */ }
 		}
 
 		this.scheduleScan(60);

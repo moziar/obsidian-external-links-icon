@@ -12,7 +12,7 @@ export function getIconSelector(icon: IconItem): string {
 	if (isSpecialIcon(name)) {
 		return ICON_CATEGORIES.SPECIAL[name].selector.replace(/:?:after/g, '');
 	}
-	const linkType = (icon as Partial<IconItem>).linkType;
+	const linkType = (icon as { linkType?: string }).linkType;
 	if (linkType === 'scheme') {
 		const scheme = icon.target || name;
 		return `${CSS_SELECTORS.URL_SCHEME}[href^="${scheme}://"]`;
@@ -34,7 +34,7 @@ export function getIconSelector(icon: IconItem): string {
 		const scheme = icon.target || name;
 		return `${CSS_SELECTORS.URL_SCHEME}[href^="${scheme}://"]`;
 	}
-	return `${CSS_SELECTORS.CUSTOM_DATA}[data-icon="${name}"]`;
+	return `${CSS_SELECTORS.CUSTOM_DATA}[data-icon="${name as string}"]`;
 }
 
 function isSpecialIcon(iconName: string): iconName is keyof typeof ICON_CATEGORIES.SPECIAL {

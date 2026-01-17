@@ -54,7 +54,7 @@ export function prepareSvgForSettings(svg: string, container: HTMLElement): stri
 			const val = (val1 || val2).trim();
 			return val || m;
 		});
-	} catch (e) {
+	} catch (_) {
 		// ignore
 	}
 	return s;
