@@ -31,12 +31,12 @@ export class Scanner {
 		if (roots.length) {
 			this.observedRoots = roots;
 			roots.forEach(r => {
-				try { this.mutationObserver?.observe(r, { childList: true, subtree: true }); } catch (_) { /* ignore root observe errors */ }
+				try { this.mutationObserver?.observe(r, { childList: true, subtree: true }); } catch { /* ignore root observe errors */ }
 			});
-			try { this.mutationObserver?.observe(doc.body, { attributes: true, attributeFilter: ['class'] }); } catch (_) { /* ignore */ }
+			try { this.mutationObserver?.observe(doc.body, { attributes: true, attributeFilter: ['class'] }); } catch { /* ignore */ }
 		} else {
 			this.observedRoots = [];
-			try { this.mutationObserver?.observe(doc.body, { childList: true, subtree: true }); } catch (_) { /* ignore */ }
+			try { this.mutationObserver?.observe(doc.body, { childList: true, subtree: true }); } catch { /* ignore */ }
 		}
 
 		this.scheduleScan(60);

@@ -33,7 +33,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		// Ensure theme-change listeners are active so previews update when theme toggles
 		this.ensureThemeListeners();
 		// Update previews to current theme state (keeps UI consistent after non-render theme switches)
-		try { this.updatePreviewIcons(preferDarkThemeFromDocument()); } catch (_) { /* ignore */ }
+		try { this.updatePreviewIcons(preferDarkThemeFromDocument()); } catch { /* ignore */ }
 	}
 
 	private displayWebsiteSection(containerEl: HTMLElement): void {
@@ -281,7 +281,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			const mq = this.themeMediaQuery;
 			this.mqHandler = () => this.scheduleThemeRefresh();
 			if (mq.addEventListener) mq.addEventListener('change', this.mqHandler);
-		} catch (_) {
+		} catch {
 				// ignore
 			}
 
@@ -297,7 +297,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			});
 			const doc = this.containerEl.ownerDocument;
 			if (doc?.body) this.bodyObserver.observe(doc.body, { attributes: true, attributeFilter: ['class'] });
-		} catch (_) {
+		} catch {
 			// ignore
 		}
 	}
@@ -315,7 +315,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			try {
 				const preferDark = preferDarkThemeFromDocument();
 				this.updatePreviewIcons(preferDark);
-			} catch (_) { /* ignore */ }
+			} catch { /* ignore */ }
 		}, 100);
 	}
 
@@ -329,12 +329,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				if (this.mqHandler) {
 					if (mq.removeEventListener) mq.removeEventListener('change', this.mqHandler);
 				}
-			} catch (_) { /* ignore */ }
+			} catch { /* ignore */ }
 			this.themeMediaQuery = null;
 			this.mqHandler = null;
 		}
 		if (this.bodyObserver) {
-			try { this.bodyObserver.disconnect(); } catch (_) { /* ignore */ }
+			try { this.bodyObserver.disconnect(); } catch { /* ignore */ }
 			this.bodyObserver = null;
 		}
 		if (this.themeChangeDebounce) {
@@ -368,7 +368,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				const prepared = prepareSvgForSettings(svgSource, container);
 				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 			});
-		} catch (_) {
+		} catch {
 			// ignore errors while updating previews
 		}
 	}
@@ -762,5 +762,5 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	onClose(): void {
 		// Cleanup theme listeners when Settings tab is closed
 		this.disconnectThemeListeners();
-		try { this.containerEl.empty(); } catch (_) { /* ignore */ }
+		try { this.containerEl.empty(); } catch { /* ignore */ }
 	}}
