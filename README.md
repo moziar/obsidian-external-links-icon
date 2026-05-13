@@ -24,6 +24,7 @@ A simple plugin that automatically adds icons to the external and internal links
 - Things
 - Apple Shortcuts
 - Advanced-URI
+- Craft
 
 ### WebSite
 - Github
@@ -47,6 +48,8 @@ A simple plugin that automatically adds icons to the external and internal links
 - Google Docs
 - Google Cloud
 - Other Google site
+- 知乎/zhihu
+- 晚点/latepost
 
 ### Obsidian
 - Website
