@@ -103,7 +103,7 @@ export class Scanner {
 			doc.querySelectorAll('.external-links-icon-enabled').forEach(el => {
 				el.classList.remove('external-links-icon-enabled');
 				el.classList.remove('external-links-icon-hide-suffix');
-				if (el instanceof HTMLElement) {
+				if (el.instanceOf(HTMLElement)) {
 					el.style.removeProperty('--external-link-icon-image');
 				}
 			});
@@ -144,7 +144,7 @@ export class Scanner {
 				if (!elements || elements.length === 0) continue;
 				for (const el of Array.from(elements)) {
 					if (applied.has(el)) continue;
-					if (!(el instanceof HTMLElement)) continue;
+					if (!el.instanceOf(HTMLElement)) continue;
 
 					const href = el.getAttribute('href') || '';
 					const hrefLower = href.toLowerCase();
@@ -211,7 +211,7 @@ export class Scanner {
 					}
 				}
 				for (const el of Array.from(elements)) {
-					if (!(el instanceof HTMLElement) || !el.isConnected) {
+					if (!el.instanceOf(HTMLElement) || !el.isConnected) {
 						elements.delete(el);
 						continue;
 					}
