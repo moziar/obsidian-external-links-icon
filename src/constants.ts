@@ -3,7 +3,7 @@ import type { IconCategories, ExternalLinksIconSettings } from './types';
 export const ICON_CATEGORIES: IconCategories = {
 	URL_SCHEME: [
 		'goodlinks', 'zotero', 'snippetslab', 'siyuan', 'eagle', 
-		'bear', 'prodrafts', 'things', 'shortcut', 'file'
+		'bear', 'prodrafts', 'things', 'shortcuts', 'file', 'craftdocs', 'obsidiannote', 'advancedurisetting'
 	] as const,
 	WEB: {
 		'github': 'github.com',
@@ -28,7 +28,9 @@ export const ICON_CATEGORIES: IconCategories = {
 		'archive': 'archive.org',
 		'google': 'google.com',
 		'docs.google': 'docs.google.com',
-		'cloud.google': 'cloud.google.com'
+		'cloud.google': 'cloud.google.com',
+		'zhihu': 'zhihu.com',
+		'latepost': 'latepost.com'
 	},
 	SPECIAL: {
 		'obsidianweb': {
