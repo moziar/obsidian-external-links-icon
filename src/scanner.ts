@@ -26,16 +26,17 @@ export class Scanner {
 		});
 
 		const observeSelectors = this.observeSelectors;
-		const roots = Array.from(document.querySelectorAll(observeSelectors.join(',')));
+		const doc = activeDocument;
+		const roots = Array.from(doc.querySelectorAll(observeSelectors.join(',')));
 		if (roots.length) {
 			this.observedRoots = roots;
 			roots.forEach(r => {
 				try { this.mutationObserver?.observe(r, { childList: true, subtree: true }); } catch (_) { /* ignore root observe errors */ }
 			});
-			try { this.mutationObserver?.observe(document.body, { attributes: true, attributeFilter: ['class'] }); } catch (_) { /* ignore */ }
+			try { this.mutationObserver?.observe(doc.body, { attributes: true, attributeFilter: ['class'] }); } catch (_) { /* ignore */ }
 		} else {
 			this.observedRoots = [];
-			try { this.mutationObserver?.observe(document.body, { childList: true, subtree: true }); } catch (_) { /* ignore */ }
+			try { this.mutationObserver?.observe(doc.body, { childList: true, subtree: true }); } catch (_) { /* ignore */ }
 		}
 
 		this.scheduleScan(60);
@@ -97,8 +98,9 @@ export class Scanner {
 		try {
 			const preferDark = preferDarkThemeFromDocument();
 			this.iconElementsByName.clear();
+			const doc = activeDocument;
 			// Clean up previous annotations
-			document.querySelectorAll('.external-links-icon-enabled').forEach(el => {
+			doc.querySelectorAll('.external-links-icon-enabled').forEach(el => {
 				el.classList.remove('external-links-icon-enabled');
 				el.classList.remove('external-links-icon-hide-suffix');
 				if (el instanceof HTMLElement) {
@@ -111,7 +113,7 @@ export class Scanner {
 			const icons: IconItem[] = this.getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(this.getSortedIcons(settings.customIcons || {}));
 			if (!icons.length) return;
 
-			const body = document.body;
+			const body = doc.body;
 			const bodyClassList = body ? body.classList : null;
 			const fancyUrlScheme = !!(bodyClassList && bodyClassList.contains('fancy-url-scheme'));
 			const fancyWebLink = !!(bodyClassList && bodyClassList.contains('fancy-web-link'));
@@ -134,10 +136,10 @@ export class Scanner {
 				}
 			}
 
-			const rootSources = (this.observedRoots && this.observedRoots.length) ? this.observedRoots : [document];
+			const rootSources = (this.observedRoots && this.observedRoots.length) ? this.observedRoots : [doc];
 			for (const root of rootSources) {
-				const elements = (root === document
-					? document.querySelectorAll('.external-link, .internal-link')
+				const elements = (root === doc
+					? doc.querySelectorAll('.external-link, .internal-link')
 					: root.querySelectorAll('.external-link, .internal-link'));
 				if (!elements || elements.length === 0) continue;
 				for (const el of Array.from(elements)) {

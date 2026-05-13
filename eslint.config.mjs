@@ -25,7 +25,9 @@ export default tseslint.config(
       globals: {
         ...globals.browser,
         ...globals.node,
-        ...globals.es2021
+        ...globals.es2021,
+        activeDocument: "readonly",
+        activeWindow: "readonly",
       },
       parserOptions: {
         project: ["./tsconfig.json"],
