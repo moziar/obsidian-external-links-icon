@@ -1,7 +1,7 @@
 {
 	"id": "external-links-icon",
 	"name": "External Links Icon",
-	"version": "1.0.2",
+	"version": "1.1.0",
 	"minAppVersion": "1.2.3",
 	"description": "Auto add icons to the external and internal links.",
 	"author": "Moz",
