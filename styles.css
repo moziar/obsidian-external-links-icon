@@ -150,9 +150,10 @@
 	overflow: hidden;
 	flex-shrink: 0;
 	border-radius: 2px;
-	display: flex;
+	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	vertical-align: middle;
 }
 
 /* small variants used in Settings/modals */
@@ -262,7 +263,7 @@ body.theme-dark .scheme-item .item-icon img[data-icon-variant="dark"] {
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 	border: none;
-	padding: 8px 16px;
+	padding: 6px 8px;
 	border-radius: 4px;
 	cursor: pointer;
 	font-size: 14px;
@@ -406,16 +407,6 @@ settings:
 	max-height: 100%;
 }
 
-/* Settings add buttons */
-.add-buttons button {
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-	border: none;
-	padding: 6px 8px;
-	border-radius: 4px;
-	cursor: pointer;
-}
-
 /* Controls area: make buttons fixed width so right-side length stays consistent */
 .icon-setting-item .setting-item-control .mod-cta,
 .icon-setting-item .setting-item-control button {
@@ -535,10 +526,4 @@ details.builtin-list summary {
 	display: block;
 	box-shadow: none;
 	margin: 0;
-}
-
-/* svg preview in modal */
-.external-links-icon-preview-div {
-	display: inline-block;
-	vertical-align: middle;
 }

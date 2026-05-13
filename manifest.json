@@ -1,8 +1,8 @@
 {
 	"id": "external-links-icon",
 	"name": "External Links Icon",
-	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
+	"version": "1.0.2",
+	"minAppVersion": "1.2.3",
 	"description": "Auto add icons to the external and internal links.",
 	"author": "Moz",
 	"authorUrl": "https://github.com/moziar",

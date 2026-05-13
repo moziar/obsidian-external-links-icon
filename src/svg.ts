@@ -39,7 +39,7 @@ export function prepareSvgForSettings(svg: string, container: HTMLElement): stri
 		// Remove embedded media queries that react to system prefers-color-scheme
 		s = s.replace(/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{[\s\S]*?\}/gi, '');
 
-		const comp = window.getComputedStyle(container);
+		const comp = activeWindow.getComputedStyle(container);
 		const color = comp && comp.color ? comp.color.trim() : '';
 
 		if (color) {
@@ -49,22 +49,22 @@ export function prepareSvgForSettings(svg: string, container: HTMLElement): stri
 
 		// replace CSS variables used inside svg e.g. var(--accent)
 		s = s.replace(/var\(--([a-zA-Z0-9-_]+)\)/g, (m, varName) => {
-			const val1 = window.getComputedStyle(container).getPropertyValue(`--${varName}`) || '';
-			const val2 = window.getComputedStyle(document.documentElement).getPropertyValue(`--${varName}`) || '';
+			const val1 = activeWindow.getComputedStyle(container).getPropertyValue(`--${varName}`) || '';
+			const val2 = activeWindow.getComputedStyle(activeDocument.documentElement).getPropertyValue(`--${varName}`) || '';
 			const val = (val1 || val2).trim();
 			return val || m;
 		});
-	} catch (_) {
+	} catch {
 		// ignore
 	}
 	return s;
 }
 
 export function preferDarkThemeFromDocument(): boolean {
-	const body = document.body;
+	const body = activeDocument.body;
 	const isDarkByClass = body && body.classList ? body.classList.contains('theme-dark') : false;
 	const isLightByClass = body && body.classList ? body.classList.contains('theme-light') : false;
 	if (isDarkByClass) return true;
 	if (isLightByClass) return false;
-	return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+	return !!(activeWindow.matchMedia && activeWindow.matchMedia('(prefers-color-scheme: dark)').matches);
 }

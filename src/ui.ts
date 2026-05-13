@@ -40,10 +40,12 @@ export class NewIconModal extends Modal {
 	}
 
 	private _defaultLinkType: LinkType = 'url';
+	private hiddenInputEl: HTMLInputElement | null = null;
 
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.empty();
+		const doc = contentEl.ownerDocument;
 
 		contentEl.createEl('h3', { text: 'Add new icon' });
 		contentEl.createEl('div', { text: 'Provide icon information. Name must be unique. ',  cls: 'external-links-icon-desc' });
@@ -63,7 +65,7 @@ export class NewIconModal extends Modal {
 		const uploadName = uploadRow.createSpan({ text: 'No file chosen' });
 		const previewDiv = uploadRow.createDiv({ cls: 'external-links-icon-preview-div small' });
 
-		const hiddenInput = document.createElement('input');
+		const hiddenInput = doc.createElement('input');
 		hiddenInput.type = 'file';
 		hiddenInput.accept = '.svg,image/svg+xml';
 		hiddenInput.classList.add('external-links-icon-hidden-input');
@@ -82,7 +84,7 @@ export class NewIconModal extends Modal {
 					uploadedSvgData = content;
 					uploadName.textContent = file.name;
 					try {
-						const img = document.createElement('img');
+						const img = doc.createElement('img');
 						const sanitized = content; // assume caller sanitizes on save
 						const prepared = sanitized;
 						img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
@@ -99,7 +101,8 @@ export class NewIconModal extends Modal {
 			reader.onerror = () => new Notice('Failed to read file');
 			reader.readAsText(file);
 		};
-		document.body.appendChild(hiddenInput);
+		this.hiddenInputEl = hiddenInput;
+		doc.body.appendChild(hiddenInput);
 		uploadBtn.onclick = () => hiddenInput.click();
 
 		const defaultType = this._defaultLinkType || 'url';
@@ -131,5 +134,9 @@ export class NewIconModal extends Modal {
 	onClose(): void {
 		const { contentEl } = this;
 		contentEl.empty();
+		if (this.hiddenInputEl && this.hiddenInputEl.isConnected) {
+			this.hiddenInputEl.remove();
+		}
+		this.hiddenInputEl = null;
 	}
 }
