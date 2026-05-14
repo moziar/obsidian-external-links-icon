@@ -4,17 +4,18 @@ import { ExternalLinksIconSettings } from './types';
 import { DEFAULT_SETTINGS } from './constants';
 import { isValidSvgData } from './utils';
 import { ExternalLinksIconSettingTab } from './settings';
-
-// The main plugin implementation. Settings and UI have been moved into `src/settings.ts` and `src/ui.ts`.
+import { createLivePreviewExtension } from './live-preview';
 
 export default class ExternalLinksIcon extends Plugin {
 	settings!: ExternalLinksIconSettings;
 	private scanner: import('./scanner').Scanner | null = null;
-	private readonly SCAN_DEBOUNCE_KEY = 'scan-links';
+	private settingsVersion = 0;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
 		this.addSettingTab(new ExternalLinksIconSettingTab(this.app, this));
+
+		this.registerEditorExtension(createLivePreviewExtension(() => this.settings));
 
 		try {
 			const Scanner = (await import('./scanner')).Scanner;
@@ -57,5 +58,7 @@ export default class ExternalLinksIcon extends Plugin {
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 		this.scanner?.scheduleScan();
+		this.settingsVersion++;
+		this.app.workspace.updateOptions();
 	}
 }
