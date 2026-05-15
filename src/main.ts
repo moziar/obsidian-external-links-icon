@@ -1,4 +1,6 @@
-import { Plugin } from 'obsidian';
+import { MarkdownView, Plugin } from 'obsidian';
+import { syntaxTree } from '@codemirror/language';
+import type { EditorView } from '@codemirror/view';
 
 import { ExternalLinksIconSettings } from './types';
 import { DEFAULT_SETTINGS } from './constants';
@@ -16,6 +18,53 @@ export default class ExternalLinksIcon extends Plugin {
 		this.addSettingTab(new ExternalLinksIconSettingTab(this.app, this));
 
 		this.registerEditorExtension(createLivePreviewExtension(() => this.settings));
+
+		this.addCommand({
+			id: 'debug-syntax-tree',
+			name: 'Debug: dump syntax tree to console',
+			callback: () => {
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+				if (!view) return;
+				const editorView = (view.editor as unknown as { cm: EditorView }).cm;
+				if (!editorView) return;
+
+				const d = editorView.state.doc;
+				const lines: string[] = ['=== Syntax Tree Debug ==='];
+				const seen = new Set<string>();
+
+				const cursor = syntaxTree(editorView.state).cursor();
+				let depth = 0;
+
+				function visit() {
+					const name = cursor.name;
+					if (!seen.has(name)) seen.add(name);
+					const from = cursor.from;
+					const to = cursor.to;
+					const text = d.sliceString(from, Math.min(to, from + 60));
+					const indent = '  '.repeat(depth);
+					lines.push(`${indent}${name} [${from}..${to}] "${text.replace(/\n/g, '\\n')}"`);
+
+					if (cursor.firstChild()) {
+						depth++;
+						visit();
+						while (cursor.nextSibling()) {
+							visit();
+						}
+						cursor.parent();
+						depth--;
+					}
+				}
+
+				visit();
+
+				lines.push('', '=== All unique node names ===');
+				lines.push(...Array.from(seen).sort());
+
+				for (const line of lines) {
+					console.debug(line);
+				}
+			}
+		});
 
 		try {
 			const Scanner = (await import('./scanner')).Scanner;

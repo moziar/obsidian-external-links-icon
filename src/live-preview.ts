@@ -36,6 +36,16 @@ class IconWidget extends WidgetType {
 const linkMarkDecoration = Decoration.mark({ class: 'external-links-icon-enabled' });
 const linkMarkHideSuffixDecoration = Decoration.mark({ class: 'external-links-icon-enabled external-links-icon-hide-suffix' });
 
+function isStringUrlNode(name: string): boolean {
+	if (name.startsWith('formatting_')) return false;
+	return name === 'string_url' || name.endsWith('_string_url');
+}
+
+function isInternalLinkNode(name: string): boolean {
+	if (name.startsWith('formatting_')) return false;
+	return name === 'hmd-internal-link' || name.includes('hmd-internal-link');
+}
+
 interface LinkInfo {
 	linkFrom: number;
 	linkTo: number;
@@ -43,8 +53,12 @@ interface LinkInfo {
 }
 
 function findLinkInfoForStringUrl(view: EditorView, stringUrlNode: { from: number; to: number }): LinkInfo | null {
-	const href = view.state.doc.sliceString(stringUrlNode.from, stringUrlNode.to);
+	let href = view.state.doc.sliceString(stringUrlNode.from, stringUrlNode.to);
 	if (!href) return null;
+
+	if (href.startsWith('`') && href.endsWith('`') && href.length > 2) {
+		href = href.slice(1, -1);
+	}
 
 	const urlEnd = stringUrlNode.to;
 	const docEnd = view.state.doc.length;
@@ -133,7 +147,7 @@ class LivePreviewIconPlugin implements PluginValue {
 				from,
 				to,
 				enter(node) {
-					if (node.name === 'string_url') {
+					if (isStringUrlNode(node.name)) {
 						const info = findLinkInfoForStringUrl(view, node);
 						if (!info) return;
 
@@ -164,21 +178,19 @@ class LivePreviewIconPlugin implements PluginValue {
 							to: info.linkTo,
 							decoration: hideSuffix ? linkMarkHideSuffixDecoration : linkMarkDecoration
 						});
-					} else if (node.name === 'hmd-internal-link') {
+					} else if (isInternalLinkNode(node.name)) {
 						const linkFrom = node.from;
 						const linkLine = view.state.doc.lineAt(linkFrom);
 
 						if (linkLine.number === cursorLine) return;
 
-						const fullText = view.state.doc.sliceString(node.from, node.to);
+						const nodeText = view.state.doc.sliceString(node.from, node.to);
 						let href = '';
-						if (fullText.startsWith('[[')) {
-							const pipeIdx = fullText.indexOf('|');
-							if (pipeIdx >= 0) {
-								href = fullText.slice(2, pipeIdx);
-							} else {
-								href = fullText.slice(2, fullText.length - 2);
-							}
+						const pipeIdx = nodeText.indexOf('|');
+						if (pipeIdx >= 0) {
+							href = nodeText.slice(0, pipeIdx);
+						} else {
+							href = nodeText;
 						}
 
 						if (!href) return;
@@ -189,11 +201,12 @@ class LivePreviewIconPlugin implements PluginValue {
 						const image = iconImageCache.get(chosen.name);
 						if (!image) return;
 
-						const endPos = node.to + 2;
+						const markFrom = node.from - 2;
+						const markTo = node.to + 2;
 
 						decoItems.push({
-							from: endPos,
-							to: endPos,
+							from: markTo,
+							to: markTo,
 							decoration: Decoration.widget({
 								widget: new IconWidget(image, false),
 								side: 1
@@ -201,8 +214,8 @@ class LivePreviewIconPlugin implements PluginValue {
 						});
 
 						decoItems.push({
-							from: node.from,
-							to: endPos,
+							from: markFrom,
+							to: markTo,
 							decoration: linkMarkDecoration
 						});
 					}
