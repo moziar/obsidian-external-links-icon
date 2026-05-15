@@ -46,7 +46,7 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 
 	const hrefLower = ctx.href.toLowerCase();
 
-	switch (icon.name) {
+	switch (icon.id) {
 		case 'obsidianweb': {
 			if (!ctx.fancyObsidianWeb) return false;
 			if (!ctx.isExternal) return false;
@@ -102,7 +102,7 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 		const idx = hrefLower.indexOf('://');
 		if (idx <= 0) return false;
 		const scheme = hrefLower.slice(0, idx);
-		const expected = (icon.target || icon.name || '').toLowerCase();
+		const expected = (icon.target || icon.id || '').toLowerCase();
 		if (!expected) return false;
 		return scheme === expected;
 	}
@@ -112,20 +112,20 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 		if (!ctx.isExternal) return false;
 		if (!hrefLower.startsWith('http://') && !hrefLower.startsWith('https://')) return false;
 		const webMap = ICON_CATEGORIES.WEB;
-		const mapped = webMap[icon.name];
-		const pattern = (mapped || icon.target || icon.name || '').toLowerCase();
+		const mapped = webMap[icon.id];
+		const pattern = (mapped || icon.target || icon.id || '').toLowerCase();
 		if (!pattern) return false;
 		return hrefLower.indexOf(pattern) !== -1;
 	}
 
 	const urlSchemeNames = ICON_CATEGORIES.URL_SCHEME || [];
-	if (urlSchemeNames.indexOf(String(icon.name)) !== -1) {
+	if (urlSchemeNames.indexOf(String(icon.id)) !== -1) {
 		if (!ctx.fancyUrlScheme) return false;
 		if (!ctx.isExternal) return false;
 		const idx = hrefLower.indexOf('://');
 		if (idx <= 0) return false;
 		const scheme = hrefLower.slice(0, idx);
-		const expected = (icon.target || icon.name || '').toLowerCase();
+		const expected = (icon.target || icon.id || '').toLowerCase();
 		if (!expected) return false;
 		return scheme === expected;
 	}

@@ -117,10 +117,10 @@ export class Scanner {
 			const iconImages = new Map<string, string>();
 			for (const icon of icons) {
 				try {
-					const image = getCachedIconImage(icon.name, icon.svgData, icon.themeDarkSvgData, preferDark);
-					iconImages.set(icon.name, image);
+					const image = getCachedIconImage(icon.id, icon.svgData, icon.themeDarkSvgData, preferDark);
+					iconImages.set(icon.id, image);
 				} catch (err) {
-					console.warn('Failed to encode icon style for', icon.name, err);
+					console.warn('Failed to encode icon style for', icon.id, err);
 				}
 			}
 
@@ -147,11 +147,11 @@ export class Scanner {
 
 					const dataIcon = el.getAttribute('data-icon') || '';
 					if (!chosen && dataIcon) {
-						chosen = icons.find(icon => icon.name === dataIcon) || null;
+						chosen = icons.find(icon => icon.id === dataIcon) || null;
 					}
 
 					if (!chosen) continue;
-					const image = iconImages.get(chosen.name);
+					const image = iconImages.get(chosen.id);
 					if (!image) continue;
 
 					try {
@@ -159,18 +159,18 @@ export class Scanner {
 						el.classList.add('external-links-icon-enabled');
 
 						if (chosen.linkType === 'scheme') {
-							const isBuiltInScheme = Boolean((DEFAULT_SETTINGS.icons || {})[chosen.name]);
-							const isCustomScheme = Boolean(settings?.customIcons?.[chosen.name]);
+							const isBuiltInScheme = Boolean((DEFAULT_SETTINGS.icons || {})[chosen.id]);
+							const isCustomScheme = Boolean(settings?.customIcons?.[chosen.id]);
 							if (isBuiltInScheme || isCustomScheme) {
 								el.classList.add('external-links-icon-hide-suffix');
 							}
 						}
 
 						applied.add(el);
-						let set = this.iconElementsByName.get(chosen.name);
+						let set = this.iconElementsByName.get(chosen.id);
 						if (!set) {
 							set = new Set<HTMLElement>();
-							this.iconElementsByName.set(chosen.name, set);
+							this.iconElementsByName.set(chosen.id, set);
 						}
 						set.add(el);
 					} catch (err) {

@@ -2,12 +2,12 @@
 export type LinkType = 'url' | 'scheme';
 
 export interface IconItem {
+	id: string;
 	name: string;
 	svgData: string;
 	order: number;
 	linkType: LinkType;
 	themeDarkSvgData?: string;
-	// target stores website domain (e.g. "baidu.com") or scheme identifier (e.g. "bear")
 	target?: string;
 }
 

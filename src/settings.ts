@@ -61,7 +61,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', iconEl);
 
 					const imgLight = doc.createElement('img');
-					imgLight.dataset.iconName = icon.name || '';
+					imgLight.dataset.iconId = icon.id || '';
 					imgLight.dataset.iconLinkType = 'url';
 					imgLight.dataset.builtin = 'true';
 					imgLight.dataset.iconVariant = 'light';
@@ -70,7 +70,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					imgLight.alt = icon.name || '';
 
 					const imgDark = doc.createElement('img');
-					imgDark.dataset.iconName = icon.name || '';
+					imgDark.dataset.iconId = icon.id || '';
 					imgDark.dataset.iconLinkType = 'url';
 					imgDark.dataset.builtin = 'true';
 					imgDark.dataset.iconVariant = 'dark';
@@ -89,7 +89,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 						svgSource = icon.themeDarkSvgData || icon.svgData || '';
 					}
 					const img = doc.createElement('img');
-					img.dataset.iconName = icon.name || '';
+					img.dataset.iconId = icon.id || '';
 					img.dataset.iconLinkType = 'url';
 					img.dataset.builtin = 'true';
 					const prepared = prepareSvgForSettings(svgSource, iconEl);
@@ -140,7 +140,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 						const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', iconEl);
 
 						const imgLight = doc.createElement('img');
-						imgLight.dataset.iconName = icon.name || '';
+						imgLight.dataset.iconId = icon.id || '';
 						imgLight.dataset.iconLinkType = 'scheme';
 						imgLight.dataset.builtin = 'true';
 						imgLight.dataset.iconVariant = 'light';
@@ -149,7 +149,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 						imgLight.alt = icon.name || '';
 
 						const imgDark = doc.createElement('img');
-						imgDark.dataset.iconName = icon.name || '';
+						imgDark.dataset.iconId = icon.id || '';
 						imgDark.dataset.iconLinkType = 'scheme';
 						imgDark.dataset.builtin = 'true';
 						imgDark.dataset.iconVariant = 'dark';
@@ -168,7 +168,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 							svgSource = icon.themeDarkSvgData || icon.svgData || '';
 						}
 						const img = doc.createElement('img');
-						img.dataset.iconName = icon.name || '';
+						img.dataset.iconId = icon.id || '';
 						img.dataset.iconLinkType = 'scheme';
 						img.dataset.builtin = 'true';
 						const prepared = prepareSvgForSettings(svgSource, iconEl);
@@ -227,21 +227,21 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	 */
 	private async addIconWithData(data: { linkType: LinkType; name: string; target: string; svgData?: string }) {
 		const { linkType, name, target, svgData } = data;
+		const id = name;
 		const customIcons = this.plugin.settings.customIcons || {};
-		if (customIcons[name]) {
+		if (customIcons[id]) {
 			new Notice(`Icon name "${name}" already exists. Please choose a unique name.`);
 		}
 
-		// 规范化 target：如果是 url，去掉协议和尾部斜杠
 		let normalized = target.trim();
 		if (linkType === 'url') {
 			normalized = normalized.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 		}
 
-		// 计算 order
 		const maxOrder = Object.values(customIcons).reduce((max, ic: IconItem) => Math.max(max, ic.order || 0), -1);
 
-		customIcons[name] = {
+		customIcons[id] = {
+			id,
 			name,
 			svgData: (svgData && svgData.trim().length > 0) ? svgData : this.plugin.getDefaultSvgData(),
 			order: maxOrder + 1,
@@ -349,16 +349,16 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	private updatePreviewIcons(preferDark?: boolean): void {
 		try {
 			if (typeof preferDark === 'undefined') preferDark = preferDarkThemeFromDocument();
-			const imgs = Array.from(this.containerEl.querySelectorAll<HTMLImageElement>('img[data-icon-name]'));
+			const imgs = Array.from(this.containerEl.querySelectorAll<HTMLImageElement>('img[data-icon-id]'));
 			imgs.forEach(img => {
 				if (img.dataset.dualVariant === 'true') return;
-				const name = img.dataset.iconName || '';
+				const id = img.dataset.iconId || '';
 				const isBuiltin = img.dataset.builtin === 'true';
 				let icon: IconItem | undefined;
-				if (isBuiltin) icon = (DEFAULT_SETTINGS.icons || {})[name];
-				if (!icon) icon = (this.plugin.settings.customIcons || {})[name];
+				if (isBuiltin) icon = (DEFAULT_SETTINGS.icons || {})[id];
+				if (!icon) icon = (this.plugin.settings.customIcons || {})[id];
 				// fallback to defaults if still missing
-				if (!icon) icon = (DEFAULT_SETTINGS.icons || {})[name];
+				if (!icon) icon = (DEFAULT_SETTINGS.icons || {})[id];
 				if (!icon) return;
 				let svgSource = '';
 				if (preferDark) svgSource = icon.themeDarkSvgData || icon.svgData || '';
@@ -410,7 +410,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const doc = previewIcon.ownerDocument;
 
 		// If this icon is a built-in, prefer the DEFAULT_SETTINGS version for Settings preview
-		const builtinOverride = (DEFAULT_SETTINGS.icons || {})[icon.name];
+		const builtinOverride = (DEFAULT_SETTINGS.icons || {})[icon.id];
 		const effectiveIcon = builtinOverride ? builtinOverride : icon;
 		try {
 			const hasDual = !!(effectiveIcon.svgData && effectiveIcon.themeDarkSvgData);
@@ -419,7 +419,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				const darkPrepared = prepareSvgForSettings(effectiveIcon.themeDarkSvgData || '', previewIcon);
 
 				const imgLight = doc.createElement('img');
-				imgLight.dataset.iconName = icon.name || '';
+				imgLight.dataset.iconId = icon.id || '';
 				imgLight.dataset.iconLinkType = icon.linkType || 'url';
 				imgLight.dataset.builtin = (builtinOverride ? 'true' : 'false');
 				imgLight.dataset.iconVariant = 'light';
@@ -428,7 +428,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				imgLight.alt = icon.name || '';
 
 				const imgDark = doc.createElement('img');
-				imgDark.dataset.iconName = icon.name || '';
+				imgDark.dataset.iconId = icon.id || '';
 				imgDark.dataset.iconLinkType = icon.linkType || 'url';
 				imgDark.dataset.builtin = (builtinOverride ? 'true' : 'false');
 				imgDark.dataset.iconVariant = 'dark';
@@ -448,7 +448,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				}
 				const prepared = prepareSvgForSettings(svgToRender || effectiveIcon.svgData || '', previewIcon);
 				const img = doc.createElement('img');
-				img.dataset.iconName = icon.name || '';
+				img.dataset.iconId = icon.id || '';
 				img.dataset.iconLinkType = icon.linkType || 'url';
 				img.dataset.builtin = (builtinOverride ? 'true' : 'false');
 				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
@@ -473,7 +473,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				text.setPlaceholder('Example.com')
 					.setValue(icon.target || '')
 					.onChange((value) => {
-						this.debounceUpdateTarget(icon.name, value);
+						this.debounceUpdateTarget(icon.id, value);
 					});
 			});
 		} else {
@@ -483,7 +483,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				text.setPlaceholder('Scheme identifier')
 					.setValue(icon.target || '')
 					.onChange((value) => {
-						this.debounceUpdateTarget(icon.name, value);
+						this.debounceUpdateTarget(icon.id, value);
 					});
 			});
 		}
@@ -492,8 +492,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	/**
 	 * 防抖动更新 target（域名或 scheme）
 	 */
-	private debounceUpdateTarget(name: string, newTarget: string): void {
-		const timerId = this.debounceTimers.get(`target-${name}`);
+	private debounceUpdateTarget(id: string, newTarget: string): void {
+		const timerId = this.debounceTimers.get(`target-${id}`);
 		if (timerId) {
 			window.clearTimeout(timerId);
 		}
@@ -501,37 +501,37 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const newTimerId = window.setTimeout(() => {
 			(async () => {
 				const icons = this.plugin.settings.customIcons || {};
-				if (icons[name]) {
-					icons[name].target = newTarget.trim();
+				if (icons[id]) {
+					icons[id].target = newTarget.trim();
 					await this.plugin.saveSettings();
 					this.display();
 				}
-				this.debounceTimers.delete(`target-${name}`);
+				this.debounceTimers.delete(`target-${id}`);
 			})().catch(console.error);
 		}, 500);
-		this.debounceTimers.set(`target-${name}`, newTimerId);
+		this.debounceTimers.set(`target-${id}`, newTimerId);
 	}
 
 	/**
 	 * 防抖动重命名处理
 	 */
-	private debounceRename(oldName: string, newName: string): void {
-		const timerId = this.debounceTimers.get(oldName);
+	private debounceRename(id: string, newName: string): void {
+		const timerId = this.debounceTimers.get(id);
 		if (timerId) {
 			window.clearTimeout(timerId);
 		}
 		
 		const newTimerId = window.setTimeout(() => {
 			(async () => {
-				if (newName !== oldName && newName.trim()) {
-					await this.renameIcon(oldName, newName.trim());
+				if (newName.trim()) {
+					await this.renameIcon(id, newName.trim());
 					this.display();
 				}
-				this.debounceTimers.delete(oldName);
+				this.debounceTimers.delete(id);
 			})().catch(console.error);
 		}, 500);
 		
-		this.debounceTimers.set(oldName, newTimerId);
+		this.debounceTimers.set(id, newTimerId);
 	}
 
 	/**
@@ -571,7 +571,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const groupSorted = allCustom
 			.filter(i => i.linkType === icon.linkType)
 			.sort((a, b) => (a.order || 0) - (b.order || 0));
-		const currentIndex = groupSorted.findIndex(i => i.name === icon.name);
+		const currentIndex = groupSorted.findIndex(i => i.id === icon.id);
 		
 		// Always render move up/down buttons but disable them when at edges within the same group
 		const canMoveUp = currentIndex > 0;
@@ -605,7 +605,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				modal.open();
 				const confirmed = await modal.result;
 				if (confirmed) {
-					delete this.plugin.settings.customIcons[icon.name];
+					delete this.plugin.settings.customIcons[icon.id];
 					await this.plugin.saveSettings();
 					this.display();
 				}
@@ -615,29 +615,20 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	/**
 	 * 重命名图标
 	 */
-	private async renameIcon(oldName: string, newName: string): Promise<void> {
-		if (!newName || newName === oldName) {
+	private async renameIcon(id: string, newName: string): Promise<void> {
+		if (!newName) {
 			return;
 		}
 
 		const icons = this.plugin.settings.customIcons;
-		const iconItem = icons[oldName];
+		const iconItem = icons[id];
 		
 		if (!iconItem) {
-			console.warn(`Icon "${oldName}" not found`);
+			console.warn(`Icon "${id}" not found`);
 			return;
 		}
 
-		// 检查是否已存在同名图标
-		if (icons[newName]) {
-			console.warn(`Icon "${newName}" already exists`);
-			return;
-		}
-
-		// 执行重命名
-		delete icons[oldName];
 		iconItem.name = newName;
-		icons[newName] = iconItem;
 		
 		await this.plugin.saveSettings();
 	}
@@ -649,7 +640,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		// Only operate within the same linkType group (url vs scheme)
 		const allCustom = Object.values(this.plugin.settings.customIcons || {});
 		const group = allCustom.filter(i => i.linkType === icon.linkType).sort((a, b) => (a.order || 0) - (b.order || 0));
-		const currentIndex = group.findIndex(i => i.name === icon.name);
+		const currentIndex = group.findIndex(i => i.id === icon.id);
 		const targetIndex = currentIndex + direction;
 		if (currentIndex === -1 || targetIndex < 0 || targetIndex >= group.length) return;
 
@@ -664,10 +655,10 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const newMap: Record<string, IconItem> = {};
 		Object.values(this.plugin.settings.customIcons || {}).forEach(it => {
 			if (it.linkType !== icon.linkType) {
-				newMap[it.name] = it;
+				newMap[it.id] = it;
 			}
 		});
-		arr.forEach(it => { newMap[it.name] = it; });
+		arr.forEach(it => { newMap[it.id] = it; });
 
 		this.plugin.settings.customIcons = newMap;
 
@@ -686,7 +677,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 		// rebuild map with normalized orders
 		const normalizedMap: Record<string, IconItem> = {};
-		combined.forEach(it => { normalizedMap[it.name] = it; });
+		combined.forEach(it => { normalizedMap[it.id] = it; });
 		this.plugin.settings.customIcons = normalizedMap;
 		await this.plugin.saveSettings();
 

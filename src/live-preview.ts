@@ -130,10 +130,10 @@ class LivePreviewIconPlugin implements PluginValue {
 
 		const iconImageCache = new Map<string, string>();
 		for (const icon of icons) {
-			if (!iconImageCache.has(icon.name)) {
+			if (!iconImageCache.has(icon.id)) {
 				try {
-					const image = getCachedIconImage(icon.name, icon.svgData, icon.themeDarkSvgData, preferDark);
-					iconImageCache.set(icon.name, image);
+					const image = getCachedIconImage(icon.id, icon.svgData, icon.themeDarkSvgData, preferDark);
+					iconImageCache.set(icon.id, image);
 				} catch {
 					// skip failed icons
 				}
@@ -157,12 +157,12 @@ class LivePreviewIconPlugin implements PluginValue {
 						const chosen = matchIcon(info.href, true, false, settings);
 						if (!chosen) return;
 
-						const image = iconImageCache.get(chosen.name);
+						const image = iconImageCache.get(chosen.id);
 						if (!image) return;
 
 						const hideSuffix = chosen.linkType === 'scheme' &&
-							(Boolean((DEFAULT_SETTINGS.icons || {})[chosen.name]) ||
-								Boolean(settings?.customIcons?.[chosen.name]));
+							(Boolean((DEFAULT_SETTINGS.icons || {})[chosen.id]) ||
+								Boolean(settings?.customIcons?.[chosen.id]));
 
 						decoItems.push({
 							from: info.linkTo,
@@ -198,7 +198,7 @@ class LivePreviewIconPlugin implements PluginValue {
 						const chosen = matchIcon(href, false, true, settings);
 						if (!chosen) return;
 
-						const image = iconImageCache.get(chosen.name);
+						const image = iconImageCache.get(chosen.id);
 						if (!image) return;
 
 						const markFrom = node.from - 2;

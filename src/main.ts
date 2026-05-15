@@ -2,7 +2,7 @@ import { MarkdownView, Plugin } from 'obsidian';
 import { syntaxTree } from '@codemirror/language';
 import type { EditorView } from '@codemirror/view';
 
-import { ExternalLinksIconSettings } from './types';
+import { ExternalLinksIconSettings, type IconItem } from './types';
 import { DEFAULT_SETTINGS } from './constants';
 import { isValidSvgData } from './utils';
 import { ExternalLinksIconSettingTab } from './settings';
@@ -90,14 +90,19 @@ export default class ExternalLinksIcon extends Plugin {
 
 	private validateAndFixSettings(): void {
 		let order = 0;
+		const migrated: Record<string, IconItem> = {};
 		for (const key in this.settings.customIcons) {
 			if (Object.prototype.hasOwnProperty.call(this.settings.customIcons, key)) {
 				const icon = this.settings.customIcons[key];
 				if (typeof icon.order !== 'number') icon.order = order++;
 				if (!icon.linkType) icon.linkType = 'url';
 				if (!icon.svgData || !isValidSvgData(icon.svgData)) icon.svgData = this.getDefaultSvgData();
+				if (!icon.id) icon.id = key;
+				migrated[icon.id] = icon;
+				order = (icon.order || 0) + 1;
 			}
 		}
+		this.settings.customIcons = migrated;
 	}
 
 	getDefaultSvgData(): string {
