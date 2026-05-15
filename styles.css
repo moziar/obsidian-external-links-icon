@@ -40,6 +40,34 @@
 }
 
 /***
+Live Preview 图标样式
+***/
+
+.cm-line .external-links-icon-inline {
+	pointer-events: none;
+	user-select: none;
+	display: inline-block;
+	width: var(--external-link-icon-size, 0.8em);
+	height: var(--external-link-icon-size, 0.8em);
+	margin-left: var(--external-link-icon-margin, 3px);
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	vertical-align: middle;
+	background-image: var(--external-link-icon-image, none);
+}
+
+.cm-line .external-links-icon-enabled {
+	background: none !important;
+	background-image: none !important;
+	padding-right: 0 !important;
+}
+
+.cm-formatting.cm-formatting-link-string.cm-string.cm-url.external-link {
+	display: none;
+}
+
+/***
 模态窗口样式
 ***/
 

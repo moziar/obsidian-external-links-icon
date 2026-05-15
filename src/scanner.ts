@@ -1,7 +1,8 @@
 import type { ExternalLinksIconSettings, IconItem } from './types';
-import { ICON_CATEGORIES, DEFAULT_SETTINGS } from './constants';
+import { DEFAULT_SETTINGS } from './constants';
 import { getCachedIconImage } from './utils';
 import { preferDarkThemeFromDocument } from './svg';
+import { getMatchContext, iconMatchesContext, getSortedIcons } from './icon-matcher';
 
 
 export type GetSettingsFn = () => ExternalLinksIconSettings;
@@ -16,7 +17,7 @@ export class Scanner {
 
 	constructor(getSettings: GetSettingsFn, observeSelectors?: string[]) {
 		this.getSettings = getSettings;
-		this.observeSelectors = observeSelectors || ['.markdown-preview-view', '.markdown-source-view', '.view-content', '.workspace-leaf-content'];
+		this.observeSelectors = observeSelectors || ['.markdown-preview-view', '.view-content', '.workspace-leaf-content'];
 	}
 
 	start(): void {
@@ -91,40 +92,27 @@ export class Scanner {
 		return true;
 	}
 
-	/**
-	 * Scan the document and annotate matching links with an inline icon element
-	 */
 	scanAndAnnotateLinks(): void {
 		try {
 			const preferDark = preferDarkThemeFromDocument();
 			this.iconElementsByName.clear();
 			const doc = activeDocument;
-			// Clean up previous annotations
-			doc.querySelectorAll('.external-links-icon-enabled').forEach(el => {
-				el.classList.remove('external-links-icon-enabled');
-				el.classList.remove('external-links-icon-hide-suffix');
-				if (el.instanceOf(HTMLElement)) {
-					el.style.removeProperty('--external-link-icon-image');
-				}
+
+			const previewRoots = doc.querySelectorAll('.markdown-preview-view');
+			previewRoots.forEach(el => {
+				el.querySelectorAll('.external-links-icon-enabled').forEach(child => {
+					child.classList.remove('external-links-icon-enabled');
+					child.classList.remove('external-links-icon-hide-suffix');
+					if (child.instanceOf(HTMLElement)) {
+						child.style.removeProperty('--external-link-icon-image');
+					}
+				});
 			});
 
 			const settings = this.getSettings();
 			const applied = new Set<Element>();
-			const icons: IconItem[] = this.getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(this.getSortedIcons(settings.customIcons || {}));
+			const icons: IconItem[] = getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(getSortedIcons(settings.customIcons || {}));
 			if (!icons.length) return;
-
-			const body = doc.body;
-			const bodyClassList = body ? body.classList : null;
-			const fancyUrlScheme = !!(bodyClassList && bodyClassList.contains('fancy-url-scheme'));
-			const fancyWebLink = !!(bodyClassList && bodyClassList.contains('fancy-web-link'));
-			const fancyObsidianWeb = !!(bodyClassList && bodyClassList.contains('fancy-obsidian-web-link'));
-			const fancyAdvancedUri = !!(bodyClassList && bodyClassList.contains('fancy-advanced-uri-link'));
-			let obsidianNoteMode: 'internal' | 'external' | 'both' | 'none' = 'none';
-			if (bodyClassList) {
-				if (bodyClassList.contains('fancy-internal-obsidian-link')) obsidianNoteMode = 'internal';
-				else if (bodyClassList.contains('fancy-external-obsidian-link')) obsidianNoteMode = 'external';
-				else if (bodyClassList.contains('fancy-both-obsidian-link')) obsidianNoteMode = 'both';
-			}
 
 			const iconImages = new Map<string, string>();
 			for (const icon of icons) {
@@ -136,25 +124,30 @@ export class Scanner {
 				}
 			}
 
-			const rootSources = (this.observedRoots && this.observedRoots.length) ? this.observedRoots : [doc];
+			const rootSources = (this.observedRoots && this.observedRoots.length) ? this.observedRoots : Array.from(previewRoots);
 			for (const root of rootSources) {
-				const elements = (root === doc
-					? doc.querySelectorAll('.external-link, .internal-link')
-					: root.querySelectorAll('.external-link, .internal-link'));
+				const elements = root.querySelectorAll('.external-link, .internal-link');
 				if (!elements || elements.length === 0) continue;
 				for (const el of Array.from(elements)) {
 					if (applied.has(el)) continue;
 					if (!el.instanceOf(HTMLElement)) continue;
 
 					const href = el.getAttribute('href') || '';
-					const hrefLower = href.toLowerCase();
-					let chosen: IconItem | null = null;
+					const isExternal = el.classList.contains('external-link');
+					const isInternal = el.classList.contains('internal-link');
 
+					let chosen: IconItem | null = null;
+					const ctx = getMatchContext(href, isExternal, isInternal);
 					for (const icon of icons) {
-						if (this.matchesIcon(icon, el, hrefLower, fancyUrlScheme, fancyWebLink, fancyObsidianWeb, fancyAdvancedUri, obsidianNoteMode)) {
+						if (iconMatchesContext(icon, ctx)) {
 							chosen = icon;
 							break;
 						}
+					}
+
+					const dataIcon = el.getAttribute('data-icon') || '';
+					if (!chosen && dataIcon) {
+						chosen = icons.find(icon => icon.name === dataIcon) || null;
 					}
 
 					if (!chosen) continue;
@@ -227,110 +220,4 @@ export class Scanner {
 		}
 	}
 
-	private matchesIcon(
-		icon: IconItem,
-		el: HTMLElement,
-		hrefLower: string,
-		fancyUrlScheme: boolean,
-		fancyWebLink: boolean,
-		fancyObsidianWeb: boolean,
-		fancyAdvancedUri: boolean,
-		obsidianNoteMode: 'internal' | 'external' | 'both' | 'none'
-	): boolean {
-		const classList = el.classList;
-		const isExternal = classList.contains('external-link');
-		const isInternal = classList.contains('internal-link');
-		if (!isExternal && !isInternal) return false;
-
-		switch (icon.name) {
-			case 'obsidianweb': {
-				if (!fancyObsidianWeb) return false;
-				if (!isExternal) return false;
-				if (!hrefLower.startsWith('https://')) return false;
-				return hrefLower.indexOf('obsidian.md') !== -1;
-			}
-			case 'obsidiannote': {
-				if (obsidianNoteMode === 'none') return false;
-				if (isInternal) {
-					return obsidianNoteMode === 'internal' || obsidianNoteMode === 'both';
-				}
-				if (isExternal && (obsidianNoteMode === 'external' || obsidianNoteMode === 'both')) {
-					if (!hrefLower.startsWith('obsidian://')) return false;
-					const isAdvSetting = hrefLower.startsWith('obsidian://adv-uri') && hrefLower.indexOf('settingid') !== -1;
-					return !isAdvSetting;
-				}
-				return false;
-			}
-			case 'advancedurisetting': {
-				if (!fancyAdvancedUri) return false;
-				if (!isExternal) return false;
-				if (!hrefLower.startsWith('obsidian://adv-uri')) return false;
-				return hrefLower.indexOf('settingid') !== -1;
-			}
-			case 'google': {
-				if (!fancyWebLink) return false;
-				if (!isExternal) return false;
-				if (!hrefLower.startsWith('https://')) return false;
-				if (hrefLower.indexOf('google.com') === -1) return false;
-				if (hrefLower.indexOf('docs.google.com') !== -1) return false;
-				if (hrefLower.indexOf('cloud.google.com') !== -1) return false;
-				return true;
-			}
-			case 'googledocs': {
-				if (!fancyWebLink) return false;
-				if (!isExternal) return false;
-				if (!hrefLower.startsWith('https://')) return false;
-				return hrefLower.indexOf('docs.google.com') !== -1;
-			}
-			case 'googlecloud': {
-				if (!fancyWebLink) return false;
-				if (!isExternal) return false;
-				if (!hrefLower.startsWith('https://')) return false;
-				return hrefLower.indexOf('cloud.google.com') !== -1;
-			}
-			default:
-				break;
-		}
-
-		if (icon.linkType === 'scheme') {
-			if (!fancyUrlScheme) return false;
-			if (!isExternal) return false;
-			const idx = hrefLower.indexOf('://');
-			if (idx <= 0) return false;
-			const scheme = hrefLower.slice(0, idx);
-			const expected = (icon.target || icon.name || '').toLowerCase();
-			if (!expected) return false;
-			return scheme === expected;
-		}
-
-		if (icon.linkType === 'url') {
-			if (!fancyWebLink) return false;
-			if (!isExternal) return false;
-			if (!hrefLower.startsWith('http://') && !hrefLower.startsWith('https://')) return false;
-			const webMap = ICON_CATEGORIES.WEB;
-			const mapped = webMap[icon.name];
-			const pattern = (mapped || icon.target || icon.name || '').toLowerCase();
-			if (!pattern) return false;
-			return hrefLower.indexOf(pattern) !== -1;
-		}
-
-		const urlSchemeNames = ICON_CATEGORIES.URL_SCHEME || [];
-		if (urlSchemeNames.indexOf(String(icon.name)) !== -1) {
-			if (!fancyUrlScheme) return false;
-			if (!isExternal) return false;
-			const idx = hrefLower.indexOf('://');
-			if (idx <= 0) return false;
-			const scheme = hrefLower.slice(0, idx);
-			const expected = (icon.target || icon.name || '').toLowerCase();
-			if (!expected) return false;
-			return scheme === expected;
-		}
-
-		const dataIcon = el.getAttribute('data-icon') || '';
-		return dataIcon === icon.name;
-	}
-
-	private getSortedIcons(icons: Record<string, IconItem>): IconItem[] {
-		return Object.values(icons).sort((a, b) => (a.order || 0) - (b.order || 0));
-	} 
 }
