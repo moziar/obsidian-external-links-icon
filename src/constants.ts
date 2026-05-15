@@ -3,7 +3,7 @@ import type { IconCategories, ExternalLinksIconSettings } from './types';
 export const ICON_CATEGORIES: IconCategories = {
 	URL_SCHEME: [
 		'goodlinks', 'zotero', 'snippetslab', 'siyuan', 'eagle', 
-		'bear', 'prodrafts', 'things', 'shortcuts', 'file', 'craftdocs', 'obsidiannote', 'advancedurisetting'
+		'bear', 'prodrafts', 'things', 'shortcuts', 'file', 'craft', 'obsidiannote', 'advancedurisetting'
 	] as const,
 	WEB: {
 		'github': 'github.com',
