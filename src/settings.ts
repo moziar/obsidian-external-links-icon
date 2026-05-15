@@ -3,6 +3,15 @@ import type ExternalLinksIcon from './main';
 import type { IconItem, LinkType } from './types';
 import { ICON_CATEGORIES, DEFAULT_SETTINGS } from './constants';
 import { t } from './lang/helper';
+
+function getIconDisplayName(icon: IconItem): string {
+	const isBuiltin = Boolean((DEFAULT_SETTINGS.icons || {})[icon.id]);
+	if (isBuiltin) {
+		const key = `icon-name.${icon.id}` as keyof typeof import('./lang/locale/en').default;
+		return t(key);
+	}
+	return icon.name;
+}
 import { preferDarkThemeFromDocument } from './svg';
 import { prepareSvgForSettings, sanitizeSvg } from './svg';
 import { ConfirmModal, NewIconModal } from './ui';
@@ -31,7 +40,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.setDesc(t('Setting page language'))
 			.addDropdown(dropdown => {
 				dropdown
-					.addOption('auto', t('Setting page language'))
+					.addOption('auto', t('Adapt to Obsidian setting (Auto)'))
 					.addOption('en', t('English'))
 					.addOption('zh', t('Chinese (Simplified)'))
 					.setValue(this.plugin.settings.language || 'auto')
@@ -85,7 +94,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					imgLight.dataset.iconVariant = 'light';
 					imgLight.dataset.dualVariant = 'true';
 					imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
-					imgLight.alt = icon.name || '';
+					imgLight.alt = getIconDisplayName(icon);
 
 					const imgDark = doc.createElement('img');
 					imgDark.dataset.iconId = icon.id || '';
@@ -94,7 +103,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					imgDark.dataset.iconVariant = 'dark';
 					imgDark.dataset.dualVariant = 'true';
 					imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
-					imgDark.alt = icon.name || '';
+					imgDark.alt = getIconDisplayName(icon);
 
 					iconEl.appendChild(imgLight);
 					iconEl.appendChild(imgDark);
@@ -112,7 +121,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					img.dataset.builtin = 'true';
 					const prepared = prepareSvgForSettings(svgSource, iconEl);
 					img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-					img.alt = icon.name || '';
+					img.alt = getIconDisplayName(icon);
 					iconEl.appendChild(img);
 				}
 			} catch (e) {
@@ -120,7 +129,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				iconEl.textContent = '🔗';
 			}
 
-			box.createSpan({ text: icon.name });
+			box.createSpan({ text: getIconDisplayName(icon) });
 		});
 
 		const customIcons = this.getSortedCustomIcons().filter(ic => ic.linkType === 'url');
@@ -164,7 +173,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 						imgLight.dataset.iconVariant = 'light';
 						imgLight.dataset.dualVariant = 'true';
 						imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
-						imgLight.alt = icon.name || '';
+						imgLight.alt = getIconDisplayName(icon);
 
 						const imgDark = doc.createElement('img');
 						imgDark.dataset.iconId = icon.id || '';
@@ -173,7 +182,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 						imgDark.dataset.iconVariant = 'dark';
 						imgDark.dataset.dualVariant = 'true';
 						imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
-						imgDark.alt = icon.name || '';
+						imgDark.alt = getIconDisplayName(icon);
 
 						iconEl.appendChild(imgLight);
 						iconEl.appendChild(imgDark);
@@ -191,7 +200,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 						img.dataset.builtin = 'true';
 						const prepared = prepareSvgForSettings(svgSource, iconEl);
 						img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-						img.alt = icon.name || '';
+						img.alt = getIconDisplayName(icon);
 
 						iconEl.appendChild(img);
 					}
@@ -199,7 +208,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					console.warn('Failed to render builtin scheme preview', e);
 					iconEl.textContent = '🔗';
 				}
-				box.createSpan({ text: icon.name });
+				box.createSpan({ text: getIconDisplayName(icon) });
 			}
 		});
 
@@ -443,7 +452,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				imgLight.dataset.iconVariant = 'light';
 				imgLight.dataset.dualVariant = 'true';
 				imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
-				imgLight.alt = icon.name || '';
+				imgLight.alt = getIconDisplayName(icon);
 
 				const imgDark = doc.createElement('img');
 				imgDark.dataset.iconId = icon.id || '';
@@ -452,7 +461,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				imgDark.dataset.iconVariant = 'dark';
 				imgDark.dataset.dualVariant = 'true';
 				imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
-				imgDark.alt = icon.name || '';
+				imgDark.alt = getIconDisplayName(icon);
 
 				previewIcon.appendChild(imgLight);
 				previewIcon.appendChild(imgDark);
@@ -470,7 +479,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				img.dataset.iconLinkType = icon.linkType || 'url';
 				img.dataset.builtin = (builtinOverride ? 'true' : 'false');
 				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-				img.alt = icon.name || '';
+				img.alt = getIconDisplayName(icon);
 				previewIcon.appendChild(img);
 			}
 		} catch (error) {
@@ -478,7 +487,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			previewIcon.textContent = '🔧'; // fallback glyph
 		}
 
-		previewContainer.createSpan({ text: icon.name });
+		previewContainer.createSpan({ text: getIconDisplayName(icon) });
 	}
 
 	/**
