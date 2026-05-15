@@ -181,7 +181,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					console.warn('Failed to render builtin scheme preview', e);
 					iconEl.textContent = '🔗';
 				}
-				box.createSpan({ text: icon.name + (icon.target ? ` — ${icon.target}` : '') });
+				box.createSpan({ text: icon.name });
 			}
 		});
 
