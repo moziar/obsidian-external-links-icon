@@ -14,6 +14,7 @@ export interface IconItem {
 export interface ExternalLinksIconSettings {
 	icons: Record<string, IconItem>;
 	customIcons: Record<string, IconItem>;
+	language: string;
 }
 
 export interface SpecialIconConfig {

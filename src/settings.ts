@@ -2,6 +2,7 @@ import { PluginSettingTab, Setting, App, Notice } from 'obsidian';
 import type ExternalLinksIcon from './main';
 import type { IconItem, LinkType } from './types';
 import { ICON_CATEGORIES, DEFAULT_SETTINGS } from './constants';
+import { t } from './lang/helper';
 import { preferDarkThemeFromDocument } from './svg';
 import { prepareSvgForSettings, sanitizeSvg } from './svg';
 import { ConfirmModal, NewIconModal } from './ui';
@@ -25,8 +26,25 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
+		new Setting(containerEl)
+			.setName(t('Language'))
+			.setDesc(t('Setting page language'))
+			.addDropdown(dropdown => {
+				dropdown
+					.addOption('auto', t('Setting page language'))
+					.addOption('en', t('English'))
+					.addOption('zh', t('Chinese (Simplified)'))
+					.setValue(this.plugin.settings.language || 'auto')
+					.onChange(async (value) => {
+						this.plugin.settings.language = value;
+						await this.plugin.saveSettings();
+						this.plugin.applyLanguage();
+						this.display();
+					});
+			});
+
 		this.createAddIconButton(containerEl);
-		containerEl.createEl('div', { text: 'Add website or URL scheme icon. The icon name must be unique.' });
+		containerEl.createEl('div', { text: t('Add website or URL scheme icon. The icon name must be unique.') });
 		this.displayWebsiteSection(containerEl);
 		this.displayURLSchemeSection(containerEl);
 
@@ -37,12 +55,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	}
 
 	private displayWebsiteSection(containerEl: HTMLElement): void {
-		new Setting(containerEl).setName('Website').setHeading();
-		containerEl.createEl('div', { text: 'Website icons are matched by domain. When adding a website-type icon, provide a unique name and the domain (e.g. "example.com").' });
+		new Setting(containerEl).setName(t('Website')).setHeading();
+		containerEl.createEl('div', { text: t('Website icons are matched by domain. When adding a website-type icon, provide a unique name and the domain (e.g. "example.com").') });
 
 		const builtInWrap = containerEl.createDiv({ cls: 'website-builtins' });
 		const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
-		builtinsDetails.createEl('summary', { text: 'Built-in' });
+		builtinsDetails.createEl('summary', { text: t('Built-in') });
 		const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
 
 		const builtinIconsMap: Record<string, IconItem> = Object.assign({}, DEFAULT_SETTINGS.icons || {});
@@ -108,22 +126,22 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const customIcons = this.getSortedCustomIcons().filter(ic => ic.linkType === 'url');
 		if (customIcons.length > 0) {
 			const customWrap = containerEl.createDiv({ cls: 'website-custom' });
-			new Setting(customWrap).setName('Custom').setHeading();
+			new Setting(customWrap).setName(t('Custom')).setHeading();
 			customIcons.forEach((icon) => {
 				this.createIconSetting(customWrap, icon);
 			});
 		} else {
-			containerEl.createEl('div', { text: 'No custom website icons yet.' });
+			containerEl.createEl('div', { text: t('No custom website icons yet.') });
 		}
 	}
 
 	private displayURLSchemeSection(containerEl: HTMLElement): void {
-		new Setting(containerEl).setName('URL scheme').setHeading();
-		containerEl.createEl('div', { text: 'URL scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. "webcal").' });
+		new Setting(containerEl).setName(t('URL scheme')).setHeading();
+		containerEl.createEl('div', { text: t('URL scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. "webcal").') });
 
 		const builtInWrap = containerEl.createDiv({ cls: 'scheme-builtins' });
 		const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
-		builtinsDetails.createEl('summary', { text: 'Built-in' });
+		builtinsDetails.createEl('summary', { text: t('Built-in') });
 		const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
 
 		(ICON_CATEGORIES.URL_SCHEME || []).forEach((key: string) => {
@@ -188,12 +206,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const customSchemeIcons = this.getSortedCustomIcons().filter(ic => ic.linkType === 'scheme');
 		if (customSchemeIcons.length > 0) {
 			const customWrap = containerEl.createDiv({ cls: 'scheme-custom' });
-			new Setting(customWrap).setName('Custom').setHeading();
+			new Setting(customWrap).setName(t('Custom')).setHeading();
 			customSchemeIcons.forEach((icon) => {
 				this.createIconSetting(customWrap, icon);
 			});
 		} else {
-			containerEl.createEl('div', { text: 'No custom URL scheme icons yet.' });
+			containerEl.createEl('div', { text: t('No custom URL scheme icons yet.') });
 		}
 	}
 
@@ -201,12 +219,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	 * 创建添加图标按钮
 	 */
 	private createAddIconButton(containerEl: HTMLElement): void {
-		const s = new Setting(containerEl).setName('Add new icon').setHeading();
+		const s = new Setting(containerEl).setName(t('Add new icon')).setHeading();
 		const btnContainer = s.controlEl.createDiv({ cls: 'add-buttons' });
 		const doc = btnContainer.ownerDocument;
 
 		const addWebsiteBtn = doc.createElement('button');
-		addWebsiteBtn.textContent = 'Add website';
+		addWebsiteBtn.textContent = t('Add website');
 		addWebsiteBtn.onclick = () => {
 			const modal = new NewIconModal(this.app, (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => this.addIconWithData(data), 'url');
 			modal.open();
@@ -214,7 +232,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		btnContainer.appendChild(addWebsiteBtn);
 
 		const addSchemeBtn = doc.createElement('button');
-		addSchemeBtn.textContent = 'Add URL scheme';
+		addSchemeBtn.textContent = t('Add URL scheme');
 		addSchemeBtn.onclick = () => {
 			const modal = new NewIconModal(this.app, (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => this.addIconWithData(data), 'scheme');
 			modal.open();
@@ -470,7 +488,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		if (icon.linkType === 'url') {
 			// Website custom icons: editable target (domain) only
 			settingItem.addText(text => {
-				text.setPlaceholder('Example.com')
+				text.setPlaceholder(t('Example.com'))
 					.setValue(icon.target || '')
 					.onChange((value) => {
 						this.debounceUpdateTarget(icon.id, value);
@@ -480,7 +498,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			// Scheme custom icons: only editable scheme identifier (protocol).
 			// Icon ID (name) is shown in the preview area and should not be editable here.
 			settingItem.addText(text => {
-				text.setPlaceholder('Scheme identifier')
+				text.setPlaceholder(t('Scheme identifier'))
 					.setValue(icon.target || '')
 					.onChange((value) => {
 						this.debounceUpdateTarget(icon.id, value);
@@ -539,8 +557,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	 */
 	private addLinkTypeDropdown(settingItem: Setting, icon: IconItem): void {
 		settingItem.addDropdown(dropdown => dropdown
-			.addOption('url', 'Website')
-			.addOption('scheme', 'URL scheme')
+			.addOption('url', t('Website'))
+			.addOption('scheme', t('URL scheme'))
 			.setValue(icon.linkType || 'url')
 			.onChange(async (value: string) => {
 				if (value === 'url' || value === 'scheme') {
@@ -557,8 +575,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	 */
 	private addUploadButton(settingItem: Setting, icon: IconItem): void {
 		settingItem.addButton(button => button
-			.setButtonText('Upload SVG')
-			.setTooltip('Upload an SVG file')
+			.setButtonText(t('Upload SVG'))
+			.setTooltip(t('Upload an SVG file'))
 			.onClick(() => this.uploadSVG(icon)));
 	}
 
@@ -578,7 +596,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const canMoveDown = currentIndex >= 0 && currentIndex < groupSorted.length - 1;
 		settingItem.addButton(button => button
 			.setButtonText('↑')
-			.setTooltip('Move up')
+			.setTooltip(t('Move up'))
 			.setDisabled(!canMoveUp)
 			.onClick(async () => {
 				if (!canMoveUp) return;
@@ -588,7 +606,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 		settingItem.addButton(button => button
 			.setButtonText('↓')
-			.setTooltip('Move down')
+			.setTooltip(t('Move down'))
 			.setDisabled(!canMoveDown)
 			.onClick(async () => {
 				if (!canMoveDown) return;
@@ -598,7 +616,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		
 		// 删除按钮
 		settingItem.addButton(button => button
-			.setButtonText('Delete')
+			.setButtonText(t('Delete'))
 			.setWarning()
 			.onClick(async () => {
 				const modal = new ConfirmModal(this.plugin.app, `Are you sure you want to delete the icon "${icon.name}"?`);
@@ -700,7 +718,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 				const file = files[0];
 				if (!this.isValidSvgFile(file)) {
-					new Notice('Please select a valid SVG file.');
+					new Notice(t('Please select a valid SVG file.'));
 					return;
 				}
 
@@ -711,11 +729,11 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 					this.display();
 				} else {
-					new Notice('Invalid SVG file content.');
+					new Notice(t('Invalid SVG file content.'));
 				}
 			} catch (error) {
 				console.error('Failed to upload SVG:', error);
-				new Notice('Failed to upload SVG file.');
+				new Notice(t('Failed to upload SVG file.'));
 			}
 		};
 

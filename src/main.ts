@@ -7,6 +7,7 @@ import { DEFAULT_SETTINGS } from './constants';
 import { isValidSvgData } from './utils';
 import { ExternalLinksIconSettingTab } from './settings';
 import { createLivePreviewExtension } from './live-preview';
+import { setLanguage } from './lang/helper';
 
 export default class ExternalLinksIcon extends Plugin {
 	settings!: ExternalLinksIconSettings;
@@ -86,6 +87,7 @@ export default class ExternalLinksIcon extends Plugin {
 	async loadSettings(): Promise<void> {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as ExternalLinksIconSettings;
 		this.validateAndFixSettings();
+		this.applyLanguage();
 	}
 
 	private validateAndFixSettings(): void {
@@ -107,6 +109,10 @@ export default class ExternalLinksIcon extends Plugin {
 
 	getDefaultSvgData(): string {
 		return '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/></svg>';
+	}
+
+	applyLanguage(): void {
+		setLanguage(this.settings.language || 'auto');
 	}
 
 	async saveSettings(): Promise<void> {

@@ -70,5 +70,6 @@ import { BUILTIN_ICONS } from './builtin-icons';
 
 export const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
 	icons: BUILTIN_ICONS,
-	customIcons: {}
+	customIcons: {},
+	language: 'auto',
 };

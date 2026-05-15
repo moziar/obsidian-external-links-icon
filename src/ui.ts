@@ -1,5 +1,6 @@
 import { App, Modal, Notice } from 'obsidian';
 import type { LinkType } from './types';
+import { t } from './lang/helper';
 
 export class ConfirmModal extends Modal {
 	private _message: string;
@@ -17,8 +18,8 @@ export class ConfirmModal extends Modal {
 		contentEl.empty();
 		contentEl.createEl('div', { text: this._message });
 		const actions = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
-		const cancelBtn = actions.createEl('button', { text: 'Cancel', cls: 'external-links-icon-cancel-btn' });
-		const okBtn = actions.createEl('button', { text: 'Confirm', cls: 'external-links-icon-add-btn' });
+		const cancelBtn = actions.createEl('button', { text: t('Cancel'), cls: 'external-links-icon-cancel-btn' });
+		const okBtn = actions.createEl('button', { text: t('Confirm'), cls: 'external-links-icon-add-btn' });
 		cancelBtn.onclick = () => { this._resolver(false); this.close(); };
 		okBtn.onclick = () => { this._resolver(true); this.close(); };
 	}
@@ -47,22 +48,22 @@ export class NewIconModal extends Modal {
 		contentEl.empty();
 		const doc = contentEl.ownerDocument;
 
-		contentEl.createEl('h3', { text: 'Add new icon' });
-		contentEl.createEl('div', { text: 'Provide icon information. Name must be unique. ',  cls: 'external-links-icon-desc' });
+		contentEl.createEl('h3', { text: t('Add new icon') });
+		contentEl.createEl('div', { text: t('Provide icon information. Name must be unique. '),  cls: 'external-links-icon-desc' });
 
 		const nameInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
-		nameInput.placeholder = 'Icon name (unique)';
+		nameInput.placeholder = t('Icon name (unique)');
 		nameInput.type = 'text';
 
 		const targetInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
-		targetInput.placeholder = 'Website or scheme identifier';
+		targetInput.placeholder = t('Website or scheme identifier');
 		targetInput.type = 'text';
 
 		let uploadedSvgData: string | undefined;
 		const uploadRow = contentEl.createDiv({ cls: 'external-links-icon-upload-row' });
 
-		const uploadBtn = uploadRow.createEl('button', { text: 'Upload SVG' });
-		const uploadName = uploadRow.createSpan({ text: 'No file chosen' });
+		const uploadBtn = uploadRow.createEl('button', { text: t('Upload SVG') });
+		const uploadName = uploadRow.createSpan({ text: t('No file chosen') });
 		const previewDiv = uploadRow.createDiv({ cls: 'external-links-icon-preview-div small' });
 
 		const hiddenInput = doc.createElement('input');
@@ -74,7 +75,7 @@ export class NewIconModal extends Modal {
 			if (!files || files.length === 0) return;
 			const file = files[0];
 			if (!(file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg'))) {
-				new Notice('Please select a valid SVG file.');
+				new Notice(t('Please select a valid SVG file.'));
 				return;
 			}
 			const reader = new FileReader();
@@ -95,10 +96,10 @@ export class NewIconModal extends Modal {
 						previewDiv.textContent = '';
 					}
 				} else {
-					new Notice('Invalid SVG content');
+					new Notice(t('Invalid SVG content'));
 				}
 			};
-			reader.onerror = () => new Notice('Failed to read file');
+			reader.onerror = () => new Notice(t('Failed to read file'));
 			reader.readAsText(file);
 		};
 		this.hiddenInputEl = hiddenInput;
@@ -106,17 +107,17 @@ export class NewIconModal extends Modal {
 		uploadBtn.onclick = () => hiddenInput.click();
 
 		const defaultType = this._defaultLinkType || 'url';
-		targetInput.placeholder = defaultType === 'url' ? 'Domain (e.g. baidu.com or https://baidu.com)' : 'Scheme identifier (e.g. zotero)';
+		targetInput.placeholder = defaultType === 'url' ? t('Domain (e.g. baidu.com or https://baidu.com)') : t('Scheme identifier (e.g. zotero)');
 
 		const buttonContainer = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
-		const cancelBtn = buttonContainer.createEl('button', { text: 'Cancel' });
+		const cancelBtn = buttonContainer.createEl('button', { text: t('Cancel') });
 		cancelBtn.onclick = () => { this.close(); };
-		const addBtn = buttonContainer.createEl('button', { text: 'Add icon' });
+		const addBtn = buttonContainer.createEl('button', { text: t('Add icon') });
 		addBtn.onclick = () => {
 			const name = nameInput.value.trim();
 			let target = targetInput.value.trim();
-			if (!name) { new Notice('Name is required'); return; }
-			if (!target) { new Notice('Target is required'); return; }
+			if (!name) { new Notice(t('Name is required')); return; }
+			if (!target) { new Notice(t('Target is required')); return; }
 			if (this._defaultLinkType === 'url') {
 				target = target.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 			}
@@ -124,7 +125,7 @@ export class NewIconModal extends Modal {
 			if (result instanceof Promise) {
 				result.catch((e) => {
 					console.error('Failed to add icon:', e);
-					new Notice('Failed to add icon');
+					new Notice(t('Failed to add icon'));
 				});
 			}
 			this.close();
