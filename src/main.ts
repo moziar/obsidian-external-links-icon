@@ -73,7 +73,7 @@ export default class ExternalLinksIcon extends Plugin {
 			this.scanner.start();
 			this.registerEvent(this.app.workspace.on('active-leaf-change', () => this.scanner?.scheduleScan(0)));
 			this.registerEvent(this.app.workspace.on('layout-change', () => this.scanner?.scheduleScan(40)));
-			this.registerEvent(this.app.workspace.on('css-change', () => this.scanner?.refreshIconsForThemeChange()))
+			this.registerEvent(this.app.workspace.on('css-change', () => this.scanner?.scheduleScan(100)))
 			this.scanner.scheduleScan();
 		} catch {
 			this.scanner?.scanAndAnnotateLinks();

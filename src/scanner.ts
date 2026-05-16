@@ -29,12 +29,14 @@ export class Scanner {
 		const observeSelectors = this.observeSelectors;
 		const doc = activeDocument;
 		const roots = Array.from(doc.querySelectorAll(observeSelectors.join(',')));
+
+		try { this.mutationObserver?.observe(doc.body, { attributes: true, attributeFilter: ['class'] }); } catch { /* ignore */ }
+
 		if (roots.length) {
 			this.observedRoots = roots;
 			roots.forEach(r => {
 				try { this.mutationObserver?.observe(r, { childList: true, subtree: true }); } catch { /* ignore root observe errors */ }
 			});
-			try { this.mutationObserver?.observe(doc.body, { attributes: true, attributeFilter: ['class'] }); } catch { /* ignore */ }
 		} else {
 			this.observedRoots = [];
 			try { this.mutationObserver?.observe(doc.body, { childList: true, subtree: true }); } catch { /* ignore */ }
@@ -68,6 +70,9 @@ export class Scanner {
 
 	private isOwnMutation(mutations: MutationRecord[]): boolean {
 		for (const m of mutations) {
+			if (m.type === 'attributes' && m.attributeName === 'class') {
+				return false;
+			}
 			if (m.type === 'childList') {
 				for (const n of Array.from(m.addedNodes)) {
 					if (n.nodeType !== Node.ELEMENT_NODE) return false;
@@ -180,6 +185,29 @@ export class Scanner {
 			}
 		} catch (e) {
 			console.error('Failed to scan and annotate links for icons:', e);
+		}
+
+		this.reobserveIfChanged();
+	}
+
+	private reobserveIfChanged(): void {
+		const doc = activeDocument;
+		const currentRoots = Array.from(doc.querySelectorAll(this.observeSelectors.join(',')));
+		const changed = currentRoots.length !== this.observedRoots.length ||
+			!currentRoots.every((r, i) => r === this.observedRoots[i]);
+		if (!changed) return;
+
+		this.observedRoots = currentRoots;
+		this.mutationObserver?.disconnect();
+
+		try { this.mutationObserver?.observe(doc.body, { attributes: true, attributeFilter: ['class'] }); } catch { /* ignore */ }
+
+		if (currentRoots.length) {
+			currentRoots.forEach(r => {
+				try { this.mutationObserver?.observe(r, { childList: true, subtree: true }); } catch { /* ignore */ }
+			});
+		} else {
+			try { this.mutationObserver?.observe(doc.body, { childList: true, subtree: true }); } catch { /* ignore */ }
 		}
 	}
 
