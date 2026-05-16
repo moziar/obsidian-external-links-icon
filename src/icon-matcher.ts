@@ -80,13 +80,13 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 			if (hrefLower.indexOf('cloud.google.com') !== -1) return false;
 			return true;
 		}
-		case 'googledocs': {
+		case 'docs.google': {
 			if (!ctx.fancyWebLink) return false;
 			if (!ctx.isExternal) return false;
 			if (!hrefLower.startsWith('https://')) return false;
 			return hrefLower.indexOf('docs.google.com') !== -1;
 		}
-		case 'googlecloud': {
+		case 'cloud.google': {
 			if (!ctx.fancyWebLink) return false;
 			if (!ctx.isExternal) return false;
 			if (!hrefLower.startsWith('https://')) return false;
@@ -116,18 +116,6 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 		const pattern = (mapped || icon.target || icon.id || '').toLowerCase();
 		if (!pattern) return false;
 		return hrefLower.indexOf(pattern) !== -1;
-	}
-
-	const urlSchemeNames = ICON_CATEGORIES.URL_SCHEME || [];
-	if (urlSchemeNames.indexOf(String(icon.id)) !== -1) {
-		if (!ctx.fancyUrlScheme) return false;
-		if (!ctx.isExternal) return false;
-		const idx = hrefLower.indexOf('://');
-		if (idx <= 0) return false;
-		const scheme = hrefLower.slice(0, idx);
-		const expected = (icon.target || icon.id || '').toLowerCase();
-		if (!expected) return false;
-		return scheme === expected;
 	}
 
 	return false;

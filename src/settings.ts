@@ -258,6 +258,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const customIcons = this.plugin.settings.customIcons || {};
 		if (customIcons[id]) {
 			new Notice(`Icon name "${name}" already exists. Please choose a unique name.`);
+			return;
 		}
 
 		let normalized = target.trim();
@@ -279,20 +280,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		this.plugin.settings.customIcons = customIcons;
 		await this.plugin.saveSettings();
 		this.display();
-	}
-
-	/**
-	 * 显示图标列表
-	 */
-	private displayIconList(containerEl: HTMLElement): void {
-		// 清除旧的图标列表
-		containerEl.querySelectorAll('.icon-setting-item').forEach(el => el.remove());
-
-		// 显示自定义图标
-		const sortedCustomIcons = this.getSortedCustomIcons();
-		sortedCustomIcons.forEach((icon) => {
-			this.createIconSetting(containerEl, icon);
-		});
 	}
 
 	/**
@@ -540,46 +527,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	}
 
 	/**
-	 * 防抖动重命名处理
-	 */
-	private debounceRename(id: string, newName: string): void {
-		const timerId = this.debounceTimers.get(id);
-		if (timerId) {
-			window.clearTimeout(timerId);
-		}
-		
-		const newTimerId = window.setTimeout(() => {
-			(async () => {
-				if (newName.trim()) {
-					await this.renameIcon(id, newName.trim());
-					this.display();
-				}
-				this.debounceTimers.delete(id);
-			})().catch(console.error);
-		}, 500);
-		
-		this.debounceTimers.set(id, newTimerId);
-	}
-
-	/**
-	 * 添加链接类型下拉框
-	 */
-	private addLinkTypeDropdown(settingItem: Setting, icon: IconItem): void {
-		settingItem.addDropdown(dropdown => dropdown
-			.addOption('url', t('Website'))
-			.addOption('scheme', t('URL scheme'))
-			.setValue(icon.linkType || 'url')
-			.onChange(async (value: string) => {
-				if (value === 'url' || value === 'scheme') {
-					icon.linkType = value;
-					await this.plugin.saveSettings();
-					// 重新显示以更新占位符
-					this.display();
-				}
-			}));
-	}
-
-	/**
 	 * 添加上传按钮
 	 */
 	private addUploadButton(settingItem: Setting, icon: IconItem): void {
@@ -628,7 +575,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.setButtonText(t('Delete'))
 			.setWarning()
 			.onClick(async () => {
-				const modal = new ConfirmModal(this.plugin.app, `Are you sure you want to delete the icon "${icon.name}"?`);
+				const modal = new ConfirmModal(this.plugin.app, `Are you sure you want to delete the icon "${getIconDisplayName(icon)}"?`);
 				modal.open();
 				const confirmed = await modal.result;
 				if (confirmed) {
