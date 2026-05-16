@@ -48,7 +48,7 @@ export default {
 	'icon-name.bear': 'Bear',
 	'icon-name.prodrafts': 'Prodrafts',
 	'icon-name.things': 'Things',
-	'icon-name.file': 'Finder',
+	'icon-name.file': 'File',
 	'icon-name.shortcut': 'Shortcuts',
 	'icon-name.github': 'GitHub',
 	'icon-name.sspai': 'SSPai',

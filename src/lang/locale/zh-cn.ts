@@ -48,7 +48,7 @@ export default {
 	'icon-name.bear': '熊掌记',
 	'icon-name.prodrafts': 'Prodrafts',
 	'icon-name.things': 'Things',
-	'icon-name.file': '访达',
+	'icon-name.file': '文件',
 	'icon-name.shortcut': '快捷指令',
 	'icon-name.github': 'GitHub',
 	'icon-name.sspai': '少数派',
