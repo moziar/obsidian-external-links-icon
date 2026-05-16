@@ -58,7 +58,7 @@ export class Scanner {
 		}
 	}
 
-	scheduleScan(delay = 120): void {
+	scheduleScan(delay = 100): void {
 		if (this.scanTimerId) {
 			window.clearTimeout(this.scanTimerId);
 			this.scanTimerId = null;
