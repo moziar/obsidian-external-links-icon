@@ -95,6 +95,65 @@ Live Preview 图标样式
 	color: var(--text-muted);
 }
 
+.external-links-icon-preview-div {
+	width: 48px;
+	height: 24px;
+	overflow: hidden;
+	flex-shrink: 0;
+	border-radius: 2px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	vertical-align: middle;
+}
+
+.external-links-icon-preview-div img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	display: block;
+	box-shadow: none;
+	margin: 0;
+}
+
+.svg-preview-container .external-links-icon-preview-div {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+}
+
+.svg-preview-container .external-links-icon-preview-div img[data-icon-variant="dark"] {
+	display: none;
+}
+
+body.theme-dark .svg-preview-container .external-links-icon-preview-div img[data-icon-variant="light"] {
+	display: none;
+}
+
+body.theme-dark .svg-preview-container .external-links-icon-preview-div img[data-icon-variant="dark"] {
+	display: block;
+}
+
+.website-item .item-icon img[data-icon-variant="dark"],
+.scheme-item .item-icon img[data-icon-variant="dark"] {
+	display: none;
+}
+
+body.theme-dark .website-item .item-icon img[data-icon-variant="light"],
+body.theme-dark .scheme-item .item-icon img[data-icon-variant="light"] {
+	display: none;
+}
+
+body.theme-dark .website-item .item-icon img[data-icon-variant="dark"],
+body.theme-dark .scheme-item .item-icon img[data-icon-variant="dark"] {
+	display: inline-block;
+}
+
+.external-links-icon-preview-div.small {
+	width: 20px;
+	height: 20px;
+}
+
 .external-links-icon-section-body {
 	display: flex;
 	gap: 14px;
