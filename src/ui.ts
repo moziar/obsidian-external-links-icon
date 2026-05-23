@@ -68,53 +68,6 @@ export class NewIconModal extends Modal {
 		targetInput.placeholder = t('Website or scheme identifier');
 		targetInput.type = 'text';
 
-		let uploadedSvgData: string | undefined;
-		const uploadRow = contentEl.createDiv({ cls: 'external-links-icon-upload-row' });
-
-		const uploadBtn = uploadRow.createEl('button', { text: t('Upload SVG') });
-		const uploadName = uploadRow.createSpan({ text: t('No file chosen') });
-		const previewDiv = uploadRow.createDiv({ cls: 'external-links-icon-preview-div small' });
-
-		const hiddenInput = doc.createElement('input');
-		hiddenInput.type = 'file';
-		hiddenInput.accept = '.svg,image/svg+xml';
-		hiddenInput.classList.add('external-links-icon-hidden-input');
-		hiddenInput.onchange = (ev) => {
-			const files = (ev.target as HTMLInputElement).files;
-			if (!files || files.length === 0) return;
-			const file = files[0];
-			if (!(file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg'))) {
-				new Notice(t('Please select a valid SVG file.'));
-				return;
-			}
-			const reader = new FileReader();
-			reader.onload = () => {
-				const content = (typeof reader.result === 'string') ? reader.result : '';
-				if (content.trim().startsWith('<svg') && content.includes('</svg>')) {
-					uploadedSvgData = content;
-					uploadName.textContent = file.name;
-					try {
-						const img = doc.createElement('img');
-						const sanitized = content; // assume caller sanitizes on save
-						const prepared = sanitized;
-						img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-						img.alt = file.name;
-						while (previewDiv.firstChild) previewDiv.removeChild(previewDiv.firstChild);
-						previewDiv.appendChild(img);
-					} catch {
-						previewDiv.textContent = '';
-					}
-				} else {
-					new Notice(t('Invalid SVG content'));
-				}
-			};
-			reader.onerror = () => new Notice(t('Failed to read file'));
-			reader.readAsText(file);
-		};
-		this.hiddenInputEl = hiddenInput;
-		doc.body.appendChild(hiddenInput);
-		uploadBtn.onclick = () => hiddenInput.click();
-
 		const defaultType = this._defaultLinkType || 'url';
 		targetInput.placeholder = defaultType === 'url' ? t('Domain (e.g. baidu.com or https://baidu.com)') : t('Scheme identifier (e.g. zotero)');
 
