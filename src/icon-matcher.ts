@@ -125,6 +125,10 @@ export function getSortedIcons(icons: Record<string, IconItem>): IconItem[] {
 	return Object.values(icons).sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
+export function getAllIconsSorted(settings: ExternalLinksIconSettings): IconItem[] {
+	return getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(getSortedIcons(settings.customIcons || {}));
+}
+
 export function matchIcon(
 	href: string,
 	isExternal: boolean,

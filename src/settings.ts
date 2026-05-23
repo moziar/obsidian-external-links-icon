@@ -12,10 +12,61 @@ function getIconDisplayName(icon: IconItem): string {
 	}
 	return icon.name;
 }
-import { preferDarkThemeFromDocument } from './svg';
-import { prepareSvgForSettings } from './svg';
+import { preferDarkThemeFromDocument, prepareSvgForSettings, getSvgSourceForTheme } from './svg';
 import { clearIconCache } from './utils';
 import { ConfirmModal, EditIconModal, NewIconModal } from './ui';
+
+function renderIconImage(
+	container: HTMLElement,
+	icon: IconItem,
+	linkType: string,
+	isBuiltin: boolean
+): void {
+	const doc = container.ownerDocument;
+	const hasDual = !!(icon.svgData && icon.themeDarkSvgData);
+	const builtinStr = isBuiltin ? 'true' : 'false';
+	try {
+		if (hasDual) {
+			const lightPrepared = prepareSvgForSettings(icon.svgData || '', container);
+			const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', container);
+
+			const imgLight = doc.createElement('img');
+			imgLight.dataset.iconId = icon.id || '';
+			imgLight.dataset.iconLinkType = linkType;
+			imgLight.dataset.builtin = builtinStr;
+			imgLight.dataset.iconVariant = 'light';
+			imgLight.dataset.dualVariant = 'true';
+			imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
+			imgLight.alt = getIconDisplayName(icon);
+
+			const imgDark = doc.createElement('img');
+			imgDark.dataset.iconId = icon.id || '';
+			imgDark.dataset.iconLinkType = linkType;
+			imgDark.dataset.builtin = builtinStr;
+			imgDark.dataset.iconVariant = 'dark';
+			imgDark.dataset.dualVariant = 'true';
+			imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
+			imgDark.alt = getIconDisplayName(icon);
+
+			container.appendChild(imgLight);
+			container.appendChild(imgDark);
+		} else {
+			const preferDark = preferDarkThemeFromDocument();
+			const svgSource = getSvgSourceForTheme(icon, preferDark);
+			const prepared = prepareSvgForSettings(svgSource, container);
+			const img = doc.createElement('img');
+			img.dataset.iconId = icon.id || '';
+			img.dataset.iconLinkType = linkType;
+			img.dataset.builtin = builtinStr;
+			img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+			img.alt = getIconDisplayName(icon);
+			container.appendChild(img);
+		}
+	} catch (e) {
+		console.warn('Failed to render icon preview', e);
+		container.textContent = '🔗';
+	}
+}
 
 export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	plugin: ExternalLinksIcon;
@@ -81,54 +132,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			const box = builtinRow.createDiv({ cls: 'website-item' });
 
 			const iconEl = box.createDiv({ cls: 'item-icon' });
-			try {
-				const doc = iconEl.ownerDocument;
-				const hasDual = !!(icon.svgData && icon.themeDarkSvgData);
-				if (hasDual) {
-					const lightPrepared = prepareSvgForSettings(icon.svgData || '', iconEl);
-					const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', iconEl);
-
-					const imgLight = doc.createElement('img');
-					imgLight.dataset.iconId = icon.id || '';
-					imgLight.dataset.iconLinkType = 'url';
-					imgLight.dataset.builtin = 'true';
-					imgLight.dataset.iconVariant = 'light';
-					imgLight.dataset.dualVariant = 'true';
-					imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
-					imgLight.alt = getIconDisplayName(icon);
-
-					const imgDark = doc.createElement('img');
-					imgDark.dataset.iconId = icon.id || '';
-					imgDark.dataset.iconLinkType = 'url';
-					imgDark.dataset.builtin = 'true';
-					imgDark.dataset.iconVariant = 'dark';
-					imgDark.dataset.dualVariant = 'true';
-					imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
-					imgDark.alt = getIconDisplayName(icon);
-
-					iconEl.appendChild(imgLight);
-					iconEl.appendChild(imgDark);
-				} else {
-					const preferDark = preferDarkThemeFromDocument();
-					let svgSource: string;
-					if (!preferDark) {
-						svgSource = icon.svgData || icon.themeDarkSvgData || '';
-					} else {
-						svgSource = icon.themeDarkSvgData || icon.svgData || '';
-					}
-					const img = doc.createElement('img');
-					img.dataset.iconId = icon.id || '';
-					img.dataset.iconLinkType = 'url';
-					img.dataset.builtin = 'true';
-					const prepared = prepareSvgForSettings(svgSource, iconEl);
-					img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-					img.alt = getIconDisplayName(icon);
-					iconEl.appendChild(img);
-				}
-			} catch (e) {
-				console.warn('Failed to render builtin website preview', e);
-				iconEl.textContent = '🔗';
-			}
+			renderIconImage(iconEl, icon, 'url', true);
 
 			box.createSpan({ text: getIconDisplayName(icon) });
 		});
@@ -160,55 +164,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				const box = builtinRow.createDiv({ cls: 'scheme-item' });
 
 				const iconEl = box.createDiv({ cls: 'item-icon' });
-				try {
-					const doc = iconEl.ownerDocument;
-					const hasDual = !!(icon.svgData && icon.themeDarkSvgData);
-					if (hasDual) {
-						const lightPrepared = prepareSvgForSettings(icon.svgData || '', iconEl);
-						const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', iconEl);
-
-						const imgLight = doc.createElement('img');
-						imgLight.dataset.iconId = icon.id || '';
-						imgLight.dataset.iconLinkType = 'scheme';
-						imgLight.dataset.builtin = 'true';
-						imgLight.dataset.iconVariant = 'light';
-						imgLight.dataset.dualVariant = 'true';
-						imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
-						imgLight.alt = getIconDisplayName(icon);
-
-						const imgDark = doc.createElement('img');
-						imgDark.dataset.iconId = icon.id || '';
-						imgDark.dataset.iconLinkType = 'scheme';
-						imgDark.dataset.builtin = 'true';
-						imgDark.dataset.iconVariant = 'dark';
-						imgDark.dataset.dualVariant = 'true';
-						imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
-						imgDark.alt = getIconDisplayName(icon);
-
-						iconEl.appendChild(imgLight);
-						iconEl.appendChild(imgDark);
-					} else {
-						const preferDark = preferDarkThemeFromDocument();
-						let svgSource: string;
-						if (!preferDark) {
-							svgSource = icon.svgData || icon.themeDarkSvgData || '';
-						} else {
-							svgSource = icon.themeDarkSvgData || icon.svgData || '';
-						}
-						const img = doc.createElement('img');
-						img.dataset.iconId = icon.id || '';
-						img.dataset.iconLinkType = 'scheme';
-						img.dataset.builtin = 'true';
-						const prepared = prepareSvgForSettings(svgSource, iconEl);
-						img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-						img.alt = getIconDisplayName(icon);
-
-						iconEl.appendChild(img);
-					}
-				} catch (e) {
-					console.warn('Failed to render builtin scheme preview', e);
-					iconEl.textContent = '🔗';
-				}
+				renderIconImage(iconEl, icon, 'scheme', true);
 				box.createSpan({ text: getIconDisplayName(icon) });
 			}
 		});
@@ -428,58 +384,11 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const previewContainer = settingItem.nameEl.createDiv({ cls: 'svg-preview-container' });
 
 		const previewIcon = previewContainer.createDiv({ cls: 'external-links-icon-preview-div small' });
-		const doc = previewIcon.ownerDocument;
 
-		// If this icon is a built-in, prefer the DEFAULT_SETTINGS version for Settings preview
 		const builtinOverride = (DEFAULT_SETTINGS.icons || {})[icon.id];
 		const effectiveIcon = builtinOverride ? builtinOverride : icon;
-		try {
-			const hasDual = !!(effectiveIcon.svgData && effectiveIcon.themeDarkSvgData);
-			if (hasDual) {
-				const lightPrepared = prepareSvgForSettings(effectiveIcon.svgData || '', previewIcon);
-				const darkPrepared = prepareSvgForSettings(effectiveIcon.themeDarkSvgData || '', previewIcon);
-
-				const imgLight = doc.createElement('img');
-				imgLight.dataset.iconId = icon.id || '';
-				imgLight.dataset.iconLinkType = icon.linkType || 'url';
-				imgLight.dataset.builtin = (builtinOverride ? 'true' : 'false');
-				imgLight.dataset.iconVariant = 'light';
-				imgLight.dataset.dualVariant = 'true';
-				imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
-				imgLight.alt = getIconDisplayName(icon);
-
-				const imgDark = doc.createElement('img');
-				imgDark.dataset.iconId = icon.id || '';
-				imgDark.dataset.iconLinkType = icon.linkType || 'url';
-				imgDark.dataset.builtin = (builtinOverride ? 'true' : 'false');
-				imgDark.dataset.iconVariant = 'dark';
-				imgDark.dataset.dualVariant = 'true';
-				imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
-				imgDark.alt = getIconDisplayName(icon);
-
-				previewIcon.appendChild(imgLight);
-				previewIcon.appendChild(imgDark);
-			} else {
-				const preferDark = preferDarkThemeFromDocument();
-				let svgToRender: string;
-				if (!preferDark) {
-					svgToRender = effectiveIcon.svgData || effectiveIcon.themeDarkSvgData || '';
-				} else {
-					svgToRender = effectiveIcon.themeDarkSvgData || effectiveIcon.svgData || '';
-				}
-				const prepared = prepareSvgForSettings(svgToRender || effectiveIcon.svgData || '', previewIcon);
-				const img = doc.createElement('img');
-				img.dataset.iconId = icon.id || '';
-				img.dataset.iconLinkType = icon.linkType || 'url';
-				img.dataset.builtin = (builtinOverride ? 'true' : 'false');
-				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-				img.alt = getIconDisplayName(icon);
-				previewIcon.appendChild(img);
-			}
-		} catch (error) {
-			console.warn('Failed to render icon preview:', error);
-			previewIcon.textContent = '🔧'; // fallback glyph
-		}
+		const isBuiltin = Boolean(builtinOverride);
+		renderIconImage(previewIcon, effectiveIcon, icon.linkType || 'url', isBuiltin);
 
 		previewContainer.createSpan({ text: getIconDisplayName(icon) });
 	}
