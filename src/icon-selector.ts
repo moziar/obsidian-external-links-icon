@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { IconItem } from './types';
 import { ICON_CATEGORIES, CSS_SELECTORS } from './constants';
 

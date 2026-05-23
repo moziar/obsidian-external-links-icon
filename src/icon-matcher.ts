@@ -111,7 +111,7 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 		if (!ctx.fancyWebLink) return false;
 		if (!ctx.isExternal) return false;
 		if (!hrefLower.startsWith('http://') && !hrefLower.startsWith('https://')) return false;
-		const webMap = ICON_CATEGORIES.WEB;
+		const webMap: Record<string, string> = ICON_CATEGORIES.WEB;
 		const mapped = webMap[icon.id];
 		const pattern = (mapped || icon.target || icon.id || '').toLowerCase();
 		if (!pattern) return false;

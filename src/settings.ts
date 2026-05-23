@@ -610,32 +610,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			}));
 	}
 
-	/**
-	 * 重命名图标
-	 */
-	private async renameIcon(id: string, newName: string): Promise<void> {
-		if (!newName) {
-			return;
-		}
-
-		const icons = this.plugin.settings.customIcons;
-		const iconItem = icons[id];
-		
-		if (!iconItem) {
-			console.warn(`Icon "${id}" not found`);
-			return;
-		}
-
-		iconItem.name = newName;
-		
-		await this.plugin.saveSettings();
-	}
-
-	/**
-	 * 移动图标位置
-	 */
 	private async moveIcon(icon: IconItem, direction: number): Promise<void> {
-		// Only operate within the same linkType group (url vs scheme)
 		const allCustom = Object.values(this.plugin.settings.customIcons || {});
 		const group = allCustom.filter(i => i.linkType === icon.linkType).sort((a, b) => (a.order || 0) - (b.order || 0));
 		const currentIndex = group.findIndex(i => i.id === icon.id);
