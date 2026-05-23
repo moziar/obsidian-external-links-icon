@@ -1,4 +1,4 @@
-import { App, Modal, Notice } from 'obsidian';
+import { App, Modal, Notice, setIcon } from 'obsidian';
 import type { IconItem, LinkType } from './types';
 import { t } from './lang/helper';
 import { prepareSvgForSettings } from './svg';
@@ -78,6 +78,7 @@ export class NewIconModal extends Modal {
 		defaultSection.createEl('div', { text: t('Default icon (light mode)'), cls: 'external-links-icon-upload-label' });
 		const defaultRow = defaultSection.createDiv({ cls: 'external-links-icon-upload-row' });
 		const defaultBtn = defaultRow.createEl('button', { text: t('Upload SVG') });
+		setIcon(defaultBtn, 'lucide-upload');
 		const defaultName = defaultRow.createSpan({ text: t('No file chosen') });
 		const defaultPreview = defaultRow.createDiv({ cls: 'external-links-icon-preview-div small' });
 
@@ -94,6 +95,7 @@ export class NewIconModal extends Modal {
 		darkSection.createEl('div', { text: t('Dark mode icon (optional)'), cls: 'external-links-icon-upload-label' });
 		const darkRow = darkSection.createDiv({ cls: 'external-links-icon-upload-row' });
 		const darkBtn = darkRow.createEl('button', { text: t('Upload SVG') });
+		setIcon(darkBtn, 'lucide-upload');
 		const darkName = darkRow.createSpan({ text: t('No file chosen') });
 		const darkPreview = darkRow.createDiv({ cls: 'external-links-icon-preview-div small' });
 		darkSection.createEl('div', { text: t('Dark mode icon hint'), cls: 'external-links-icon-upload-hint' });
@@ -171,6 +173,8 @@ export class EditIconModal extends Modal {
 		let removeDark = false;
 		let removeBtn: HTMLButtonElement | undefined;
 		let removeIndicator: HTMLSpanElement | undefined;
+		let darkName!: HTMLSpanElement;
+		let darkPreview!: HTMLDivElement;
 
 		const defaultSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section external-links-icon-light-section' });
 		defaultSection.createEl('div', { text: t('Default icon (light mode)'), cls: 'external-links-icon-upload-label' });
@@ -186,10 +190,28 @@ export class EditIconModal extends Modal {
 				img.alt = 'current';
 				currentPreview.appendChild(img);
 			} catch { currentPreview.textContent = '🔧'; }
+
+			const downloadBtn = currentRow.createEl('button', { cls: 'clickable-icon' });
+			setIcon(downloadBtn, 'lucide-download');
+			downloadBtn.setAttribute('aria-label', t('Download icon'));
+			downloadBtn.onclick = () => downloadSvg(this.icon.svgData!, `${this.icon.name}-light.svg`);
+
+			if (!this.icon.themeDarkSvgData) {
+				const copyBtn = currentRow.createEl('button', { cls: 'external-links-icon-current-action-btn copy-to-dark' });
+				setIcon(copyBtn, 'lucide-copy');
+				copyBtn.appendText(` ${t('Copy to dark')}`);
+				copyBtn.onclick = () => {
+					newDarkSvgData = newSvgData || this.icon.svgData;
+					removeDark = false;
+					darkName.textContent = t('Copied from light icon');
+					renderPreview(doc, darkPreview, newDarkSvgData!, 'copied');
+				};
+			}
 		}
 
 		const defaultRow = defaultSection.createDiv({ cls: 'external-links-icon-upload-row' });
 		const defaultBtn = defaultRow.createEl('button', { text: t('Upload new') });
+		setIcon(defaultBtn, 'lucide-upload');
 		const defaultName = defaultRow.createSpan({ text: t('No file chosen') });
 		const defaultPreview = defaultRow.createDiv({ cls: 'external-links-icon-preview-div small' });
 
@@ -217,6 +239,11 @@ export class EditIconModal extends Modal {
 				currentDarkPreview.appendChild(img);
 			} catch { currentDarkPreview.textContent = '🔧'; }
 
+			const downloadDarkBtn = currentDarkRow.createEl('button', { cls: 'clickable-icon' });
+			setIcon(downloadDarkBtn, 'lucide-download');
+			downloadDarkBtn.setAttribute('aria-label', t('Download icon'));
+			downloadDarkBtn.onclick = () => downloadSvg(this.icon.themeDarkSvgData!, `${this.icon.name}-dark.svg`);
+
 			removeBtn = currentDarkRow.createEl('button', { text: t('Remove'), cls: 'external-links-icon-remove-btn' });
 			removeIndicator = currentDarkRow.createSpan({ cls: 'external-links-icon-remove-indicator' });
 			removeBtn!.onclick = () => {
@@ -228,8 +255,9 @@ export class EditIconModal extends Modal {
 
 		const darkRow = darkSection.createDiv({ cls: 'external-links-icon-upload-row' });
 		const darkBtn = darkRow.createEl('button', { text: t('Upload new') });
-		const darkName = darkRow.createSpan({ text: t('No file chosen') });
-		const darkPreview = darkRow.createDiv({ cls: 'external-links-icon-preview-div small' });
+		setIcon(darkBtn, 'lucide-upload');
+		darkName = darkRow.createSpan({ text: t('No file chosen') });
+		darkPreview = darkRow.createDiv({ cls: 'external-links-icon-preview-div small' });
 		darkSection.createEl('div', { text: t('Dark mode icon hint'), cls: 'external-links-icon-upload-hint' });
 
 		const darkInput = createFileInput(doc, (content, fileName) => {
@@ -319,4 +347,16 @@ function renderPreview(doc: Document, previewDiv: HTMLElement, content: string, 
 	} catch {
 		previewDiv.textContent = '';
 	}
+}
+
+function downloadSvg(svgData: string, fileName: string): void {
+	const blob = new Blob([svgData], { type: 'image/svg+xml' });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = fileName;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
 }

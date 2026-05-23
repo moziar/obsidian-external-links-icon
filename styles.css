@@ -338,6 +338,33 @@ body:not(.theme-dark) .external-links-icon-dark-section .external-links-icon-upl
 	flex-shrink: 0;
 }
 
+.external-links-icon-current-action-btn {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	padding: 2px 8px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 12px;
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.external-links-icon-current-action-btn svg {
+	width: 14px;
+	height: 14px;
+}
+
+.external-links-icon-current-action-btn.copy-to-dark {
+	margin-left: auto;
+}
+
+.external-links-icon-current-action-btn:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
 .external-links-icon-remove-btn {
 	background-color: var(--background-modifier-hover);
 	color: var(--text-muted);
