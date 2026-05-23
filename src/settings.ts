@@ -12,10 +12,61 @@ function getIconDisplayName(icon: IconItem): string {
 	}
 	return icon.name;
 }
-import { preferDarkThemeFromDocument } from './svg';
-import { prepareSvgForSettings } from './svg';
+import { preferDarkThemeFromDocument, prepareSvgForSettings, getSvgSourceForTheme } from './svg';
 import { clearIconCache } from './utils';
 import { ConfirmModal, EditIconModal, NewIconModal } from './ui';
+
+function renderIconImage(
+	container: HTMLElement,
+	icon: IconItem,
+	linkType: string,
+	isBuiltin: boolean
+): void {
+	const doc = container.ownerDocument;
+	const hasDual = !!(icon.svgData && icon.themeDarkSvgData);
+	const builtinStr = isBuiltin ? 'true' : 'false';
+	try {
+		if (hasDual) {
+			const lightPrepared = prepareSvgForSettings(icon.svgData || '', container);
+			const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', container);
+
+			const imgLight = doc.createElement('img');
+			imgLight.dataset.iconId = icon.id || '';
+			imgLight.dataset.iconLinkType = linkType;
+			imgLight.dataset.builtin = builtinStr;
+			imgLight.dataset.iconVariant = 'light';
+			imgLight.dataset.dualVariant = 'true';
+			imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
+			imgLight.alt = getIconDisplayName(icon);
+
+			const imgDark = doc.createElement('img');
+			imgDark.dataset.iconId = icon.id || '';
+			imgDark.dataset.iconLinkType = linkType;
+			imgDark.dataset.builtin = builtinStr;
+			imgDark.dataset.iconVariant = 'dark';
+			imgDark.dataset.dualVariant = 'true';
+			imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
+			imgDark.alt = getIconDisplayName(icon);
+
+			container.appendChild(imgLight);
+			container.appendChild(imgDark);
+		} else {
+			const preferDark = preferDarkThemeFromDocument();
+			const svgSource = getSvgSourceForTheme(icon, preferDark);
+			const prepared = prepareSvgForSettings(svgSource, container);
+			const img = doc.createElement('img');
+			img.dataset.iconId = icon.id || '';
+			img.dataset.iconLinkType = linkType;
+			img.dataset.builtin = builtinStr;
+			img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+			img.alt = getIconDisplayName(icon);
+			container.appendChild(img);
+		}
+	} catch (e) {
+		console.warn('Failed to render icon preview', e);
+		container.textContent = '🔗';
+	}
+}
 
 export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	plugin: ExternalLinksIcon;
@@ -81,54 +132,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			const box = builtinRow.createDiv({ cls: 'website-item' });
 
 			const iconEl = box.createDiv({ cls: 'item-icon' });
-			try {
-				const doc = iconEl.ownerDocument;
-				const hasDual = !!(icon.svgData && icon.themeDarkSvgData);
-				if (hasDual) {
-					const lightPrepared = prepareSvgForSettings(icon.svgData || '', iconEl);
-					const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', iconEl);
-
-					const imgLight = doc.createElement('img');
-					imgLight.dataset.iconId = icon.id || '';
-					imgLight.dataset.iconLinkType = 'url';
-					imgLight.dataset.builtin = 'true';
-					imgLight.dataset.iconVariant = 'light';
-					imgLight.dataset.dualVariant = 'true';
-					imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
-					imgLight.alt = getIconDisplayName(icon);
-
-					const imgDark = doc.createElement('img');
-					imgDark.dataset.iconId = icon.id || '';
-					imgDark.dataset.iconLinkType = 'url';
-					imgDark.dataset.builtin = 'true';
-					imgDark.dataset.iconVariant = 'dark';
-					imgDark.dataset.dualVariant = 'true';
-					imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
-					imgDark.alt = getIconDisplayName(icon);
-
-					iconEl.appendChild(imgLight);
-					iconEl.appendChild(imgDark);
-				} else {
-					const preferDark = preferDarkThemeFromDocument();
-					let svgSource: string;
-					if (!preferDark) {
-						svgSource = icon.svgData || icon.themeDarkSvgData || '';
-					} else {
-						svgSource = icon.themeDarkSvgData || icon.svgData || '';
-					}
-					const img = doc.createElement('img');
-					img.dataset.iconId = icon.id || '';
-					img.dataset.iconLinkType = 'url';
-					img.dataset.builtin = 'true';
-					const prepared = prepareSvgForSettings(svgSource, iconEl);
-					img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-					img.alt = getIconDisplayName(icon);
-					iconEl.appendChild(img);
-				}
-			} catch (e) {
-				console.warn('Failed to render builtin website preview', e);
-				iconEl.textContent = '🔗';
-			}
+			renderIconImage(iconEl, icon, 'url', true);
 
 			box.createSpan({ text: getIconDisplayName(icon) });
 		});
@@ -160,55 +164,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				const box = builtinRow.createDiv({ cls: 'scheme-item' });
 
 				const iconEl = box.createDiv({ cls: 'item-icon' });
-				try {
-					const doc = iconEl.ownerDocument;
-					const hasDual = !!(icon.svgData && icon.themeDarkSvgData);
-					if (hasDual) {
-						const lightPrepared = prepareSvgForSettings(icon.svgData || '', iconEl);
-						const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', iconEl);
-
-						const imgLight = doc.createElement('img');
-						imgLight.dataset.iconId = icon.id || '';
-						imgLight.dataset.iconLinkType = 'scheme';
-						imgLight.dataset.builtin = 'true';
-						imgLight.dataset.iconVariant = 'light';
-						imgLight.dataset.dualVariant = 'true';
-						imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
-						imgLight.alt = getIconDisplayName(icon);
-
-						const imgDark = doc.createElement('img');
-						imgDark.dataset.iconId = icon.id || '';
-						imgDark.dataset.iconLinkType = 'scheme';
-						imgDark.dataset.builtin = 'true';
-						imgDark.dataset.iconVariant = 'dark';
-						imgDark.dataset.dualVariant = 'true';
-						imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
-						imgDark.alt = getIconDisplayName(icon);
-
-						iconEl.appendChild(imgLight);
-						iconEl.appendChild(imgDark);
-					} else {
-						const preferDark = preferDarkThemeFromDocument();
-						let svgSource: string;
-						if (!preferDark) {
-							svgSource = icon.svgData || icon.themeDarkSvgData || '';
-						} else {
-							svgSource = icon.themeDarkSvgData || icon.svgData || '';
-						}
-						const img = doc.createElement('img');
-						img.dataset.iconId = icon.id || '';
-						img.dataset.iconLinkType = 'scheme';
-						img.dataset.builtin = 'true';
-						const prepared = prepareSvgForSettings(svgSource, iconEl);
-						img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-						img.alt = getIconDisplayName(icon);
-
-						iconEl.appendChild(img);
-					}
-				} catch (e) {
-					console.warn('Failed to render builtin scheme preview', e);
-					iconEl.textContent = '🔗';
-				}
+				renderIconImage(iconEl, icon, 'scheme', true);
 				box.createSpan({ text: getIconDisplayName(icon) });
 			}
 		});
@@ -428,58 +384,11 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const previewContainer = settingItem.nameEl.createDiv({ cls: 'svg-preview-container' });
 
 		const previewIcon = previewContainer.createDiv({ cls: 'external-links-icon-preview-div small' });
-		const doc = previewIcon.ownerDocument;
 
-		// If this icon is a built-in, prefer the DEFAULT_SETTINGS version for Settings preview
 		const builtinOverride = (DEFAULT_SETTINGS.icons || {})[icon.id];
 		const effectiveIcon = builtinOverride ? builtinOverride : icon;
-		try {
-			const hasDual = !!(effectiveIcon.svgData && effectiveIcon.themeDarkSvgData);
-			if (hasDual) {
-				const lightPrepared = prepareSvgForSettings(effectiveIcon.svgData || '', previewIcon);
-				const darkPrepared = prepareSvgForSettings(effectiveIcon.themeDarkSvgData || '', previewIcon);
-
-				const imgLight = doc.createElement('img');
-				imgLight.dataset.iconId = icon.id || '';
-				imgLight.dataset.iconLinkType = icon.linkType || 'url';
-				imgLight.dataset.builtin = (builtinOverride ? 'true' : 'false');
-				imgLight.dataset.iconVariant = 'light';
-				imgLight.dataset.dualVariant = 'true';
-				imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
-				imgLight.alt = getIconDisplayName(icon);
-
-				const imgDark = doc.createElement('img');
-				imgDark.dataset.iconId = icon.id || '';
-				imgDark.dataset.iconLinkType = icon.linkType || 'url';
-				imgDark.dataset.builtin = (builtinOverride ? 'true' : 'false');
-				imgDark.dataset.iconVariant = 'dark';
-				imgDark.dataset.dualVariant = 'true';
-				imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
-				imgDark.alt = getIconDisplayName(icon);
-
-				previewIcon.appendChild(imgLight);
-				previewIcon.appendChild(imgDark);
-			} else {
-				const preferDark = preferDarkThemeFromDocument();
-				let svgToRender: string;
-				if (!preferDark) {
-					svgToRender = effectiveIcon.svgData || effectiveIcon.themeDarkSvgData || '';
-				} else {
-					svgToRender = effectiveIcon.themeDarkSvgData || effectiveIcon.svgData || '';
-				}
-				const prepared = prepareSvgForSettings(svgToRender || effectiveIcon.svgData || '', previewIcon);
-				const img = doc.createElement('img');
-				img.dataset.iconId = icon.id || '';
-				img.dataset.iconLinkType = icon.linkType || 'url';
-				img.dataset.builtin = (builtinOverride ? 'true' : 'false');
-				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-				img.alt = getIconDisplayName(icon);
-				previewIcon.appendChild(img);
-			}
-		} catch (error) {
-			console.warn('Failed to render icon preview:', error);
-			previewIcon.textContent = '🔧'; // fallback glyph
-		}
+		const isBuiltin = Boolean(builtinOverride);
+		renderIconImage(previewIcon, effectiveIcon, icon.linkType || 'url', isBuiltin);
 
 		previewContainer.createSpan({ text: getIconDisplayName(icon) });
 	}
@@ -488,26 +397,14 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	 * 添加名称输入框
 	 */
 	private addNameInput(settingItem: Setting, icon: IconItem): void {
-		if (icon.linkType === 'url') {
-			// Website custom icons: editable target (domain) only
-			settingItem.addText(text => {
-				text.setPlaceholder(t('Example.com'))
-					.setValue(icon.target || '')
-					.onChange((value) => {
-						this.debounceUpdateTarget(icon.id, value);
-					});
-			});
-		} else {
-			// Scheme custom icons: only editable scheme identifier (protocol).
-			// Icon ID (name) is shown in the preview area and should not be editable here.
-			settingItem.addText(text => {
-				text.setPlaceholder(t('Scheme identifier'))
-					.setValue(icon.target || '')
-					.onChange((value) => {
-						this.debounceUpdateTarget(icon.id, value);
-					});
-			});
-		}
+		const placeholder = icon.linkType === 'url' ? t('Example.com') : t('Scheme identifier');
+		settingItem.addText(text => {
+			text.setPlaceholder(placeholder)
+				.setValue(icon.target || '')
+				.onChange((value) => {
+					this.debounceUpdateTarget(icon.id, value);
+				});
+		});
 	}
 
 	/**
@@ -610,32 +507,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			}));
 	}
 
-	/**
-	 * 重命名图标
-	 */
-	private async renameIcon(id: string, newName: string): Promise<void> {
-		if (!newName) {
-			return;
-		}
-
-		const icons = this.plugin.settings.customIcons;
-		const iconItem = icons[id];
-		
-		if (!iconItem) {
-			console.warn(`Icon "${id}" not found`);
-			return;
-		}
-
-		iconItem.name = newName;
-		
-		await this.plugin.saveSettings();
-	}
-
-	/**
-	 * 移动图标位置
-	 */
 	private async moveIcon(icon: IconItem, direction: number): Promise<void> {
-		// Only operate within the same linkType group (url vs scheme)
 		const allCustom = Object.values(this.plugin.settings.customIcons || {});
 		const group = allCustom.filter(i => i.linkType === icon.linkType).sort((a, b) => (a.order || 0) - (b.order || 0));
 		const currentIndex = group.findIndex(i => i.id === icon.id);
@@ -646,10 +518,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const [moved] = arr.splice(currentIndex, 1);
 		arr.splice(targetIndex, 0, moved);
 
-		// reassign orders within this group
 		arr.forEach((it, idx) => { it.order = idx; });
 
-		// merge back: preserve other custom icons (from other linkType) and update this group's items
 		const newMap: Record<string, IconItem> = {};
 		Object.values(this.plugin.settings.customIcons || {}).forEach(it => {
 			if (it.linkType !== icon.linkType) {
@@ -659,24 +529,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		arr.forEach(it => { newMap[it.id] = it; });
 
 		this.plugin.settings.customIcons = newMap;
-
-		// Normalize orders across all custom icons to ensure stable global ordering
-		const combined = Object.values(newMap);
-		const linkOrder: LinkType[] = ['url', 'scheme'];
-		let idx2 = 0;
-		linkOrder.forEach(lt => {
-			combined
-				.filter(i => i.linkType === lt)
-				.sort((a, b) => (a.order || 0) - (b.order || 0))
-				.forEach(it => {
-					it.order = idx2++;
-				});
-		});
-
-		// rebuild map with normalized orders
-		const normalizedMap: Record<string, IconItem> = {};
-		combined.forEach(it => { normalizedMap[it.id] = it; });
-		this.plugin.settings.customIcons = normalizedMap;
 		await this.plugin.saveSettings();
 
 	}
