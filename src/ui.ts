@@ -169,6 +169,8 @@ export class EditIconModal extends Modal {
 		let newSvgData: string | undefined;
 		let newDarkSvgData: string | undefined;
 		let removeDark = false;
+		let removeBtn: HTMLButtonElement | undefined;
+		let removeIndicator: HTMLSpanElement | undefined;
 
 		const defaultSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section external-links-icon-light-section' });
 		defaultSection.createEl('div', { text: t('Default icon (light mode)'), cls: 'external-links-icon-upload-label' });
@@ -215,12 +217,12 @@ export class EditIconModal extends Modal {
 				currentDarkPreview.appendChild(img);
 			} catch { currentDarkPreview.textContent = '🔧'; }
 
-			const removeBtn = currentDarkRow.createEl('button', { text: t('Remove'), cls: 'external-links-icon-remove-btn' });
-			const removeIndicator = currentDarkRow.createSpan({ cls: 'external-links-icon-remove-indicator' });
-			removeBtn.onclick = () => {
+			removeBtn = currentDarkRow.createEl('button', { text: t('Remove'), cls: 'external-links-icon-remove-btn' });
+			removeIndicator = currentDarkRow.createSpan({ cls: 'external-links-icon-remove-indicator' });
+			removeBtn!.onclick = () => {
 				removeDark = !removeDark;
-				removeIndicator.textContent = removeDark ? ` ✓ ${t('Will be removed on save')}` : '';
-				removeBtn.classList.toggle('is-active', removeDark);
+				removeIndicator!.textContent = removeDark ? ` ✓ ${t('Will be removed on save')}` : '';
+				removeBtn!.classList.toggle('is-active', removeDark);
 			};
 		}
 
@@ -233,6 +235,8 @@ export class EditIconModal extends Modal {
 		const darkInput = createFileInput(doc, (content, fileName) => {
 			newDarkSvgData = content;
 			removeDark = false;
+			if (removeBtn) removeBtn.classList.remove('is-active');
+			if (removeIndicator) removeIndicator.textContent = '';
 			darkName.textContent = fileName;
 			renderPreview(doc, darkPreview, content, fileName);
 		});
