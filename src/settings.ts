@@ -529,24 +529,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		arr.forEach(it => { newMap[it.id] = it; });
 
 		this.plugin.settings.customIcons = newMap;
-
-		// Normalize orders across all custom icons to ensure stable global ordering
-		const combined = Object.values(newMap);
-		const linkOrder: LinkType[] = ['url', 'scheme'];
-		let idx2 = 0;
-		linkOrder.forEach(lt => {
-			combined
-				.filter(i => i.linkType === lt)
-				.sort((a, b) => (a.order || 0) - (b.order || 0))
-				.forEach(it => {
-					it.order = idx2++;
-				});
-		});
-
-		// rebuild map with normalized orders
-		const normalizedMap: Record<string, IconItem> = {};
-		combined.forEach(it => { normalizedMap[it.id] = it; });
-		this.plugin.settings.customIcons = normalizedMap;
 		await this.plugin.saveSettings();
 
 	}

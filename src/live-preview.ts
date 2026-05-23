@@ -5,11 +5,10 @@ import {
 	type PluginValue,
 	ViewPlugin, type ViewUpdate, WidgetType
 } from '@codemirror/view';
-import type { IconItem } from './types';
 import { DEFAULT_SETTINGS } from './constants';
 import { getCachedIconImage } from './utils';
 import { preferDarkThemeFromDocument } from './svg';
-import { matchIcon, getSortedIcons } from './icon-matcher';
+import { matchIcon } from './icon-matcher';
 import type { GetSettingsFn } from './scanner';
 
 export const settingsVersionFacet = Facet.define<number, number>({
@@ -123,23 +122,6 @@ class LivePreviewIconPlugin implements PluginValue {
 		const cursorPos = view.state.selection.main.head;
 		const cursorLine = view.state.doc.lineAt(cursorPos).number;
 
-		const icons: IconItem[] = getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(getSortedIcons(settings.customIcons || {}));
-		if (!icons.length) {
-			return builder.finish();
-		}
-
-		const iconImageCache = new Map<string, string>();
-		for (const icon of icons) {
-			if (!iconImageCache.has(icon.id)) {
-				try {
-					const image = getCachedIconImage(icon.id, icon.svgData, icon.themeDarkSvgData, preferDark);
-					iconImageCache.set(icon.id, image);
-				} catch {
-					// skip failed icons
-				}
-			}
-		}
-
 		const decoItems: { from: number; to: number; decoration: Decoration }[] = [];
 
 		for (const { from, to } of view.visibleRanges) {
@@ -157,7 +139,10 @@ class LivePreviewIconPlugin implements PluginValue {
 						const chosen = matchIcon(info.href, true, false, settings);
 						if (!chosen) return;
 
-						const image = iconImageCache.get(chosen.id);
+						let image: string | undefined;
+						try {
+							image = getCachedIconImage(chosen.id, chosen.svgData, chosen.themeDarkSvgData, preferDark);
+						} catch { /* skip failed icons */ }
 						if (!image) return;
 
 						const hideSuffix = chosen.linkType === 'scheme' &&
@@ -198,7 +183,10 @@ class LivePreviewIconPlugin implements PluginValue {
 						const chosen = matchIcon(href, false, true, settings);
 						if (!chosen) return;
 
-						const image = iconImageCache.get(chosen.id);
+						let image: string | undefined;
+						try {
+							image = getCachedIconImage(chosen.id, chosen.svgData, chosen.themeDarkSvgData, preferDark);
+						} catch { /* skip failed icons */ }
 						if (!image) return;
 
 						const markFrom = node.from - 2;
