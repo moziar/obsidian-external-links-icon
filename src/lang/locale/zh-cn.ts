@@ -44,6 +44,7 @@ export default {
 	'Remove': '移除',
 	'Will be removed on save': '保存后将移除',
 	'Default icon is required when uploading a dark mode icon': '上传暗色模式图标时，默认图标为必选',
+	'Are you sure you want to delete the icon': '确定要删除图标',
 	'Move up': '上移',
 	'Move down': '下移',
 	'Delete': '删除',

@@ -44,6 +44,7 @@ export default {
 	'Remove': 'Remove',
 	'Will be removed on save': 'Will be removed on save',
 	'Default icon is required when uploading a dark mode icon': 'Default icon is required when uploading a dark mode icon',
+	'Are you sure you want to delete the icon': 'Are you sure you want to delete the icon',
 	'Move up': 'Move up',
 	'Move down': 'Move down',
 	'Delete': 'Delete',
