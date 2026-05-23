@@ -78,8 +78,7 @@ export class NewIconModal extends Modal {
 
 		const lightBody = defaultSection.createDiv({ cls: 'external-links-icon-section-body' });
 
-		const lightBadge = lightBody.createDiv({ cls: 'external-links-icon-badge external-links-icon-badge-light external-links-icon-badge-empty' });
-		const lightPreview = lightBadge.createDiv({ cls: 'external-links-icon-badge-icon' });
+		const { badge: lightBadge, preview: lightPreview } = createBadgeWithPreview(lightBody, 'light');
 
 		const lightControls = lightBody.createDiv({ cls: 'external-links-icon-controls-col' });
 		const lightRow = lightControls.createDiv({ cls: 'external-links-icon-control-row' });
@@ -101,8 +100,7 @@ export class NewIconModal extends Modal {
 
 		const darkBody = darkSection.createDiv({ cls: 'external-links-icon-section-body' });
 
-		const darkBadge = darkBody.createDiv({ cls: 'external-links-icon-badge external-links-icon-badge-dark external-links-icon-badge-empty' });
-		const darkPreview = darkBadge.createDiv({ cls: 'external-links-icon-badge-icon' });
+		const { badge: darkBadge, preview: darkPreview } = createBadgeWithPreview(darkBody, 'dark');
 
 		const darkControls = darkBody.createDiv({ cls: 'external-links-icon-controls-col' });
 		const darkRow = darkControls.createDiv({ cls: 'external-links-icon-control-row' });
@@ -184,32 +182,15 @@ export class EditIconModal extends Modal {
 		let removeDark = false;
 		let removeBtn: HTMLButtonElement | undefined;
 		let removeIndicator: HTMLSpanElement | undefined;
-		let darkPreview!: HTMLDivElement;
-		let darkBadge!: HTMLDivElement;
+		let darkBadge: HTMLDivElement;
+		let darkPreview: HTMLDivElement;
 
 		const lightSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
 		lightSection.createEl('div', { text: t('Default icon (light mode)'), cls: 'external-links-icon-upload-label' });
 
 		const lightBody = lightSection.createDiv({ cls: 'external-links-icon-section-body' });
 
-		const lightBadge = lightBody.createDiv({ cls: 'external-links-icon-badge external-links-icon-badge-light' });
-		const lightPreview = lightBadge.createDiv({ cls: 'external-links-icon-badge-icon' });
-		if (this.icon.svgData) {
-			try {
-				const prepared = prepareSvgForSettings(this.icon.svgData, lightPreview);
-				const img = doc.createElement('img');
-				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-				img.alt = 'current';
-				lightPreview.appendChild(img);
-			} catch { lightPreview.textContent = '🔧'; }
-			const dlCorner = lightBadge.createDiv({ cls: 'external-links-icon-badge-dl' });
-			dlCorner.title = t('Download icon');
-			const dlIcon = dlCorner.createDiv({ cls: 'external-links-icon-badge-dl-icon' });
-			setIcon(dlIcon, 'lucide-download');
-			dlCorner.onclick = () => downloadSvg(this.icon.svgData!, `${this.icon.name}-light.svg`);
-		} else {
-			lightBadge.classList.add('external-links-icon-badge-empty');
-		}
+		const { badge: lightBadge, preview: lightPreview } = createBadgeWithPreview(lightBody, 'light', this.icon.svgData, this.icon.name);
 
 		const lightControls = lightBody.createDiv({ cls: 'external-links-icon-controls-col' });
 		const lightRow = lightControls.createDiv({ cls: 'external-links-icon-control-row' });
@@ -246,25 +227,9 @@ export class EditIconModal extends Modal {
 
 		const darkBody = darkSection.createDiv({ cls: 'external-links-icon-section-body' });
 
-		const darkBadgeEl = darkBody.createDiv({ cls: 'external-links-icon-badge external-links-icon-badge-dark' });
-		darkBadge = darkBadgeEl;
-		darkPreview = darkBadge.createDiv({ cls: 'external-links-icon-badge-icon' });
-		if (this.icon.themeDarkSvgData) {
-			try {
-				const prepared = prepareSvgForSettings(this.icon.themeDarkSvgData, darkPreview);
-				const img = doc.createElement('img');
-				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
-				img.alt = 'current dark';
-				darkPreview.appendChild(img);
-			} catch { darkPreview.textContent = '🔧'; }
-			const dlCorner = darkBadge.createDiv({ cls: 'external-links-icon-badge-dl' });
-			dlCorner.title = t('Download icon');
-			const dlIcon = dlCorner.createDiv({ cls: 'external-links-icon-badge-dl-icon' });
-			setIcon(dlIcon, 'lucide-download');
-			dlCorner.onclick = () => downloadSvg(this.icon.themeDarkSvgData!, `${this.icon.name}-dark.svg`);
-		} else {
-			darkBadge.classList.add('external-links-icon-badge-empty');
-		}
+		const darkBadgeResult = createBadgeWithPreview(darkBody, 'dark', this.icon.themeDarkSvgData, this.icon.name);
+		darkBadge = darkBadgeResult.badge;
+		darkPreview = darkBadgeResult.preview;
 
 		const darkControls = darkBody.createDiv({ cls: 'external-links-icon-controls-col' });
 		const darkRow = darkControls.createDiv({ cls: 'external-links-icon-control-row' });
@@ -383,4 +348,41 @@ function downloadSvg(svgData: string, fileName: string): void {
 	a.click();
 	document.body.removeChild(a);
 	URL.revokeObjectURL(url);
+}
+
+interface BadgeElements {
+	badge: HTMLDivElement;
+	preview: HTMLDivElement;
+}
+
+function createBadgeWithPreview(
+	parent: HTMLElement,
+	variant: 'light' | 'dark',
+	svgData?: string,
+	iconName?: string
+): BadgeElements {
+	const badge = parent.createDiv({
+		cls: `external-links-icon-badge external-links-icon-badge-${variant}`
+	});
+	const preview = badge.createDiv({ cls: 'external-links-icon-badge-icon' });
+
+	if (svgData) {
+		try {
+			const prepared = prepareSvgForSettings(svgData, preview);
+			const img = badge.ownerDocument.createElement('img');
+			img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+			img.alt = variant === 'light' ? 'current' : 'current dark';
+			preview.appendChild(img);
+		} catch { preview.textContent = '🔧'; }
+
+		const dlCorner = badge.createDiv({ cls: 'external-links-icon-badge-dl' });
+		dlCorner.title = t('Download icon');
+		const dlIcon = dlCorner.createDiv({ cls: 'external-links-icon-badge-dl-icon' });
+		setIcon(dlIcon, 'lucide-download');
+		dlCorner.onclick = () => downloadSvg(svgData, `${iconName || 'icon'}-${variant}.svg`);
+	} else {
+		badge.classList.add('external-links-icon-badge-empty');
+	}
+
+	return { badge, preview };
 }
