@@ -71,46 +71,6 @@ Live Preview 图标样式
 模态窗口样式
 ***/
 
-/* Add Website 和 Add URL Scheme 模态窗口样式 */
-.external-links-icon-modal-container {
-	font-family: var(--font-interface);
-}
-
-.external-links-icon-modal {
-	background-color: var(--background-primary);
-	border-radius: 8px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-	border: 1px solid var(--divider-color);
-	padding: 0;
-	max-width: 500px;
-	width: 90vw;
-}
-
-.external-links-icon-modal-header {
-	padding: 16px 20px;
-	border-bottom: 1px solid var(--divider-color);
-	background-color: var(--background-secondary);
-	border-radius: 8px 8px 0 0;
-}
-
-.external-links-icon-modal-header h3 {
-	margin: 0;
-	font-size: 18px;
-	font-weight: 600;
-	color: var(--text-normal);
-}
-
-.external-links-icon-modal-content {
-	padding: 20px;
-}
-
-.external-links-icon-modal-content > div {
-	margin-bottom: 16px;
-	color: var(--text-muted);
-	font-size: 14px;
-	line-height: 1.5;
-}
-
 .external-links-icon-modal-input {
 	width: 100%;
 	padding: 8px 12px;
@@ -135,43 +95,6 @@ Live Preview 图标样式
 	color: var(--text-muted);
 }
 
-.external-links-icon-upload-row {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	padding: 12px;
-	background-color: var(--background-secondary);
-	border-radius: 4px;
-	border: 1px dashed var(--interactive-accent);
-	margin-top: 8px;
-	margin-bottom: 16px;
-}
-
-.external-links-icon-upload-btn {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
-	border: none;
-	padding: 6px 12px;
-	border-radius: 4px;
-	cursor: pointer;
-	font-size: 14px;
-	transition: background-color 0.2s ease;
-	flex-shrink: 0;
-}
-
-.external-links-icon-upload-btn:hover {
-	background-color: var(--interactive-accent-hover);
-}
-
-.external-links-icon-upload-name {
-	flex-grow: 1;
-	color: var(--text-muted);
-	font-size: 14px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 .external-links-icon-preview-div {
 	width: 48px;
 	height: 24px;
@@ -193,7 +116,6 @@ Live Preview 图标样式
 	margin: 0;
 }
 
-/* small variants used in Settings/modals */
 .svg-preview-container .external-links-icon-preview-div {
 	width: 16px;
 	height: 16px;
@@ -452,7 +374,7 @@ body.theme-dark .external-links-icon-badge-dark {
 	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
-	transition: all 0.2s ease;
+	transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 	border: 1px solid transparent;
 }
 
@@ -590,32 +512,46 @@ settings:
 	animation: none !important;
 	transform: none !important;
 	box-shadow: none !important;
-	outline: none !important;
 	filter: none !important;
 	-webkit-tap-highlight-color: transparent !important;
 }
 
+.icon-setting-item .setting-item-control button:focus-visible,
+.icon-setting-item .setting-item-control .mod-cta:focus-visible,
+.add-buttons button:focus-visible,
+.external-links-icon-upload-btn:focus-visible,
+.svg-preview-container button:focus-visible,
+.website-item button:focus-visible,
+.scheme-item button:focus-visible {
+	outline: 2px solid var(--interactive-accent) !important;
+	outline-offset: 1px !important;
+}
+
+.icon-setting-item .setting-item-control button:focus:not(:focus-visible),
+.icon-setting-item .setting-item-control .mod-cta:focus:not(:focus-visible),
+.add-buttons button:focus:not(:focus-visible),
+.external-links-icon-upload-btn:focus:not(:focus-visible),
+.svg-preview-container button:focus:not(:focus-visible),
+.website-item button:focus:not(:focus-visible),
+.scheme-item button:focus:not(:focus-visible) {
+	outline: none !important;
+}
+
 /* Also ensure hover/focus/active states don't apply transforms or transitions */
 .icon-setting-item .setting-item-control button:hover,
-.icon-setting-item .setting-item-control button:focus,
 .icon-setting-item .setting-item-control button:active,
 .add-buttons button:hover,
-.add-buttons button:focus,
 .add-buttons button:active,
 .external-links-icon-upload-btn:hover,
-.external-links-icon-upload-btn:focus,
 .external-links-icon-upload-btn:active,
 .website-item button:hover,
-.website-item button:focus,
 .website-item button:active,
 .scheme-item button:hover,
-.scheme-item button:focus,
 .scheme-item button:active {
 	transition: none !important;
 	animation: none !important;
 	transform: none !important;
 	box-shadow: none !important;
-	outline: none !important;
 	filter: none !important;
 }
 
