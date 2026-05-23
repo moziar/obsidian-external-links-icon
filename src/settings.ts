@@ -13,8 +13,9 @@ function getIconDisplayName(icon: IconItem): string {
 	return icon.name;
 }
 import { preferDarkThemeFromDocument } from './svg';
-import { prepareSvgForSettings, sanitizeSvg } from './svg';
-import { ConfirmModal, NewIconModal } from './ui';
+import { prepareSvgForSettings } from './svg';
+import { clearIconCache } from './utils';
+import { ConfirmModal, EditIconModal, NewIconModal } from './ui';
 
 export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	plugin: ExternalLinksIcon;
@@ -235,7 +236,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const addWebsiteBtn = doc.createElement('button');
 		addWebsiteBtn.textContent = t('Add website');
 		addWebsiteBtn.onclick = () => {
-			const modal = new NewIconModal(this.app, (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => this.addIconWithData(data), 'url');
+			const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'url');
 			modal.open();
 		};
 		btnContainer.appendChild(addWebsiteBtn);
@@ -243,7 +244,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const addSchemeBtn = doc.createElement('button');
 		addSchemeBtn.textContent = t('Add URL scheme');
 		addSchemeBtn.onclick = () => {
-			const modal = new NewIconModal(this.app, (data: { linkType: LinkType; name: string; target: string; svgData?: string }) => this.addIconWithData(data), 'scheme');
+			const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'scheme');
 			modal.open();
 		};
 		btnContainer.appendChild(addSchemeBtn);
@@ -252,8 +253,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	/**
 	 * 根据弹窗数据添加新图标（带校验）
 	 */
-	private async addIconWithData(data: { linkType: LinkType; name: string; target: string; svgData?: string }) {
-		const { linkType, name, target, svgData } = data;
+	private async addIconWithData(data: { linkType: LinkType; name: string; target: string; svgData?: string; themeDarkSvgData?: string }) {
+		const { linkType, name, target, svgData, themeDarkSvgData } = data;
 		const id = name;
 		const customIcons = this.plugin.settings.customIcons || {};
 		if (customIcons[id]) {
@@ -268,7 +269,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 		const maxOrder = Object.values(customIcons).reduce((max, ic: IconItem) => Math.max(max, ic.order || 0), -1);
 
-		customIcons[id] = {
+		const newIcon: IconItem = {
 			id,
 			name,
 			svgData: (svgData && svgData.trim().length > 0) ? svgData : this.plugin.getDefaultSvgData(),
@@ -276,6 +277,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			linkType,
 			target: normalized
 		};
+
+		if (themeDarkSvgData && themeDarkSvgData.trim().length > 0) {
+			newIcon.themeDarkSvgData = themeDarkSvgData;
+		}
+
+		customIcons[id] = newIcon;
 
 		this.plugin.settings.customIcons = customIcons;
 		await this.plugin.saveSettings();
@@ -530,10 +537,25 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	 * 添加上传按钮
 	 */
 	private addUploadButton(settingItem: Setting, icon: IconItem): void {
-		settingItem.addButton(button => button
-			.setButtonText(t('Upload SVG'))
-			.setTooltip(t('Upload an SVG file'))
-			.onClick(() => this.uploadSVG(icon)));
+		settingItem.addButton(button => {
+			button.setIcon('lucide-pencil')
+				.setTooltip(t('Edit icon'))
+				.onClick(() => {
+					const modal = new EditIconModal(this.app, icon, async (data) => {
+						if (data.svgData) {
+							icon.svgData = data.svgData;
+						}
+						if (data.themeDarkSvgData === null) {
+							delete icon.themeDarkSvgData;
+						} else if (data.themeDarkSvgData) {
+							icon.themeDarkSvgData = data.themeDarkSvgData;
+						}
+						await this.plugin.saveSettings();
+						this.display();
+					});
+					modal.open();
+				});
+		});
 	}
 
 	/**
@@ -575,11 +597,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.setButtonText(t('Delete'))
 			.setWarning()
 			.onClick(async () => {
-				const modal = new ConfirmModal(this.plugin.app, `Are you sure you want to delete the icon "${getIconDisplayName(icon)}"?`);
+				const modal = new ConfirmModal(this.plugin.app, `${t('Are you sure you want to delete the icon')} "${getIconDisplayName(icon)}"?`);
 				modal.open();
 				const confirmed = await modal.result;
 				if (confirmed) {
 					delete this.plugin.settings.customIcons[icon.id];
+					clearIconCache(icon.id);
 					await this.plugin.saveSettings();
 					this.display();
 				}
@@ -657,73 +680,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 	}
 
-	/**
-	 * 上传 SVG 文件
-	 */
-	private uploadSVG(icon: IconItem): void {
-		const doc = this.containerEl.ownerDocument;
-		const input = doc.createElement('input');
-		input.type = 'file';
-		input.accept = '.svg,image/svg+xml';
-		input.classList.add('external-links-icon-hidden-input');
-
-		input.onchange = async (event) => {
-			try {
-				const files = (event.target as HTMLInputElement).files;
-				if (!files || files.length === 0) return;
-
-				const file = files[0];
-				if (!this.isValidSvgFile(file)) {
-					new Notice(t('Please select a valid SVG file.'));
-					return;
-				}
-
-				const content = await this.readFileAsText(file);
-				if (content && this.isValidSvgContent(content)) {
-					const sanitized = sanitizeSvg(content);
-					icon.svgData = sanitized;
-					await this.plugin.saveSettings();
-					this.display();
-				} else {
-					new Notice(t('Invalid SVG file content.'));
-				}
-			} catch (error) {
-				console.error('Failed to upload SVG:', error);
-				new Notice(t('Failed to upload SVG file.'));
-			}
-		};
-
-		doc.body.appendChild(input);
-		input.click();
-		doc.body.removeChild(input);
-	}
-
-	private isValidSvgFile(file: File): boolean {
-		return file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
-	}
-
-	/**
-	 * 验证 SVG 内容是否有效
-	 */
-	private isValidSvgContent(content: string): boolean {
-		const trimmed = content.trim();
-		return trimmed.startsWith('<svg') && trimmed.includes('</svg>');
-	}
-
-	/**
-	 * 读取文件为文本
-	 */
-	private readFileAsText(file: File): Promise<string> {
-		return new Promise((resolve, reject) => {
-			const reader = new FileReader();
-			reader.onload = (e) => {
-				const result = e.target?.result as string;
-				resolve(result || '');
-			};
-			reader.onerror = () => reject(new Error('Failed to read file'));
-			reader.readAsText(file);
-		});
-	}
 	onClose(): void {
 		// Cleanup theme listeners when Settings tab is closed
 		this.disconnectThemeListeners();
