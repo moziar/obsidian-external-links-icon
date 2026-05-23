@@ -397,26 +397,14 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	 * 添加名称输入框
 	 */
 	private addNameInput(settingItem: Setting, icon: IconItem): void {
-		if (icon.linkType === 'url') {
-			// Website custom icons: editable target (domain) only
-			settingItem.addText(text => {
-				text.setPlaceholder(t('Example.com'))
-					.setValue(icon.target || '')
-					.onChange((value) => {
-						this.debounceUpdateTarget(icon.id, value);
-					});
-			});
-		} else {
-			// Scheme custom icons: only editable scheme identifier (protocol).
-			// Icon ID (name) is shown in the preview area and should not be editable here.
-			settingItem.addText(text => {
-				text.setPlaceholder(t('Scheme identifier'))
-					.setValue(icon.target || '')
-					.onChange((value) => {
-						this.debounceUpdateTarget(icon.id, value);
-					});
-			});
-		}
+		const placeholder = icon.linkType === 'url' ? t('Example.com') : t('Scheme identifier');
+		settingItem.addText(text => {
+			text.setPlaceholder(placeholder)
+				.setValue(icon.target || '')
+				.onChange((value) => {
+					this.debounceUpdateTarget(icon.id, value);
+				});
+		});
 	}
 
 	/**
@@ -530,10 +518,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const [moved] = arr.splice(currentIndex, 1);
 		arr.splice(targetIndex, 0, moved);
 
-		// reassign orders within this group
 		arr.forEach((it, idx) => { it.order = idx; });
 
-		// merge back: preserve other custom icons (from other linkType) and update this group's items
 		const newMap: Record<string, IconItem> = {};
 		Object.values(this.plugin.settings.customIcons || {}).forEach(it => {
 			if (it.linkType !== icon.linkType) {

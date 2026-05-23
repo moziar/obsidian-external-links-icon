@@ -315,7 +315,7 @@ body.theme-dark .external-links-icon-badge-dark {
 	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
-	transition: all 0.2s ease;
+	transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 	border: 1px solid transparent;
 }
 
@@ -453,32 +453,46 @@ settings:
 	animation: none !important;
 	transform: none !important;
 	box-shadow: none !important;
-	outline: none !important;
 	filter: none !important;
 	-webkit-tap-highlight-color: transparent !important;
 }
 
+.icon-setting-item .setting-item-control button:focus-visible,
+.icon-setting-item .setting-item-control .mod-cta:focus-visible,
+.add-buttons button:focus-visible,
+.external-links-icon-upload-btn:focus-visible,
+.svg-preview-container button:focus-visible,
+.website-item button:focus-visible,
+.scheme-item button:focus-visible {
+	outline: 2px solid var(--interactive-accent) !important;
+	outline-offset: 1px !important;
+}
+
+.icon-setting-item .setting-item-control button:focus:not(:focus-visible),
+.icon-setting-item .setting-item-control .mod-cta:focus:not(:focus-visible),
+.add-buttons button:focus:not(:focus-visible),
+.external-links-icon-upload-btn:focus:not(:focus-visible),
+.svg-preview-container button:focus:not(:focus-visible),
+.website-item button:focus:not(:focus-visible),
+.scheme-item button:focus:not(:focus-visible) {
+	outline: none !important;
+}
+
 /* Also ensure hover/focus/active states don't apply transforms or transitions */
 .icon-setting-item .setting-item-control button:hover,
-.icon-setting-item .setting-item-control button:focus,
 .icon-setting-item .setting-item-control button:active,
 .add-buttons button:hover,
-.add-buttons button:focus,
 .add-buttons button:active,
 .external-links-icon-upload-btn:hover,
-.external-links-icon-upload-btn:focus,
 .external-links-icon-upload-btn:active,
 .website-item button:hover,
-.website-item button:focus,
 .website-item button:active,
 .scheme-item button:hover,
-.scheme-item button:focus,
 .scheme-item button:active {
 	transition: none !important;
 	animation: none !important;
 	transform: none !important;
 	box-shadow: none !important;
-	outline: none !important;
 	filter: none !important;
 }
 

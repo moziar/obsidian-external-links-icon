@@ -65,7 +65,6 @@ export class NewIconModal extends Modal {
 		nameInput.type = 'text';
 
 		const targetInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
-		targetInput.placeholder = t('Website or scheme identifier');
 		targetInput.type = 'text';
 
 		const defaultType = this._defaultLinkType || 'url';
@@ -85,8 +84,8 @@ export class NewIconModal extends Modal {
 		const lightControls = lightBody.createDiv({ cls: 'external-links-icon-controls-col' });
 		const lightRow = lightControls.createDiv({ cls: 'external-links-icon-control-row' });
 		const lightUploadBtn = lightRow.createEl('button', { cls: 'external-links-icon-btn' });
-	setIcon(lightUploadBtn, 'lucide-upload');
-	lightUploadBtn.appendText(` ${t('Upload icon')}`);
+		setIcon(lightUploadBtn, 'lucide-upload');
+		lightUploadBtn.appendText(` ${t('Upload icon')}`);
 
 	const lightInput = createFileInput(doc, (content) => {
 			uploadedSvgData = content;
@@ -108,9 +107,9 @@ export class NewIconModal extends Modal {
 		const darkControls = darkBody.createDiv({ cls: 'external-links-icon-controls-col' });
 		const darkRow = darkControls.createDiv({ cls: 'external-links-icon-control-row' });
 		const darkUploadBtn = darkRow.createEl('button', { cls: 'external-links-icon-btn' });
-	setIcon(darkUploadBtn, 'lucide-upload');
-	darkUploadBtn.appendText(` ${t('Upload icon')}`);
-	darkSection.createEl('div', { text: t('Dark mode icon hint'), cls: 'external-links-icon-upload-hint' });
+		setIcon(darkUploadBtn, 'lucide-upload');
+		darkUploadBtn.appendText(` ${t('Upload icon')}`);
+		darkSection.createEl('div', { text: t('Dark mode icon hint'), cls: 'external-links-icon-upload-hint' });
 
 		const darkInput = createFileInput(doc, (content) => {
 			uploadedDarkSvgData = content;
