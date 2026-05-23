@@ -67,6 +67,10 @@ export function getCachedIconImage(
 		if (!existing.dark) existing.dark = encodeSvgData(normalizedDark);
 		return existing.dark;
 	}
+	if (!preferDark) {
+		if (!existing.light) existing.light = encodeSvgData(normalizedSvg || normalizedDark);
+		return existing.light;
+	}
 	if (!existing.light) existing.light = encodeSvgData(normalizedSvg || normalizedDark);
 	return existing.light;
 }

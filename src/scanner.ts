@@ -1,8 +1,8 @@
 import type { ExternalLinksIconSettings, IconItem } from './types';
 import { DEFAULT_SETTINGS } from './constants';
 import { getCachedIconImage } from './utils';
-import { preferDarkThemeFromDocument, getSvgSourceForTheme } from './svg';
-import { getMatchContext, iconMatchesContext, getAllIconsSorted } from './icon-matcher';
+import { preferDarkThemeFromDocument } from './svg';
+import { getMatchContext, iconMatchesContext, getSortedIcons } from './icon-matcher';
 
 
 export type GetSettingsFn = () => ExternalLinksIconSettings;
@@ -119,7 +119,7 @@ export class Scanner {
 
 			const settings = this.getSettings();
 			const applied = new Set<Element>();
-			const icons: IconItem[] = getAllIconsSorted(settings);
+			const icons: IconItem[] = getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(getSortedIcons(settings.customIcons || {}));
 			if (!icons.length) return;
 
 			const iconImages = new Map<string, string>();

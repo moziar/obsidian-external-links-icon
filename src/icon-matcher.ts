@@ -111,7 +111,7 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 		if (!ctx.fancyWebLink) return false;
 		if (!ctx.isExternal) return false;
 		if (!hrefLower.startsWith('http://') && !hrefLower.startsWith('https://')) return false;
-		const webMap: Record<string, string> = ICON_CATEGORIES.WEB;
+		const webMap = ICON_CATEGORIES.WEB;
 		const mapped = webMap[icon.id];
 		const pattern = (mapped || icon.target || icon.id || '').toLowerCase();
 		if (!pattern) return false;
@@ -123,10 +123,6 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 
 export function getSortedIcons(icons: Record<string, IconItem>): IconItem[] {
 	return Object.values(icons).sort((a, b) => (a.order || 0) - (b.order || 0));
-}
-
-export function getAllIconsSorted(settings: ExternalLinksIconSettings): IconItem[] {
-	return getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(getSortedIcons(settings.customIcons || {}));
 }
 
 export function matchIcon(

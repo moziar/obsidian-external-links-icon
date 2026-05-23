@@ -1,5 +1,4 @@
-import type { IconItem } from './types';
-
+// SVG utilities: sanitize and prepare SVG strings for use as inline images
 export function sanitizeSvg(svg: string): string {
 	let s = svg.trim();
 	// remove xml prolog and doctype
@@ -68,11 +67,4 @@ export function preferDarkThemeFromDocument(): boolean {
 	if (isDarkByClass) return true;
 	if (isLightByClass) return false;
 	return !!(activeWindow.matchMedia && activeWindow.matchMedia('(prefers-color-scheme: dark)').matches);
-}
-
-export function getSvgSourceForTheme(icon: IconItem, preferDark: boolean): string {
-	if (!preferDark) {
-		return icon.svgData || icon.themeDarkSvgData || '';
-	}
-	return icon.themeDarkSvgData || icon.svgData || '';
 }

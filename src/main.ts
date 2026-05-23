@@ -20,54 +20,52 @@ export default class ExternalLinksIcon extends Plugin {
 
 		this.registerEditorExtension(createLivePreviewExtension(() => this.settings));
 
-		if (process.env.NODE_ENV === 'development') {
-			this.addCommand({
-				id: 'debug-syntax-tree',
-				name: 'Debug: dump syntax tree to console',
-				callback: () => {
-					const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-					if (!view) return;
-					const editorView = (view.editor as unknown as { cm: EditorView }).cm;
-					if (!editorView) return;
+		this.addCommand({
+			id: 'debug-syntax-tree',
+			name: 'Debug: dump syntax tree to console',
+			callback: () => {
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+				if (!view) return;
+				const editorView = (view.editor as unknown as { cm: EditorView }).cm;
+				if (!editorView) return;
 
-					const d = editorView.state.doc;
-					const lines: string[] = ['=== Syntax Tree Debug ==='];
-					const seen = new Set<string>();
+				const d = editorView.state.doc;
+				const lines: string[] = ['=== Syntax Tree Debug ==='];
+				const seen = new Set<string>();
 
-					const cursor = syntaxTree(editorView.state).cursor();
-					let depth = 0;
+				const cursor = syntaxTree(editorView.state).cursor();
+				let depth = 0;
 
-					function visit() {
-						const name = cursor.name;
-						if (!seen.has(name)) seen.add(name);
-						const from = cursor.from;
-						const to = cursor.to;
-						const text = d.sliceString(from, Math.min(to, from + 60));
-						const indent = '  '.repeat(depth);
-						lines.push(`${indent}${name} [${from}..${to}] "${text.replace(/\n/g, '\\n')}"`);
+				function visit() {
+					const name = cursor.name;
+					if (!seen.has(name)) seen.add(name);
+					const from = cursor.from;
+					const to = cursor.to;
+					const text = d.sliceString(from, Math.min(to, from + 60));
+					const indent = '  '.repeat(depth);
+					lines.push(`${indent}${name} [${from}..${to}] "${text.replace(/\n/g, '\\n')}"`);
 
-						if (cursor.firstChild()) {
-							depth++;
+					if (cursor.firstChild()) {
+						depth++;
+						visit();
+						while (cursor.nextSibling()) {
 							visit();
-							while (cursor.nextSibling()) {
-								visit();
-							}
-							cursor.parent();
-							depth--;
 						}
-					}
-
-					visit();
-
-					lines.push('', '=== All unique node names ===');
-					lines.push(...Array.from(seen).sort());
-
-					for (const line of lines) {
-						console.debug(line);
+						cursor.parent();
+						depth--;
 					}
 				}
-			});
-		}
+
+				visit();
+
+				lines.push('', '=== All unique node names ===');
+				lines.push(...Array.from(seen).sort());
+
+				for (const line of lines) {
+					console.debug(line);
+				}
+			}
+		});
 
 		try {
 			const Scanner = (await import('./scanner')).Scanner;
