@@ -1,15 +1,19 @@
-## External links icon
-[![GitHub Release](https://img.shields.io/github/v/release/moziar/obsidian-external-links-icon)](https://github.com/moziar/obsidian-external-links-icon/releases/latest)
-[![Total Downloads](https://img.shields.io/github/downloads/moziar/obsidian-external-links-icon/total?label=Total%20Downloads)](https://github.com/moziar/obsidian-external-links-icon/releases)
-[![Latest Downloads](https://img.shields.io/github/downloads/moziar/obsidian-external-links-icon/latest/total?label=Latest%20Downloads)](https://github.com/moziar/obsidian-external-links-icon/releases/latest)
-[![Last Commit](https://img.shields.io/github/last-commit/moziar/obsidian-external-links-icon?label=Last%20Commit)](https://github.com/moziar/obsidian-external-links-icon/commits/master)
-
-A simple plugin that automatically adds icons to the external and internal links, designed to work seamlessly in your local environment.
+<div align="center">
+    <h1>External links icon</h1>
+    <p>
+        <img alt="GitHub Release" src="https://img.shields.io/github/v/release/moziar/obsidian-external-links-icon?label=Release">
+        <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/moziar/obsidian-external-links-icon/total?label=Total%20Downloads">
+        <img alt="GitHub Downloads (all assets, latest release)" src="https://img.shields.io/github/downloads/moziar/obsidian-external-links-icon/latest/total?label=Latest%20Downloads">
+        <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/moziar/obsidian-external-links-icon">
+    </p >
+    <p>[ English | <a href="https://github.com/moziar/obsidian-external-links-icon/blob/master/README_zh.md">简体中文</a > ]</p >
+    <p>A simple plugin that automatically adds icons to the external and internal links, designed to work seamlessly in your local environment.</p >
+</div>
 
 ![demo.png](demo.png)
 
 <details>
-	<summary><h2>Built-in links</h2></summary>
+	<summary><strong>Built-in links</strong></summary>
 
 ![links](links.png)
 
@@ -66,16 +70,20 @@ A simple plugin that automatically adds icons to the external and internal links
 To add a custom icon, click **Add Website** or **Add URL Scheme** in the settings.
 
 - Only **SVG** format is supported.
-- We recommend compressing your SVG file before uploading to improve performance.
+- The plugin will auto compress icon to improve performance.
 
 ## Performance
 This plugin is designed for high performance.
 
-Every image has been meticulously optimized, with most displayed in `SVG` format.
+Every built-in image has been meticulously optimized, with most displayed in `SVG` format.
 
 Some icons are adaptive to the _Base color scheme_ and will automatically adjust their highlight color accordingly.
 
 ## Installation
+### From Obsidian Community (Recommended)
+Open the Community Plugins tab in the settings and search for "Iconify" (or click [here](https://obsidian.md/plugins?id=external-links-icon)).
+
+### Manual Installation
 Use the [BRAT](https://github.com/TfTHacker/obsidian42-brat) to install this plugin.
 
 1. Install [BRAT](https://obsidian.md/plugins?id=obsidian42-brat) Obsidian plugin
@@ -93,4 +101,4 @@ Obsidian Note Link icon is disabled by default. You can enable either _internal 
 ![style-setting](style-setting.png)
 
 ## Credit
-The implementation borrows from [marginnote-companion](https://github.com/aidenlx/marginnote-companion).
+Inspire by [marginnote-companion](https://github.com/aidenlx/marginnote-companion).
