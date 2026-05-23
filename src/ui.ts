@@ -74,7 +74,7 @@ export class NewIconModal extends Modal {
 		let uploadedSvgData: string | undefined;
 		let uploadedDarkSvgData: string | undefined;
 
-		const defaultSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
+		const defaultSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section external-links-icon-light-section' });
 		defaultSection.createEl('div', { text: t('Default icon (light mode)'), cls: 'external-links-icon-upload-label' });
 		const defaultRow = defaultSection.createDiv({ cls: 'external-links-icon-upload-row' });
 		const defaultBtn = defaultRow.createEl('button', { text: t('Upload SVG') });
@@ -90,7 +90,7 @@ export class NewIconModal extends Modal {
 		doc.body.appendChild(defaultInput);
 		defaultBtn.onclick = () => defaultInput.click();
 
-		const darkSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
+		const darkSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section external-links-icon-dark-section' });
 		darkSection.createEl('div', { text: t('Dark mode icon (optional)'), cls: 'external-links-icon-upload-label' });
 		const darkRow = darkSection.createDiv({ cls: 'external-links-icon-upload-row' });
 		const darkBtn = darkRow.createEl('button', { text: t('Upload SVG') });
