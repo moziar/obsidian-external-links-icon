@@ -1,4 +1,4 @@
-import { App, Modal, Notice } from 'obsidian';
+import { App, Modal, Notice, setIcon } from 'obsidian';
 import type { IconItem, LinkType } from './types';
 import { t } from './lang/helper';
 import { prepareSvgForSettings } from './svg';
@@ -74,38 +74,52 @@ export class NewIconModal extends Modal {
 		let uploadedSvgData: string | undefined;
 		let uploadedDarkSvgData: string | undefined;
 
-		const defaultSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section external-links-icon-light-section' });
+		const defaultSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
 		defaultSection.createEl('div', { text: t('Default icon (light mode)'), cls: 'external-links-icon-upload-label' });
-		const defaultRow = defaultSection.createDiv({ cls: 'external-links-icon-upload-row' });
-		const defaultBtn = defaultRow.createEl('button', { text: t('Upload SVG') });
-		const defaultName = defaultRow.createSpan({ text: t('No file chosen') });
-		const defaultPreview = defaultRow.createDiv({ cls: 'external-links-icon-preview-div small' });
 
-		const defaultInput = createFileInput(doc, (content, fileName) => {
+		const lightBody = defaultSection.createDiv({ cls: 'external-links-icon-section-body' });
+
+		const lightBadge = lightBody.createDiv({ cls: 'external-links-icon-badge external-links-icon-badge-light external-links-icon-badge-empty' });
+		const lightPreview = lightBadge.createDiv({ cls: 'external-links-icon-badge-icon' });
+
+		const lightControls = lightBody.createDiv({ cls: 'external-links-icon-controls-col' });
+		const lightRow = lightControls.createDiv({ cls: 'external-links-icon-control-row' });
+		const lightUploadBtn = lightRow.createEl('button', { cls: 'external-links-icon-btn' });
+	setIcon(lightUploadBtn, 'lucide-upload');
+	lightUploadBtn.appendText(` ${t('Upload icon')}`);
+
+	const lightInput = createFileInput(doc, (content) => {
 			uploadedSvgData = content;
-			defaultName.textContent = fileName;
-			renderPreview(doc, defaultPreview, content, fileName);
+			lightBadge.classList.remove('external-links-icon-badge-empty');
+			renderPreview(doc, lightPreview, content, 'uploaded');
 		});
-		this.hiddenInputs.push(defaultInput);
-		doc.body.appendChild(defaultInput);
-		defaultBtn.onclick = () => defaultInput.click();
+		this.hiddenInputs.push(lightInput);
+		doc.body.appendChild(lightInput);
+		lightUploadBtn.onclick = () => lightInput.click();
 
-		const darkSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section external-links-icon-dark-section' });
+		const darkSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
 		darkSection.createEl('div', { text: t('Dark mode icon (optional)'), cls: 'external-links-icon-upload-label' });
-		const darkRow = darkSection.createDiv({ cls: 'external-links-icon-upload-row' });
-		const darkBtn = darkRow.createEl('button', { text: t('Upload SVG') });
-		const darkName = darkRow.createSpan({ text: t('No file chosen') });
-		const darkPreview = darkRow.createDiv({ cls: 'external-links-icon-preview-div small' });
-		darkSection.createEl('div', { text: t('Dark mode icon hint'), cls: 'external-links-icon-upload-hint' });
 
-		const darkInput = createFileInput(doc, (content, fileName) => {
+		const darkBody = darkSection.createDiv({ cls: 'external-links-icon-section-body' });
+
+		const darkBadge = darkBody.createDiv({ cls: 'external-links-icon-badge external-links-icon-badge-dark external-links-icon-badge-empty' });
+		const darkPreview = darkBadge.createDiv({ cls: 'external-links-icon-badge-icon' });
+
+		const darkControls = darkBody.createDiv({ cls: 'external-links-icon-controls-col' });
+		const darkRow = darkControls.createDiv({ cls: 'external-links-icon-control-row' });
+		const darkUploadBtn = darkRow.createEl('button', { cls: 'external-links-icon-btn' });
+	setIcon(darkUploadBtn, 'lucide-upload');
+	darkUploadBtn.appendText(` ${t('Upload icon')}`);
+	darkSection.createEl('div', { text: t('Dark mode icon hint'), cls: 'external-links-icon-upload-hint' });
+
+		const darkInput = createFileInput(doc, (content) => {
 			uploadedDarkSvgData = content;
-			darkName.textContent = fileName;
-			renderPreview(doc, darkPreview, content, fileName);
+			darkBadge.classList.remove('external-links-icon-badge-empty');
+			renderPreview(doc, darkPreview, content, 'uploaded');
 		});
 		this.hiddenInputs.push(darkInput);
 		doc.body.appendChild(darkInput);
-		darkBtn.onclick = () => darkInput.click();
+		darkUploadBtn.onclick = () => darkInput.click();
 
 		const buttonContainer = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
 		const cancelBtn = buttonContainer.createEl('button', { text: t('Cancel') });
@@ -171,54 +185,97 @@ export class EditIconModal extends Modal {
 		let removeDark = false;
 		let removeBtn: HTMLButtonElement | undefined;
 		let removeIndicator: HTMLSpanElement | undefined;
+		let darkPreview!: HTMLDivElement;
+		let darkBadge!: HTMLDivElement;
 
-		const defaultSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section external-links-icon-light-section' });
-		defaultSection.createEl('div', { text: t('Default icon (light mode)'), cls: 'external-links-icon-upload-label' });
+		const lightSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
+		lightSection.createEl('div', { text: t('Default icon (light mode)'), cls: 'external-links-icon-upload-label' });
 
+		const lightBody = lightSection.createDiv({ cls: 'external-links-icon-section-body' });
+
+		const lightBadge = lightBody.createDiv({ cls: 'external-links-icon-badge external-links-icon-badge-light' });
+		const lightPreview = lightBadge.createDiv({ cls: 'external-links-icon-badge-icon' });
 		if (this.icon.svgData) {
-			const currentRow = defaultSection.createDiv({ cls: 'external-links-icon-current-row' });
-			currentRow.createSpan({ text: t('Current icon'), cls: 'external-links-icon-current-label' });
-			const currentPreview = currentRow.createDiv({ cls: 'external-links-icon-preview-div modal-preview' });
 			try {
-				const prepared = prepareSvgForSettings(this.icon.svgData, currentPreview);
+				const prepared = prepareSvgForSettings(this.icon.svgData, lightPreview);
 				const img = doc.createElement('img');
 				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 				img.alt = 'current';
-				currentPreview.appendChild(img);
-			} catch { currentPreview.textContent = '🔧'; }
+				lightPreview.appendChild(img);
+			} catch { lightPreview.textContent = '🔧'; }
+			const dlCorner = lightBadge.createDiv({ cls: 'external-links-icon-badge-dl' });
+			dlCorner.title = t('Download icon');
+			const dlIcon = dlCorner.createDiv({ cls: 'external-links-icon-badge-dl-icon' });
+			setIcon(dlIcon, 'lucide-download');
+			dlCorner.onclick = () => downloadSvg(this.icon.svgData!, `${this.icon.name}-light.svg`);
+		} else {
+			lightBadge.classList.add('external-links-icon-badge-empty');
 		}
 
-		const defaultRow = defaultSection.createDiv({ cls: 'external-links-icon-upload-row' });
-		const defaultBtn = defaultRow.createEl('button', { text: t('Upload new') });
-		const defaultName = defaultRow.createSpan({ text: t('No file chosen') });
-		const defaultPreview = defaultRow.createDiv({ cls: 'external-links-icon-preview-div small' });
+		const lightControls = lightBody.createDiv({ cls: 'external-links-icon-controls-col' });
+		const lightRow = lightControls.createDiv({ cls: 'external-links-icon-control-row' });
+		const lightUploadBtn = lightRow.createEl('button', { cls: 'external-links-icon-btn' });
+		setIcon(lightUploadBtn, 'lucide-upload');
+		lightUploadBtn.appendText(` ${t('Upload new icon')}`);
 
-		const defaultInput = createFileInput(doc, (content, fileName) => {
+		if (this.icon.svgData && !this.icon.themeDarkSvgData) {
+			const copyBtn = lightRow.createEl('button', { cls: 'external-links-icon-btn external-links-icon-btn-copy' });
+			setIcon(copyBtn, 'lucide-copy');
+			copyBtn.appendText(` ${t('Copy to dark')}`);
+			copyBtn.onclick = () => {
+				newDarkSvgData = newSvgData || this.icon.svgData;
+				removeDark = false;
+				if (removeBtn) removeBtn.classList.remove('is-active');
+				if (removeIndicator) removeIndicator.textContent = '';
+				darkBadge.classList.remove('external-links-icon-badge-empty');
+				renderPreview(doc, darkPreview, newDarkSvgData!, 'copied');
+				new Notice(t('Copied to dark'));
+			};
+		}
+
+		const lightInput = createFileInput(doc, (content) => {
 			newSvgData = content;
-			defaultName.textContent = fileName;
-			renderPreview(doc, defaultPreview, content, fileName);
+			lightBadge.classList.remove('external-links-icon-badge-empty');
+			renderPreview(doc, lightPreview, content, 'uploaded');
 		});
-		this.hiddenInputs.push(defaultInput);
-		doc.body.appendChild(defaultInput);
-		defaultBtn.onclick = () => defaultInput.click();
+		this.hiddenInputs.push(lightInput);
+		doc.body.appendChild(lightInput);
+		lightUploadBtn.onclick = () => lightInput.click();
 
-		const darkSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section external-links-icon-dark-section' });
+		const darkSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
 		darkSection.createEl('div', { text: t('Dark mode icon (optional)'), cls: 'external-links-icon-upload-label' });
 
+		const darkBody = darkSection.createDiv({ cls: 'external-links-icon-section-body' });
+
+		const darkBadgeEl = darkBody.createDiv({ cls: 'external-links-icon-badge external-links-icon-badge-dark' });
+		darkBadge = darkBadgeEl;
+		darkPreview = darkBadge.createDiv({ cls: 'external-links-icon-badge-icon' });
 		if (this.icon.themeDarkSvgData) {
-			const currentDarkRow = darkSection.createDiv({ cls: 'external-links-icon-current-row dark-bg' });
-			currentDarkRow.createSpan({ text: t('Current icon'), cls: 'external-links-icon-current-label' });
-			const currentDarkPreview = currentDarkRow.createDiv({ cls: 'external-links-icon-preview-div modal-preview' });
 			try {
-				const prepared = prepareSvgForSettings(this.icon.themeDarkSvgData, currentDarkPreview);
+				const prepared = prepareSvgForSettings(this.icon.themeDarkSvgData, darkPreview);
 				const img = doc.createElement('img');
 				img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 				img.alt = 'current dark';
-				currentDarkPreview.appendChild(img);
-			} catch { currentDarkPreview.textContent = '🔧'; }
+				darkPreview.appendChild(img);
+			} catch { darkPreview.textContent = '🔧'; }
+			const dlCorner = darkBadge.createDiv({ cls: 'external-links-icon-badge-dl' });
+			dlCorner.title = t('Download icon');
+			const dlIcon = dlCorner.createDiv({ cls: 'external-links-icon-badge-dl-icon' });
+			setIcon(dlIcon, 'lucide-download');
+			dlCorner.onclick = () => downloadSvg(this.icon.themeDarkSvgData!, `${this.icon.name}-dark.svg`);
+		} else {
+			darkBadge.classList.add('external-links-icon-badge-empty');
+		}
 
-			removeBtn = currentDarkRow.createEl('button', { text: t('Remove'), cls: 'external-links-icon-remove-btn' });
-			removeIndicator = currentDarkRow.createSpan({ cls: 'external-links-icon-remove-indicator' });
+		const darkControls = darkBody.createDiv({ cls: 'external-links-icon-controls-col' });
+		const darkRow = darkControls.createDiv({ cls: 'external-links-icon-control-row' });
+		const darkUploadBtn = darkRow.createEl('button', { cls: 'external-links-icon-btn' });
+		setIcon(darkUploadBtn, 'lucide-upload');
+		darkUploadBtn.appendText(` ${t('Upload new icon')}`);
+
+		if (this.icon.themeDarkSvgData) {
+			removeBtn = darkRow.createEl('button', { text: t('Remove'), cls: 'external-links-icon-btn external-links-icon-btn-danger' });
+			removeIndicator = darkRow.createSpan({ cls: 'external-links-icon-remove-indicator' });
 			removeBtn!.onclick = () => {
 				removeDark = !removeDark;
 				removeIndicator!.textContent = removeDark ? ` ✓ ${t('Will be removed on save')}` : '';
@@ -226,23 +283,19 @@ export class EditIconModal extends Modal {
 			};
 		}
 
-		const darkRow = darkSection.createDiv({ cls: 'external-links-icon-upload-row' });
-		const darkBtn = darkRow.createEl('button', { text: t('Upload new') });
-		const darkName = darkRow.createSpan({ text: t('No file chosen') });
-		const darkPreview = darkRow.createDiv({ cls: 'external-links-icon-preview-div small' });
 		darkSection.createEl('div', { text: t('Dark mode icon hint'), cls: 'external-links-icon-upload-hint' });
 
-		const darkInput = createFileInput(doc, (content, fileName) => {
+		const darkInput = createFileInput(doc, (content) => {
 			newDarkSvgData = content;
 			removeDark = false;
 			if (removeBtn) removeBtn.classList.remove('is-active');
 			if (removeIndicator) removeIndicator.textContent = '';
-			darkName.textContent = fileName;
-			renderPreview(doc, darkPreview, content, fileName);
+			darkBadge.classList.remove('external-links-icon-badge-empty');
+			renderPreview(doc, darkPreview, content, 'uploaded');
 		});
 		this.hiddenInputs.push(darkInput);
 		doc.body.appendChild(darkInput);
-		darkBtn.onclick = () => darkInput.click();
+		darkUploadBtn.onclick = () => darkInput.click();
 
 		const buttonContainer = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
 		const cancelBtn = buttonContainer.createEl('button', { text: t('Cancel') });
@@ -319,4 +372,16 @@ function renderPreview(doc: Document, previewDiv: HTMLElement, content: string, 
 	} catch {
 		previewDiv.textContent = '';
 	}
+}
+
+function downloadSvg(svgData: string, fileName: string): void {
+	const blob = new Blob([svgData], { type: 'image/svg+xml' });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = fileName;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
 }

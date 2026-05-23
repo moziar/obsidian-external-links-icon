@@ -1,4 +1,4 @@
-import { PluginSettingTab, Setting, App, Notice } from 'obsidian';
+import { PluginSettingTab, Setting, App, Notice, setIcon } from 'obsidian';
 import type ExternalLinksIcon from './main';
 import type { IconItem, LinkType } from './types';
 import { ICON_CATEGORIES, DEFAULT_SETTINGS } from './constants';
@@ -594,7 +594,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		
 		// 删除按钮
 		settingItem.addButton(button => button
-			.setButtonText(t('Delete'))
+			.setIcon('lucide-trash-2')
+			.setTooltip(t('Delete'))
 			.setWarning()
 			.onClick(async () => {
 				const modal = new ConfirmModal(this.plugin.app, `${t('Are you sure you want to delete the icon')} "${getIconDisplayName(icon)}"?`);
