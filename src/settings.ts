@@ -14,6 +14,7 @@ function getIconDisplayName(icon: IconItem): string {
 }
 import { preferDarkThemeFromDocument } from './svg';
 import { prepareSvgForSettings } from './svg';
+import { clearIconCache } from './utils';
 import { ConfirmModal, EditIconModal, NewIconModal } from './ui';
 
 export class ExternalLinksIconSettingTab extends PluginSettingTab {
@@ -596,11 +597,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.setButtonText(t('Delete'))
 			.setWarning()
 			.onClick(async () => {
-				const modal = new ConfirmModal(this.plugin.app, `Are you sure you want to delete the icon "${getIconDisplayName(icon)}"?`);
+				const modal = new ConfirmModal(this.plugin.app, `${t('Are you sure you want to delete the icon')} "${getIconDisplayName(icon)}"?`);
 				modal.open();
 				const confirmed = await modal.result;
 				if (confirmed) {
 					delete this.plugin.settings.customIcons[icon.id];
+					clearIconCache(icon.id);
 					await this.plugin.saveSettings();
 					this.display();
 				}

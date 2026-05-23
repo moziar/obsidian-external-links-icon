@@ -42,6 +42,14 @@ export function isValidSvgData(svgData: string): boolean {
 	return s.startsWith('<svg') || s.startsWith('data:image/svg+xml');
 }
 
+export function clearIconCache(key?: string): void {
+	if (key) {
+		iconImageCache.delete(key);
+	} else {
+		iconImageCache.clear();
+	}
+}
+
 export function getCachedIconImage(
 	key: string,
 	svgData: string,
