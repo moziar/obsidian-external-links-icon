@@ -574,10 +574,12 @@ settings:
 details.builtin-list {
 	margin-top: 8px;
 	margin-bottom: 8px;
+	width: 100%;
 }
 details.builtin-list summary {
 	font-weight: 600;
 	cursor: pointer;
+	text-align: left;
 }
 
 /* Built-in icons container */
