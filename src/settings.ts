@@ -113,7 +113,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			name: t('Add new icon'),
 			desc: t('Add website or URL scheme icon. The icon name must be unique.'),
 			render: (setting) => {
-				setting.setHeading();
 				const btnContainer = setting.controlEl.createDiv({ cls: 'add-buttons' });
 				const doc = btnContainer.ownerDocument;
 
@@ -145,12 +144,11 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const items: SettingGroupItem[] = [];
 
 		items.push({
-			name: t('Built-in'),
+			name: t('Built-in icons'),
 			render: (setting) => {
-				setting.nameEl.empty();
-				setting.controlEl.style.width = '100%';
-				const builtinsDetails = setting.controlEl.createEl('details', { cls: 'builtin-list' });
-				builtinsDetails.createEl('summary', { text: t('Built-in') });
+				setting.settingEl.classList.add('builtin-list-row');
+				const builtinsDetails = setting.settingEl.createEl('details', { cls: 'builtin-list' });
+				builtinsDetails.createEl('summary', { text: t('Built-in icons') });
 				const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
 
 				const builtinIconsMap: Record<string, IconItem> = Object.assign({}, DEFAULT_SETTINGS.icons || {});
@@ -188,12 +186,11 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const items: SettingGroupItem[] = [];
 
 		items.push({
-			name: t('Built-in'),
+			name: t('Built-in icons'),
 			render: (setting) => {
-				setting.nameEl.empty();
-				setting.controlEl.style.width = '100%';
-				const builtinsDetails = setting.controlEl.createEl('details', { cls: 'builtin-list' });
-				builtinsDetails.createEl('summary', { text: t('Built-in') });
+				setting.settingEl.classList.add('builtin-list-row');
+				const builtinsDetails = setting.settingEl.createEl('details', { cls: 'builtin-list' });
+				builtinsDetails.createEl('summary', { text: t('Built-in icons') });
 				const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
 
 				(ICON_CATEGORIES.URL_SCHEME || []).forEach((key: string) => {
