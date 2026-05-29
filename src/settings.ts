@@ -1,4 +1,4 @@
-import { PluginSettingTab, Setting, App, Notice, setIcon } from 'obsidian';
+import { PluginSettingTab, Setting, App, Notice } from 'obsidian';
 import type { SettingDefinitionItem, SettingGroupItem } from 'obsidian';
 import type ExternalLinksIcon from './main';
 import type { IconItem, LinkType } from './types';
