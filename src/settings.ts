@@ -70,6 +70,7 @@ function renderIconImage(
 }
 
 export class ExternalLinksIconSettingTab extends PluginSettingTab {
+	icon: string = 'external-link';
 	plugin: ExternalLinksIcon;
 	private debounceTimers: Map<string, number> = new Map();
 
