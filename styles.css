@@ -18,11 +18,11 @@
 	- 用 ::after 根据变量显示 SVG 图标
 	*/
 
-.external-link.external-links-icon-enabled,
-.internal-link.external-links-icon-enabled {
-	background: none !important;
-	background-image: none !important;
-	padding-right: 0 !important;
+.external-link.external-links-icon-enabled.external-links-icon-enabled,
+.internal-link.external-links-icon-enabled.external-links-icon-enabled {
+	background: none;
+	background-image: none;
+	padding-right: 0;
 }
 
 .external-link.external-links-icon-enabled::after,
@@ -57,10 +57,10 @@ Live Preview 图标样式
 	background-image: var(--external-link-icon-image, none);
 }
 
-.cm-line .external-links-icon-enabled {
-	background: none !important;
-	background-image: none !important;
-	padding-right: 0 !important;
+.cm-line.cm-line .external-links-icon-enabled.external-links-icon-enabled {
+	background: none;
+	background-image: none;
+	padding-right: 0;
 }
 
 .cm-formatting.cm-formatting-link-string.cm-string.cm-url.external-link {
@@ -498,9 +498,10 @@ settings:
 	cursor: default;
 }
 
-/* Disable animations/transitions/transforms on buttons in plugin settings
-   to avoid misleading animated effects that look like bugs. Use high
-   specificity and !important to override Obsidian defaults where needed. */
+/* TODO: 这组规则禁用设置页按钮的动画/变换/伪元素效果。
+   注释掉以观察 Obsidian 默认行为，确认是否仍需要这些覆盖。
+   如需恢复，移除 !important 后重新启用即可。 */
+/*
 .icon-setting-item .setting-item-control button,
 .icon-setting-item .setting-item-control .mod-cta,
 .add-buttons button,
@@ -537,7 +538,6 @@ settings:
 	outline: none !important;
 }
 
-/* Also ensure hover/focus/active states don't apply transforms or transitions */
 .icon-setting-item .setting-item-control button:hover,
 .icon-setting-item .setting-item-control button:active,
 .add-buttons button:hover,
@@ -555,7 +555,6 @@ settings:
 	filter: none !important;
 }
 
-/* Remove pseudo-element effects that could draw shapes on click */
 .icon-setting-item .setting-item-control button::before,
 .icon-setting-item .setting-item-control button::after,
 .add-buttons button::before,
@@ -569,6 +568,7 @@ settings:
 	content: none !important;
 	display: none !important;
 }
+*/
 
 /* details styling for built-in lists */
 .builtin-list-row {
