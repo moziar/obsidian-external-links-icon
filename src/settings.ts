@@ -1,4 +1,5 @@
-import { PluginSettingTab, Setting, App, Notice, setIcon } from 'obsidian';
+import { PluginSettingTab, Setting, App, Notice } from 'obsidian';
+import type { SettingDefinitionItem, SettingGroupItem } from 'obsidian';
 import type ExternalLinksIcon from './main';
 import type { IconItem, LinkType } from './types';
 import { ICON_CATEGORIES, DEFAULT_SETTINGS } from './constants';
@@ -69,10 +70,10 @@ function renderIconImage(
 }
 
 export class ExternalLinksIconSettingTab extends PluginSettingTab {
+	icon: string = 'external-link';
 	plugin: ExternalLinksIcon;
 	private debounceTimers: Map<string, number> = new Map();
 
-	// Theme change detection
 	private themeMediaQuery: MediaQueryList | null = null;
 	private mqHandler: EventListener | null = null;
 	private bodyObserver: MutationObserver | null = null;
@@ -83,132 +84,160 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	display(): void {
-		const { containerEl } = this;
-		containerEl.empty();
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		const result: SettingDefinitionItem[] = [];
 
-		new Setting(containerEl)
-			.setName(t('Language'))
-			.setDesc(t('Setting page language'))
-			.addDropdown(dropdown => {
-				dropdown
-					.addOption('auto', t('Adapt to Obsidian setting (Auto)'))
-					.addOption('en', t('English'))
-					.addOption('zh', t('Chinese (Simplified)'))
-					.setValue(this.plugin.settings.language || 'auto')
-					.onChange(async (value) => {
-						this.plugin.settings.language = value;
-						await this.plugin.saveSettings();
-						this.plugin.applyLanguage();
-						this.display();
-					});
-			});
+		result.push({
+			name: t('Language'),
+			desc: t('Setting page language'),
+			render: (setting) => {
+				setting.addDropdown(dropdown => {
+					dropdown
+						.addOption('auto', t('Adapt to Obsidian setting (Auto)'))
+						.addOption('en', t('English'))
+						.addOption('zh', t('Chinese (Simplified)'))
+						.setValue(this.plugin.settings.language || 'auto')
+						.onChange(async (value) => {
+							this.plugin.settings.language = value;
+							await this.plugin.saveSettings();
+							this.plugin.applyLanguage();
+							this.update();
+						});
+				});
+				this.ensureThemeListeners();
+				try { this.updatePreviewIcons(preferDarkThemeFromDocument()); } catch { /* ignore */ }
+				return () => this.disconnectThemeListeners();
+			},
+		});
 
-		this.createAddIconButton(containerEl);
-		containerEl.createEl('div', { text: t('Add website or URL scheme icon. The icon name must be unique.') });
-		this.displayWebsiteSection(containerEl);
-		this.displayURLSchemeSection(containerEl);
+		result.push({
+			name: t('Add new icon'),
+			desc: t('Add website or URL scheme icon. The icon name must be unique.'),
+			render: (setting) => {
+				const btnContainer = setting.controlEl.createDiv({ cls: 'add-buttons' });
+				const doc = btnContainer.ownerDocument;
 
-		// Ensure theme-change listeners are active so previews update when theme toggles
-		this.ensureThemeListeners();
-		// Update previews to current theme state (keeps UI consistent after non-render theme switches)
-		try { this.updatePreviewIcons(preferDarkThemeFromDocument()); } catch { /* ignore */ }
+				const addWebsiteBtn = doc.createElement('button');
+				addWebsiteBtn.textContent = t('Add website');
+				addWebsiteBtn.onclick = () => {
+					const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'url');
+					modal.open();
+				};
+				btnContainer.appendChild(addWebsiteBtn);
+
+				const addSchemeBtn = doc.createElement('button');
+				addSchemeBtn.textContent = t('Add URL scheme');
+				addSchemeBtn.onclick = () => {
+					const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'scheme');
+					modal.open();
+				};
+				btnContainer.appendChild(addSchemeBtn);
+			},
+		});
+
+		result.push(...this.buildWebsiteDefinitions());
+		result.push(...this.buildSchemeDefinitions());
+
+		return result;
 	}
 
-	private displayWebsiteSection(containerEl: HTMLElement): void {
-		new Setting(containerEl).setName(t('Website')).setHeading();
-		containerEl.createEl('div', { text: t('Website icons are matched by domain. When adding a website-type icon, provide a unique name and the domain (e.g. "example.com").') });
+	private buildWebsiteDefinitions(): SettingDefinitionItem[] {
+		const items: SettingGroupItem[] = [];
 
-		const builtInWrap = containerEl.createDiv({ cls: 'website-builtins' });
-		const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
-		builtinsDetails.createEl('summary', { text: t('Built-in') });
-		const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
+		items.push({
+			name: t('Built-in icons'),
+			render: (setting) => {
+				setting.settingEl.classList.add('builtin-list-row');
+				const builtinsDetails = setting.settingEl.createEl('details', { cls: 'builtin-list' });
+				builtinsDetails.createEl('summary', { text: t('Built-in icons') });
+				const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
 
-		const builtinIconsMap: Record<string, IconItem> = Object.assign({}, DEFAULT_SETTINGS.icons || {});
-		const builtinIcons = Object.values(builtinIconsMap)
-			.sort((a: IconItem, b: IconItem) => (a.order || 0) - (b.order || 0))
-			.filter((ic: IconItem) => ic.linkType === 'url');
-		builtinIcons.forEach((icon: IconItem) => {
-			const box = builtinRow.createDiv({ cls: 'website-item' });
-
-			const iconEl = box.createDiv({ cls: 'item-icon' });
-			renderIconImage(iconEl, icon, 'url', true);
-
-			box.createSpan({ text: getIconDisplayName(icon) });
+				const builtinIconsMap: Record<string, IconItem> = Object.assign({}, DEFAULT_SETTINGS.icons || {});
+				const builtinIcons = Object.values(builtinIconsMap)
+					.sort((a: IconItem, b: IconItem) => (a.order || 0) - (b.order || 0))
+					.filter((ic: IconItem) => ic.linkType === 'url');
+				builtinIcons.forEach((icon: IconItem) => {
+					const box = builtinRow.createDiv({ cls: 'website-item' });
+					const iconEl = box.createDiv({ cls: 'item-icon' });
+					renderIconImage(iconEl, icon, 'url', true);
+					box.createSpan({ text: getIconDisplayName(icon) });
+				});
+			},
 		});
 
 		const customIcons = this.getSortedCustomIcons().filter(ic => ic.linkType === 'url');
 		if (customIcons.length > 0) {
-			const customWrap = containerEl.createDiv({ cls: 'website-custom' });
-			new Setting(customWrap).setName(t('Custom')).setHeading();
 			customIcons.forEach((icon) => {
-				this.createIconSetting(customWrap, icon);
+				items.push(this.createIconDefinition(icon));
 			});
 		} else {
-			containerEl.createEl('div', { text: t('No custom website icons yet.') });
+			items.push({
+				name: t('No custom website icons yet.'),
+			});
 		}
+
+		return [{
+			type: 'group' as const,
+			heading: t('Website'),
+			items,
+		}];
 	}
 
-	private displayURLSchemeSection(containerEl: HTMLElement): void {
-		new Setting(containerEl).setName(t('URL scheme')).setHeading();
-		containerEl.createEl('div', { text: t('URL scheme icons are matched by a scheme identifier. When adding a scheme-type icon, provide a unique name and the scheme identifier (e.g. "webcal").') });
+	private buildSchemeDefinitions(): SettingDefinitionItem[] {
+		const items: SettingGroupItem[] = [];
 
-		const builtInWrap = containerEl.createDiv({ cls: 'scheme-builtins' });
-		const builtinsDetails = builtInWrap.createEl('details', { cls: 'builtin-list' });
-		builtinsDetails.createEl('summary', { text: t('Built-in') });
-		const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
+		items.push({
+			name: t('Built-in icons'),
+			render: (setting) => {
+				setting.settingEl.classList.add('builtin-list-row');
+				const builtinsDetails = setting.settingEl.createEl('details', { cls: 'builtin-list' });
+				builtinsDetails.createEl('summary', { text: t('Built-in icons') });
+				const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
 
-		(ICON_CATEGORIES.URL_SCHEME || []).forEach((key: string) => {
-			const icon = (DEFAULT_SETTINGS.icons || {})[key] || (this.plugin.settings.icons || {})[key];
-			if (icon) {
-				const box = builtinRow.createDiv({ cls: 'scheme-item' });
-
-				const iconEl = box.createDiv({ cls: 'item-icon' });
-				renderIconImage(iconEl, icon, 'scheme', true);
-				box.createSpan({ text: getIconDisplayName(icon) });
-			}
+				(ICON_CATEGORIES.URL_SCHEME || []).forEach((key: string) => {
+					const icon = (DEFAULT_SETTINGS.icons || {})[key] || (this.plugin.settings.icons || {})[key];
+					if (icon) {
+						const box = builtinRow.createDiv({ cls: 'scheme-item' });
+						const iconEl = box.createDiv({ cls: 'item-icon' });
+						renderIconImage(iconEl, icon, 'scheme', true);
+						box.createSpan({ text: getIconDisplayName(icon) });
+					}
+				});
+			},
 		});
 
 		const customSchemeIcons = this.getSortedCustomIcons().filter(ic => ic.linkType === 'scheme');
 		if (customSchemeIcons.length > 0) {
-			const customWrap = containerEl.createDiv({ cls: 'scheme-custom' });
-			new Setting(customWrap).setName(t('Custom')).setHeading();
 			customSchemeIcons.forEach((icon) => {
-				this.createIconSetting(customWrap, icon);
+				items.push(this.createIconDefinition(icon));
 			});
 		} else {
-			containerEl.createEl('div', { text: t('No custom URL scheme icons yet.') });
+			items.push({
+				name: t('No custom URL scheme icons yet.'),
+			});
 		}
+
+		return [{
+			type: 'group' as const,
+			heading: t('URL scheme'),
+			items,
+		}];
 	}
 
-	/**
-	 * 创建添加图标按钮
-	 */
-	private createAddIconButton(containerEl: HTMLElement): void {
-		const s = new Setting(containerEl).setName(t('Add new icon')).setHeading();
-		const btnContainer = s.controlEl.createDiv({ cls: 'add-buttons' });
-		const doc = btnContainer.ownerDocument;
-
-		const addWebsiteBtn = doc.createElement('button');
-		addWebsiteBtn.textContent = t('Add website');
-		addWebsiteBtn.onclick = () => {
-			const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'url');
-			modal.open();
+	private createIconDefinition(icon: IconItem): SettingGroupItem {
+		return {
+			name: getIconDisplayName(icon),
+			render: (setting) => {
+				setting.setClass('icon-setting-item');
+				setting.nameEl.empty();
+				this.addIconPreview(setting, icon);
+				this.addNameInput(setting, icon);
+				this.addUploadButton(setting, icon);
+				this.addControlButtons(setting, icon);
+			},
 		};
-		btnContainer.appendChild(addWebsiteBtn);
-
-		const addSchemeBtn = doc.createElement('button');
-		addSchemeBtn.textContent = t('Add URL scheme');
-		addSchemeBtn.onclick = () => {
-			const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'scheme');
-			modal.open();
-		};
-		btnContainer.appendChild(addSchemeBtn);
 	}
 
-	/**
-	 * 根据弹窗数据添加新图标（带校验）
-	 */
 	private async addIconWithData(data: { linkType: LinkType; name: string; target: string; svgData?: string; themeDarkSvgData?: string }) {
 		const { linkType, name, target, svgData, themeDarkSvgData } = data;
 		const id = name;
@@ -242,17 +271,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 		this.plugin.settings.customIcons = customIcons;
 		await this.plugin.saveSettings();
-		this.display();
+		this.update();
 	}
 
-	/**
-	 * Setup listeners to detect theme changes and refresh Settings previews.
-	 */
 	private ensureThemeListeners(): void {
-		// Disconnect any existing listeners first to avoid duplicates
 		this.disconnectThemeListeners();
 
-		// Listen to prefers-color-scheme changes
 		try {
 			this.themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 			const mq = this.themeMediaQuery;
@@ -262,7 +286,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				// ignore
 			}
 
-		// Observe body class changes (Obsidian toggles theme classes on <body>)
 		try {
 			this.bodyObserver = new MutationObserver((mutations) => {
 				for (const m of mutations) {
@@ -279,16 +302,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		}
 	}
 
-	/**
-	 * Debounced refresh scheduler to avoid rapid re-renders
-	 */
 	private scheduleThemeRefresh(): void {
 		if (this.themeChangeDebounce) {
 			window.clearTimeout(this.themeChangeDebounce);
 		}
 		this.themeChangeDebounce = window.setTimeout(() => {
 			this.themeChangeDebounce = 0;
-			// Update only preview images so they reflect the current theme without a full re-render
 			try {
 				const preferDark = preferDarkThemeFromDocument();
 				this.updatePreviewIcons(preferDark);
@@ -296,9 +315,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		}, 100);
 	}
 
-	/**
-	 * Disconnect any previously registered listeners
-	 */
 	private disconnectThemeListeners(): void {
 		if (this.themeMediaQuery) {
 			try {
@@ -320,9 +336,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		}
 	}
 
-	/**
-	 * Update preview icons in-place according to theme preference.
-	 */
 	private updatePreviewIcons(preferDark?: boolean): void {
 		try {
 			if (typeof preferDark === 'undefined') preferDark = preferDarkThemeFromDocument();
@@ -334,7 +347,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				let icon: IconItem | undefined;
 				if (isBuiltin) icon = (DEFAULT_SETTINGS.icons || {})[id];
 				if (!icon) icon = (this.plugin.settings.customIcons || {})[id];
-				// fallback to defaults if still missing
 				if (!icon) icon = (DEFAULT_SETTINGS.icons || {})[id];
 				if (!icon) return;
 				let svgSource = '';
@@ -350,36 +362,11 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		}
 	}
 
-	/**
-	 * 获取按顺序排列的自定义图标
-	 */
 	private getSortedCustomIcons(): IconItem[] {
 		return Object.values(this.plugin.settings.customIcons || {})
 			.sort((a: IconItem, b: IconItem) => (a.order || 0) - (b.order || 0));
 	}
 
-	/**
-	 * 创建单个图标设置项
-	 */
-	private createIconSetting(containerEl: HTMLElement, icon: IconItem): void {
-		const settingItem = new Setting(containerEl).setClass('icon-setting-item');
-
-		// SVG 预览和名称
-		this.addIconPreview(settingItem, icon);
-		
-		// 图标名称输入
-		this.addNameInput(settingItem, icon);
-		
-		// 文件上传按钮
-		this.addUploadButton(settingItem, icon);
-		
-		// 移动和删除按钮
-		this.addControlButtons(settingItem, icon);
-	}
-
-	/**
-	 * 添加图标预览
-	 */
 	private addIconPreview(settingItem: Setting, icon: IconItem): void {
 		const previewContainer = settingItem.nameEl.createDiv({ cls: 'svg-preview-container' });
 
@@ -393,9 +380,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		previewContainer.createSpan({ text: getIconDisplayName(icon) });
 	}
 
-	/**
-	 * 添加名称输入框
-	 */
 	private addNameInput(settingItem: Setting, icon: IconItem): void {
 		const placeholder = icon.linkType === 'url' ? t('Example.com') : t('Scheme identifier');
 		settingItem.addText(text => {
@@ -407,9 +391,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		});
 	}
 
-	/**
-	 * 防抖动更新 target（域名或 scheme）
-	 */
 	private debounceUpdateTarget(id: string, newTarget: string): void {
 		const timerId = this.debounceTimers.get(`target-${id}`);
 		if (timerId) {
@@ -422,7 +403,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				if (icons[id]) {
 					icons[id].target = newTarget.trim();
 					await this.plugin.saveSettings();
-					this.display();
+					this.update();
 				}
 				this.debounceTimers.delete(`target-${id}`);
 			})().catch(console.error);
@@ -430,9 +411,6 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		this.debounceTimers.set(`target-${id}`, newTimerId);
 	}
 
-	/**
-	 * 添加上传按钮
-	 */
 	private addUploadButton(settingItem: Setting, icon: IconItem): void {
 		settingItem.addButton(button => {
 			button.setIcon('lucide-pencil')
@@ -448,25 +426,20 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 							icon.themeDarkSvgData = data.themeDarkSvgData;
 						}
 						await this.plugin.saveSettings();
-						this.display();
+						this.update();
 					});
 					modal.open();
 				});
 		});
 	}
 
-	/**
-	 * 添加控制按钮（上移、下移、删除）
-	 */
 	private addControlButtons(settingItem: Setting, icon: IconItem): void {
-		// Compute ordering within the same linkType group so move buttons reflect group boundaries
 		const allCustom = Object.values(this.plugin.settings.customIcons || {});
 		const groupSorted = allCustom
 			.filter(i => i.linkType === icon.linkType)
 			.sort((a, b) => (a.order || 0) - (b.order || 0));
 		const currentIndex = groupSorted.findIndex(i => i.id === icon.id);
-		
-		// Always render move up/down buttons but disable them when at edges within the same group
+
 		const canMoveUp = currentIndex > 0;
 		const canMoveDown = currentIndex >= 0 && currentIndex < groupSorted.length - 1;
 		settingItem.addButton(button => button
@@ -476,7 +449,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.onClick(async () => {
 				if (!canMoveUp) return;
 				await this.moveIcon(icon, -1);
-				this.display();
+				this.update();
 			}));
 
 		settingItem.addButton(button => button
@@ -486,10 +459,9 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			.onClick(async () => {
 				if (!canMoveDown) return;
 				await this.moveIcon(icon, 1);
-				this.display();
+				this.update();
 			}));
-		
-		// 删除按钮
+
 		settingItem.addButton(button => button
 			.setIcon('lucide-trash-2')
 			.setTooltip(t('Delete'))
@@ -502,7 +474,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					delete this.plugin.settings.customIcons[icon.id];
 					clearIconCache(icon.id);
 					await this.plugin.saveSettings();
-					this.display();
+					this.update();
 				}
 			}));
 	}
@@ -530,11 +502,5 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 
 		this.plugin.settings.customIcons = newMap;
 		await this.plugin.saveSettings();
-
 	}
-
-	onClose(): void {
-		// Cleanup theme listeners when Settings tab is closed
-		this.disconnectThemeListeners();
-		try { this.containerEl.empty(); } catch { /* ignore */ }
-	}}
+}

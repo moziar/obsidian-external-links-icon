@@ -1,6 +1,6 @@
 {
 	"name": "external-links-icon",
-	"version": "1.2.0",
+	"version": "1.2.1-beta.1",
 	"description": "Auto add icons to the external and internal links.",
 	"main": "main.js",
 	"scripts": {
@@ -8,7 +8,7 @@
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"test:smoke": "npm run build && node -e \"console.log('smoke ok')\"",
 		"test:manual": "echo 'See TESTING.md for manual verification steps'",
-		"version": "node version-bump.mjs && git add manifest.json versions.json",
+		"version": "node version-bump.mjs && git add manifest.json manifest-beta.json versions.json",
 		"lint": "npx eslint src/**/*.ts",
 		"lint:fix": "npx eslint src/**/*.ts --fix",
 		"optimize-icons": "node scripts/optimize-icons.mjs"
@@ -27,7 +27,7 @@
 		"eslint": "^8.57.1",
 		"eslint-plugin-obsidianmd": "^0.3.0",
 		"globals": "^17.0.0",
-		"obsidian": "latest",
+		"obsidian": "^1.13.0",
 		"svgo": "^4.0.0",
 		"tslib": "2.4.0",
 		"typescript": "^5.0.0",

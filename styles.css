@@ -571,13 +571,22 @@ settings:
 }
 
 /* details styling for built-in lists */
+.builtin-list-row {
+	flex-wrap: wrap;
+}
+.builtin-list-row > .setting-item-info {
+	display: none;
+}
+.builtin-list-row > .setting-item-control {
+	display: none;
+}
 details.builtin-list {
-	margin-top: 8px;
-	margin-bottom: 8px;
+	flex-basis: 100%;
 }
 details.builtin-list summary {
-	font-weight: 600;
 	cursor: pointer;
+	color: var(--text-muted);
+	font-size: 0.9em;
 }
 
 /* Built-in icons container */

@@ -58,7 +58,6 @@ export class NewIconModal extends Modal {
 		const doc = contentEl.ownerDocument;
 
 		contentEl.createEl('h3', { text: t('Add new icon') });
-		contentEl.createEl('div', { text: t('Provide icon information. Name must be unique. '),  cls: 'external-links-icon-desc' });
 
 		const nameInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
 		nameInput.placeholder = t('Icon name (unique)');

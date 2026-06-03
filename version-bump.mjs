@@ -10,6 +10,7 @@ writeFileSync("manifest.json", JSON.stringify(manifest, null, "\t"));
 if (existsSync("manifest-beta.json")) {
 	let manifestBeta = JSON.parse(readFileSync("manifest-beta.json", "utf8"));
 	manifestBeta.version = targetVersion;
+	manifestBeta.minAppVersion = minAppVersion;
 	writeFileSync("manifest-beta.json", JSON.stringify(manifestBeta, null, "\t"));
 }
 
