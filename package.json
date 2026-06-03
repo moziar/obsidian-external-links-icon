@@ -1,6 +1,6 @@
 {
 	"name": "external-links-icon",
-	"version": "1.2.1",
+	"version": "1.2.1-beta.1",
 	"description": "Auto add icons to the external and internal links.",
 	"main": "main.js",
 	"scripts": {
