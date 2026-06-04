@@ -15,20 +15,14 @@ export interface MatchContext {
 export function getMatchContext(
 	href: string,
 	isExternal: boolean,
-	isInternal: boolean
+	isInternal: boolean,
+	settings: ExternalLinksIconSettings
 ): MatchContext {
-	const body = activeDocument.body;
-	const bodyClassList = body ? body.classList : null;
-	const fancyUrlScheme = !!(bodyClassList && bodyClassList.contains('fancy-url-scheme'));
-	const fancyWebLink = !!(bodyClassList && bodyClassList.contains('fancy-web-link'));
-	const fancyObsidianWeb = !!(bodyClassList && bodyClassList.contains('fancy-obsidian-web-link'));
-	const fancyAdvancedUri = !!(bodyClassList && bodyClassList.contains('fancy-advanced-uri-link'));
-	let obsidianNoteMode: 'internal' | 'external' | 'both' | 'none' = 'none';
-	if (bodyClassList) {
-		if (bodyClassList.contains('fancy-internal-obsidian-link')) obsidianNoteMode = 'internal';
-		else if (bodyClassList.contains('fancy-external-obsidian-link')) obsidianNoteMode = 'external';
-		else if (bodyClassList.contains('fancy-both-obsidian-link')) obsidianNoteMode = 'both';
-	}
+	const fancyUrlScheme = settings.fancyUrlScheme;
+	const fancyWebLink = settings.fancyWebLink;
+	const fancyObsidianWeb = settings.fancyObsidianWebLink;
+	const fancyAdvancedUri = settings.fancyAdvancedUriLink;
+	const obsidianNoteMode = settings.fancyObsidianNoteLink;
 	return {
 		href,
 		isExternal,
@@ -135,7 +129,7 @@ export function matchIcon(
 	isInternal: boolean,
 	settings: ExternalLinksIconSettings
 ): IconItem | null {
-	const ctx = getMatchContext(href, isExternal, isInternal);
+	const ctx = getMatchContext(href, isExternal, isInternal, settings);
 	const icons: IconItem[] = getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(getSortedIcons(settings.customIcons || {}));
 	if (!icons.length) return null;
 

@@ -16,17 +16,19 @@ export const settingsVersionFacet = Facet.define<number, number>({
 });
 
 class IconWidget extends WidgetType {
-	constructor(readonly iconImage: string, readonly hideSuffix: boolean) { super(); }
+	constructor(readonly iconImage: string, readonly hideSuffix: boolean, readonly isBefore: boolean) { super(); }
 
 	toDOM(_view: EditorView): HTMLElement {
 		const span = activeDocument.createElement('span');
-		span.className = 'external-links-icon-inline' + (this.hideSuffix ? ' external-links-icon-hide-suffix' : '');
+		span.className = 'external-links-icon-inline'
+			+ (this.hideSuffix ? ' external-links-icon-hide-suffix' : '')
+			+ (this.isBefore ? ' external-links-icon-position-before' : '');
 		span.style.setProperty('--external-link-icon-image', `url("${this.iconImage}")`);
 		return span;
 	}
 
 	eq(other: IconWidget): boolean {
-		return this.iconImage === other.iconImage && this.hideSuffix === other.hideSuffix;
+		return this.iconImage === other.iconImage && this.hideSuffix === other.hideSuffix && this.isBefore === other.isBefore;
 	}
 
 	ignoreEvent(): boolean { return true; }
@@ -121,6 +123,7 @@ class LivePreviewIconPlugin implements PluginValue {
 		const preferDark = preferDarkThemeFromDocument();
 		const cursorPos = view.state.selection.main.head;
 		const cursorLine = view.state.doc.lineAt(cursorPos).number;
+		const isBefore = settings.iconPosition === 'before';
 
 		const decoItems: { from: number; to: number; decoration: Decoration }[] = [];
 
@@ -150,11 +153,11 @@ class LivePreviewIconPlugin implements PluginValue {
 								Boolean(settings?.customIcons?.[chosen.id]));
 
 						decoItems.push({
-							from: info.linkTo,
-							to: info.linkTo,
+							from: isBefore ? info.linkFrom : info.linkTo,
+							to: isBefore ? info.linkFrom : info.linkTo,
 							decoration: Decoration.widget({
-								widget: new IconWidget(image, hideSuffix),
-								side: 1
+								widget: new IconWidget(image, hideSuffix, isBefore),
+								side: isBefore ? -1 : 1
 							})
 						});
 
@@ -193,11 +196,11 @@ class LivePreviewIconPlugin implements PluginValue {
 						const markTo = node.to + 2;
 
 						decoItems.push({
-							from: markTo,
-							to: markTo,
+							from: isBefore ? markFrom : markTo,
+							to: isBefore ? markFrom : markTo,
 							decoration: Decoration.widget({
-								widget: new IconWidget(image, false),
-								side: 1
+								widget: new IconWidget(image, false, isBefore),
+								side: isBefore ? -1 : 1
 							})
 						});
 

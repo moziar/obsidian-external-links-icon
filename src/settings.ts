@@ -85,63 +85,105 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	}
 
 	getSettingDefinitions(): SettingDefinitionItem[] {
-		const result: SettingDefinitionItem[] = [];
-
-		result.push({
-			name: t('Language'),
-			desc: t('Setting page language'),
-			render: (setting) => {
-				setting.addDropdown(dropdown => {
-					dropdown
-						.addOption('auto', t('Adapt to Obsidian setting (Auto)'))
-						.addOption('en', t('English'))
-						.addOption('zh', t('Chinese (Simplified)'))
-						.setValue(this.plugin.settings.language || 'auto')
-						.onChange(async (value) => {
-							this.plugin.settings.language = value;
-							await this.plugin.saveSettings();
-							this.plugin.applyLanguage();
-							this.update();
-						});
-				});
-				this.ensureThemeListeners();
-				try { this.updatePreviewIcons(preferDarkThemeFromDocument()); } catch { /* ignore */ }
-				return () => this.disconnectThemeListeners();
+		return [
+			{
+				name: t('Language'),
+				desc: t('Setting page language'),
+				render: (setting) => {
+					setting.addDropdown(dropdown => {
+						dropdown
+							.addOption('auto', t('Adapt to Obsidian setting (Auto)'))
+							.addOption('en', t('English'))
+							.addOption('zh', t('Chinese (Simplified)'))
+							.setValue(this.plugin.settings.language || 'auto')
+							.onChange(async (value) => {
+								this.plugin.settings.language = value;
+								await this.plugin.saveSettings();
+								this.plugin.applyLanguage();
+								this.update();
+							});
+					});
+					this.ensureThemeListeners();
+					try { this.updatePreviewIcons(preferDarkThemeFromDocument()); } catch { /* ignore */ }
+					return () => this.disconnectThemeListeners();
+				},
 			},
-		});
+			{
+				name: t('Add new icon'),
+				desc: t('Add website or URL scheme icon. The icon name must be unique.'),
+				render: (setting) => {
+					const btnContainer = setting.controlEl.createDiv({ cls: 'add-buttons' });
+					const doc = btnContainer.ownerDocument;
 
-		result.push({
-			name: t('Add new icon'),
-			desc: t('Add website or URL scheme icon. The icon name must be unique.'),
-			render: (setting) => {
-				const btnContainer = setting.controlEl.createDiv({ cls: 'add-buttons' });
-				const doc = btnContainer.ownerDocument;
+					const addWebsiteBtn = doc.createElement('button');
+					addWebsiteBtn.textContent = t('Add website');
+					addWebsiteBtn.onclick = () => {
+						const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'url');
+						modal.open();
+					};
+					btnContainer.appendChild(addWebsiteBtn);
 
-				const addWebsiteBtn = doc.createElement('button');
-				addWebsiteBtn.textContent = t('Add website');
-				addWebsiteBtn.onclick = () => {
-					const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'url');
-					modal.open();
-				};
-				btnContainer.appendChild(addWebsiteBtn);
-
-				const addSchemeBtn = doc.createElement('button');
-				addSchemeBtn.textContent = t('Add URL scheme');
-				addSchemeBtn.onclick = () => {
-					const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'scheme');
-					modal.open();
-				};
-				btnContainer.appendChild(addSchemeBtn);
+					const addSchemeBtn = doc.createElement('button');
+					addSchemeBtn.textContent = t('Add URL scheme');
+					addSchemeBtn.onclick = () => {
+						const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'scheme');
+						modal.open();
+					};
+					btnContainer.appendChild(addSchemeBtn);
+				},
 			},
-		});
-
-		result.push(...this.buildWebsiteDefinitions());
-		result.push(...this.buildSchemeDefinitions());
-
-		return result;
+			{
+				type: 'page',
+				name: t('Appearance'),
+				items: [
+					{ name: t('Fancy url scheme'), desc: t('Enable icons for url schemes.'), control: { type: 'toggle', key: 'fancyUrlScheme' } },
+					{ name: t('Fancy web link'), desc: t('Enable icons for web page links.'), control: { type: 'toggle', key: 'fancyWebLink' } },
+					{ name: t('Fancy obsidian web link'), desc: t('Enable icons for Obsidian website links. Turn this off if you find the icons confusing with Fancy obsidian note link.'), control: { type: 'toggle', key: 'fancyObsidianWebLink' } },
+					{
+						name: t('Fancy obsidian note link'),
+						desc: t('Enable internal links or external vault links icon.'),
+						control: {
+							type: 'dropdown',
+							key: 'fancyObsidianNoteLink',
+							defaultValue: 'none',
+							options: {
+								none: t('None'),
+								internal: t('Internal'),
+								external: t('External'),
+								both: t('Both'),
+							},
+						},
+					},
+					{ name: t('Fancy advanced uri link'), desc: t('Enable icons for advanced uri links.'), control: { type: 'toggle', key: 'fancyAdvancedUriLink' } },
+					{
+						name: t('Icon position'),
+						desc: t('Choose whether the icon appears before or after the link text.'),
+						control: {
+							type: 'dropdown',
+							key: 'iconPosition',
+							defaultValue: 'after',
+							options: {
+								before: t('Before link'),
+								after: t('After link'),
+							},
+						},
+					},
+				],
+			},
+			{
+				type: 'group',
+				heading: t('Website'),
+				items: this.buildWebsiteItems(),
+			},
+			{
+				type: 'group',
+				heading: t('URL scheme'),
+				items: this.buildSchemeItems(),
+			},
+		];
 	}
 
-	private buildWebsiteDefinitions(): SettingDefinitionItem[] {
+	private buildWebsiteItems(): SettingGroupItem[] {
 		const items: SettingGroupItem[] = [];
 
 		items.push({
@@ -176,14 +218,10 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			});
 		}
 
-		return [{
-			type: 'group' as const,
-			heading: t('Website'),
-			items,
-		}];
+		return items;
 	}
 
-	private buildSchemeDefinitions(): SettingDefinitionItem[] {
+	private buildSchemeItems(): SettingGroupItem[] {
 		const items: SettingGroupItem[] = [];
 
 		items.push({
@@ -217,11 +255,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			});
 		}
 
-		return [{
-			type: 'group' as const,
-			heading: t('URL scheme'),
-			items,
-		}];
+		return items;
 	}
 
 	private createIconDefinition(icon: IconItem): SettingGroupItem {

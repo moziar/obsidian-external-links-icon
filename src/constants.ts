@@ -40,4 +40,10 @@ export const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
 	icons: BUILTIN_ICONS,
 	customIcons: {},
 	language: 'auto',
+	fancyUrlScheme: true,
+	fancyWebLink: true,
+	fancyObsidianWebLink: true,
+	fancyObsidianNoteLink: 'none',
+	fancyAdvancedUriLink: true,
+	iconPosition: 'after',
 };
