@@ -18,11 +18,11 @@
 	- 用 ::after 根据变量显示 SVG 图标
 	*/
 
-.external-link.external-links-icon-enabled,
-.internal-link.external-links-icon-enabled {
-	background: none !important;
-	background-image: none !important;
-	padding-right: 0 !important;
+.external-link.external-links-icon-enabled.external-links-icon-enabled,
+.internal-link.external-links-icon-enabled.external-links-icon-enabled {
+	background: none;
+	background-image: none;
+	padding-right: 0;
 }
 
 .external-link.external-links-icon-enabled::after,
@@ -57,10 +57,10 @@ Live Preview 图标样式
 	background-image: var(--external-link-icon-image, none);
 }
 
-.cm-line .external-links-icon-enabled {
-	background: none !important;
-	background-image: none !important;
-	padding-right: 0 !important;
+.cm-line.cm-line .external-links-icon-enabled.external-links-icon-enabled {
+	background: none;
+	background-image: none;
+	padding-right: 0;
 }
 
 .cm-formatting.cm-formatting-link-string.cm-string.cm-url.external-link {
@@ -324,7 +324,8 @@ body.theme-dark .external-links-icon-badge-dark {
 }
 
 .external-links-icon-btn-danger:hover {
-	color: var(--text-error);
+	background: var(--text-error);
+	color: var(--text-on-accent);
 	border-color: var(--text-error);
 }
 
@@ -496,78 +497,6 @@ settings:
 .icon-setting-item .setting-item-control .mod-cta[disabled] {
 	opacity: 0.45;
 	cursor: default;
-}
-
-/* Disable animations/transitions/transforms on buttons in plugin settings
-   to avoid misleading animated effects that look like bugs. Use high
-   specificity and !important to override Obsidian defaults where needed. */
-.icon-setting-item .setting-item-control button,
-.icon-setting-item .setting-item-control .mod-cta,
-.add-buttons button,
-.external-links-icon-upload-btn,
-.svg-preview-container button,
-.website-item button,
-.scheme-item button {
-	transition: none !important;
-	animation: none !important;
-	transform: none !important;
-	box-shadow: none !important;
-	filter: none !important;
-	-webkit-tap-highlight-color: transparent !important;
-}
-
-.icon-setting-item .setting-item-control button:focus-visible,
-.icon-setting-item .setting-item-control .mod-cta:focus-visible,
-.add-buttons button:focus-visible,
-.external-links-icon-upload-btn:focus-visible,
-.svg-preview-container button:focus-visible,
-.website-item button:focus-visible,
-.scheme-item button:focus-visible {
-	outline: 2px solid var(--interactive-accent) !important;
-	outline-offset: 1px !important;
-}
-
-.icon-setting-item .setting-item-control button:focus:not(:focus-visible),
-.icon-setting-item .setting-item-control .mod-cta:focus:not(:focus-visible),
-.add-buttons button:focus:not(:focus-visible),
-.external-links-icon-upload-btn:focus:not(:focus-visible),
-.svg-preview-container button:focus:not(:focus-visible),
-.website-item button:focus:not(:focus-visible),
-.scheme-item button:focus:not(:focus-visible) {
-	outline: none !important;
-}
-
-/* Also ensure hover/focus/active states don't apply transforms or transitions */
-.icon-setting-item .setting-item-control button:hover,
-.icon-setting-item .setting-item-control button:active,
-.add-buttons button:hover,
-.add-buttons button:active,
-.external-links-icon-upload-btn:hover,
-.external-links-icon-upload-btn:active,
-.website-item button:hover,
-.website-item button:active,
-.scheme-item button:hover,
-.scheme-item button:active {
-	transition: none !important;
-	animation: none !important;
-	transform: none !important;
-	box-shadow: none !important;
-	filter: none !important;
-}
-
-/* Remove pseudo-element effects that could draw shapes on click */
-.icon-setting-item .setting-item-control button::before,
-.icon-setting-item .setting-item-control button::after,
-.add-buttons button::before,
-.add-buttons button::after,
-.external-links-icon-upload-btn::before,
-.external-links-icon-upload-btn::after,
-.website-item button::before,
-.website-item button::after,
-.scheme-item button::before,
-.scheme-item button::after {
-	content: none !important;
-	display: none !important;
 }
 
 /* details styling for built-in lists */
