@@ -24,7 +24,7 @@ jobs:
 
       - name: Build
         run: |
-          npm ci --legacy-peer-deps
+          npm ci
           npm run build
 
       - name: Lint
