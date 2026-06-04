@@ -14,7 +14,6 @@ export class Scanner {
 	private observedRoots: Element[] = [];
 	private observeSelectors: string[];
 	private iconElementsByName: Map<string, Set<HTMLElement>> = new Map();
-	private lastFancyState = '';
 
 	constructor(getSettings: GetSettingsFn, observeSelectors?: string[]) {
 		this.getSettings = getSettings;
@@ -104,8 +103,6 @@ export class Scanner {
 			this.iconElementsByName.clear();
 			const doc = activeDocument;
 
-			this.lastFancyState = this.getFancyState();
-
 			const previewRoots = doc.querySelectorAll('.markdown-preview-view');
 			previewRoots.forEach(el => {
 				el.querySelectorAll('.external-links-icon-enabled').forEach(child => {
@@ -145,7 +142,7 @@ export class Scanner {
 					const isInternal = el.classList.contains('internal-link');
 
 					let chosen: IconItem | null = null;
-					const ctx = getMatchContext(href, isExternal, isInternal);
+					const ctx = getMatchContext(href, isExternal, isInternal, this.getSettings());
 					for (const icon of icons) {
 						if (iconMatchesContext(icon, ctx)) {
 							chosen = icon;
@@ -249,20 +246,8 @@ export class Scanner {
 		}
 	}
 
-	private getFancyState(): string {
-		const body = activeDocument.body;
-		if (!body) return '';
-		const classes = ['fancy-url-scheme', 'fancy-web-link', 'fancy-obsidian-web-link', 'fancy-advanced-uri-link', 'fancy-internal-obsidian-link', 'fancy-external-obsidian-link', 'fancy-both-obsidian-link'];
-		return classes.filter(c => body.classList.contains(c)).join(',');
-	}
-
 	handleCssChange(): void {
-		const current = this.getFancyState();
-		if (current !== this.lastFancyState) {
-			this.scheduleScan(100);
-		} else {
-			this.refreshIconsForThemeChange();
-		}
+		this.refreshIconsForThemeChange();
 	}
 
 }

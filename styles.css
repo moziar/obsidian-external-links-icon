@@ -428,54 +428,6 @@ body.theme-dark .external-links-icon-badge-dark {
 	background: var(--interactive-accent-hover);
 }
 
-/* @settings
-
-name: External Links Icon
-id: external-links-icon
-settings:
-    - 
-        id: fancy-url-scheme
-        title: Fancy url scheme
-        description: Enable icons for url schemes.
-        type: class-toggle
-        default: true
-    -
-        id: fancy-web-link
-        title: Fancy web link
-        description: Enable icons for web page links.
-        type: class-toggle
-        default: true
-    -
-        id: fancy-obsidian-web-link
-        title: Fancy obsidian web link
-        description: Enable icons for Obsidian website links. Turn this off if you find the icons confusing with Fancy obsidian note link described below.
-    	type: class-toggle
-    	default: true
-    -
-        id: fancy-obsidian-note-link
-        title: Fancy obsidian note link
-        description: Enable internal links or external vault links icon. Choose the behavior that best fits your workflow.
-        type: class-select
-        allowEmpty: yes
-        default: none
-        options:
-        	-
-        	    label: internal
-        		value: fancy-internal-obsidian-link
-        	-
-        		label: external
-        		value: fancy-external-obsidian-link
-        	-
-        		label: both
-        		value: fancy-both-obsidian-link
-    -
-        id: fancy-advanced-uri-link
-        title: Fancy advanced uri link
-        description: Enable icons for advanced uri links.
-    	type: class-toggle
-    	default: true
-*/
-
 .svg-preview-container {
 	display: flex;
 	align-items: center;
