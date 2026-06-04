@@ -2,6 +2,7 @@
     <h1>External links icon</h1>
     <p>
         <img alt="GitHub Release" src="https://img.shields.io/github/v/release/moziar/obsidian-external-links-icon?label=Release">
+		<img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24%5B%22external-links-icon%22%5D.downloads&logo=obsidian&label=Downloads&color=%238a5cf5">
         <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/moziar/obsidian-external-links-icon/total?label=Total%20Downloads">
         <img alt="GitHub Downloads (all assets, latest release)" src="https://img.shields.io/github/downloads/moziar/obsidian-external-links-icon/latest/total?label=Latest%20Downloads">
         <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/moziar/obsidian-external-links-icon">
@@ -10,12 +11,12 @@
     <p>一个简单的插件，自动为外部链接和内部链接添加图标，专为本地环境无缝使用而设计。</p >
 </div>
 
-![demo.png](demo.png)
+![demo.png](../demo.png)
 
 <details>
 	<summary><strong>内置链接</strong></summary>
 
-![links](links.png)
+![links_zh](images/links_zh.png)
 
 ### URL Scheme
 - GoodLinks
@@ -66,19 +67,6 @@
 
 </details>
 
-## 自定义图标
-在设置中点击 **添加网站** 或 **添加 URL Scheme** 即可添加自定义图标。
-
-- 仅支持 **SVG** 格式。
-- 插件会自动压缩图标以提升性能。
-
-## 性能
-本插件专为高性能而设计。
-
-每张内置图标都经过精心优化，大部分以 `SVG` 格式呈现。
-
-部分图标可适配 _深色/浅色模式_，自动调整高亮颜色。
-
 ## 安装
 ### 从 Obsidian 社区安装（推荐）
 在设置的社区插件标签页中搜索 " External Links Icon"（或点击[这里](https://obsidian.md/plugins?id=external-links-icon)）。
@@ -91,14 +79,33 @@
 3. 在弹窗中输入 `moziar/obsidian-external-links-icon`
 4. 开始使用
 
+## 使用
+### 添加图标
+在设置中点击 **添加网站** 或 **添加 URL Scheme** 即可添加自定义图标。
+
+- 仅支持 **SVG** 格式。
+- 插件会自动压缩图标以提升性能。
+- 默认图标（亮色模式）是必选的，暗色模式图标是可选的。
+
+![add-icon_zh.png](images/add-icon_zh.png)
+
+### 编辑图标
+- 你可以点击图标旁边的下载按钮来下载图标。
+- 如果你误将暗色图标上传到亮色区域，`复制到暗色` 将派上用场。
+- 如果用不到暗色图标，你可以单独删除它。
+
+![edit-icon_zh.png](images/edit-icon_zh.png)
+
 ## 设置
-默认情况下，URL Scheme 和网站图标均已启用。你可以通过 **Style Setting 插件** 禁用其中任意一项。
+默认情况下，URL Scheme 和网站图标均已启用。你可以在插件设置中禁用其中任意一项。
 
 插件提供了两种不同的 Obsidian 图标，帮助用户更好地区分 Obsidian 网站链接和笔记链接。
 
-Obsidian 笔记链接图标默认关闭。你可以启用 _内部链接_、_外部链接_，或两者都启用，也可以完全关闭 — 取决于你的工作流。
+Obsidian 笔记链接图标默认关闭。你可以启用 _双链_、_外链_，或两者都启用，也可以完全关闭 — 取决于你的工作流。
 
-![style-setting](style-setting.png)
+你可以自定义图标位置（在链接前面或者后面），以确保跟其他插件（例如 Iconize）保持一致。
+
+![setting_zh.png](images/setting_zh.png)
 
 ## 致谢
 灵感来自 [marginnote-companion](https://github.com/aidenlx/marginnote-companion)。
