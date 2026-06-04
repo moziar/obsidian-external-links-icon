@@ -15,5 +15,9 @@ if (existsSync("manifest-beta.json")) {
 }
 
 let versions = JSON.parse(readFileSync("versions.json", "utf8"));
-versions[targetVersion] = minAppVersion;
-writeFileSync("versions.json", JSON.stringify(versions, null, "\t"));
+// Only update versions.json when minAppVersion changes
+const latestVersion = Object.keys(versions).sort().pop();
+if (!latestVersion || versions[latestVersion] !== minAppVersion) {
+	versions[targetVersion] = minAppVersion;
+	writeFileSync("versions.json", JSON.stringify(versions, null, "\t"));
+}
