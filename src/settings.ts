@@ -155,6 +155,19 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 						},
 					},
 					{ name: t('Fancy advanced uri link'), desc: t('Enable icons for advanced uri links.'), control: { type: 'toggle', key: 'fancyAdvancedUriLink' } },
+					{
+						name: t('Icon position'),
+						desc: t('Choose whether the icon appears before or after the link text.'),
+						control: {
+							type: 'dropdown',
+							key: 'iconPosition',
+							defaultValue: 'after',
+							options: {
+								before: t('Before link'),
+								after: t('After link'),
+							},
+						},
+					},
 				],
 			},
 			{

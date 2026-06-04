@@ -39,6 +39,26 @@
 	background-image: var(--external-link-icon-image, none);
 }
 
+/* Icon position: before link */
+.external-links-icon-position-before .external-link.external-links-icon-enabled::before,
+.external-links-icon-position-before .internal-link.external-links-icon-enabled::before {
+	content: " ";
+	display: inline-block;
+	width: var(--external-link-icon-size);
+	height: var(--external-link-icon-size);
+	margin-right: var(--external-link-icon-margin);
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	vertical-align: middle;
+	background-image: var(--external-link-icon-image, none);
+}
+
+.external-links-icon-position-before .external-link.external-links-icon-enabled::after,
+.external-links-icon-position-before .internal-link.external-links-icon-enabled::after {
+	display: none;
+}
+
 /***
 Live Preview 图标样式
 ***/
@@ -55,6 +75,11 @@ Live Preview 图标样式
 	background-position: center;
 	vertical-align: middle;
 	background-image: var(--external-link-icon-image, none);
+}
+
+.cm-line .external-links-icon-inline.external-links-icon-position-before {
+	margin-left: 0;
+	margin-right: var(--external-link-icon-margin, 3px);
 }
 
 .cm-line.cm-line .external-links-icon-enabled.external-links-icon-enabled {

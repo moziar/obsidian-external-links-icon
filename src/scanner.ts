@@ -103,6 +103,9 @@ export class Scanner {
 			this.iconElementsByName.clear();
 			const doc = activeDocument;
 
+			// Update icon position body class
+			doc.body.classList.remove('external-links-icon-position-before');
+
 			const previewRoots = doc.querySelectorAll('.markdown-preview-view');
 			previewRoots.forEach(el => {
 				el.querySelectorAll('.external-links-icon-enabled').forEach(child => {
@@ -115,6 +118,9 @@ export class Scanner {
 			});
 
 			const settings = this.getSettings();
+			if (settings.iconPosition === 'before') {
+				doc.body.classList.add('external-links-icon-position-before');
+			}
 			const applied = new Set<Element>();
 			const icons: IconItem[] = getAllIconsSorted(settings);
 			if (!icons.length) return;

@@ -19,4 +19,5 @@ export interface ExternalLinksIconSettings {
 	fancyObsidianWebLink: boolean;
 	fancyObsidianNoteLink: 'none' | 'internal' | 'external' | 'both';
 	fancyAdvancedUriLink: boolean;
+	iconPosition: 'after' | 'before';
 }

@@ -106,4 +106,8 @@ export default {
 	'Internal': 'Internal',
 	'External': 'External',
 	'Both': 'Both',
+	'Icon position': 'Icon position',
+	'Choose whether the icon appears before or after the link text.': 'Choose whether the icon appears before or after the link text.',
+	'After link': 'After link',
+	'Before link': 'Before link',
 } as const;

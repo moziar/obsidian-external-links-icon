@@ -45,4 +45,5 @@ export const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
 	fancyObsidianWebLink: true,
 	fancyObsidianNoteLink: 'none',
 	fancyAdvancedUriLink: true,
+	iconPosition: 'after',
 };
