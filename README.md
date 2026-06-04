@@ -97,13 +97,10 @@ To add a custom icon, click **Add Website** or **Add URL Scheme** in the setting
 ![edit-icon.png](docs/images/edit-icon.png)
 
 ### Setting
-By default, both URL Scheme and WebSite icon are enabled. You could disable any of them in the plugin setting.
-
-There are two different Obsidian icons to help users better distinguish between Obsidian web links and note links.
-
-Obsidian Note Link icon is disabled by default. You can enable either _internal link_, _external link_, or both, or disable them entirely — it all depends on your workflow.
-
-You can customize the icon position (before or after the link), ensuring consistency with other plugins like Iconize. 
+- By default, both URL Scheme and WebSite icon are enabled. You could disable any of them in the plugin setting.
+- There are two different Obsidian icons to help users better distinguish between Obsidian web links and note links.
+- Obsidian Note Link icon is disabled by default. You can enable either _internal link_, _external link_, or both, or disable them entirely — it all depends on your workflow. 
+- You can customize the icon position (before or after the link), ensuring consistency with other plugins like Iconize. 
 
 ![setting](docs/images/setting.png)
 
