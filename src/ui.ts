@@ -350,7 +350,7 @@ function downloadSvg(svgData: string, fileName: string): void {
 		doc.body.removeChild(a);
 		URL.revokeObjectURL(url);
 	} catch {
-		new Notice(t('Failed to download SVG file'));
+		new Notice(t('Failed to download SVG file.'));
 	}
 }
 
