@@ -339,14 +339,15 @@ function renderPreview(doc: Document, previewDiv: HTMLElement, content: string, 
 
 function downloadSvg(svgData: string, fileName: string): void {
 	try {
+		const doc = activeDocument;
 		const blob = new Blob([svgData], { type: 'image/svg+xml' });
 		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
+		const a = doc.createElement('a');
 		a.href = url;
 		a.download = fileName;
-		document.body.appendChild(a);
+		doc.body.appendChild(a);
 		a.click();
-		document.body.removeChild(a);
+		doc.body.removeChild(a);
 		URL.revokeObjectURL(url);
 	} catch {
 		new Notice(t('Failed to download SVG file'));
