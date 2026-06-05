@@ -493,7 +493,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		settingItem.addButton(button => button
 			.setIcon('lucide-trash-2')
 			.setTooltip(t('Delete'))
-			.setDestructive()
+			.setWarning()
 			.onClick(async () => {
 				const modal = new ConfirmModal(this.plugin.app, `${t('Are you sure you want to delete the icon')} "${getIconDisplayName(icon)}"?`);
 				modal.open();
