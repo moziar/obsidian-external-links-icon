@@ -110,6 +110,5 @@ export default {
 	'Icon position': '图标位置',
 	'Choose whether the icon appears before or after the link text.': '选择图标显示在链接文字的前面还是后面。',
 	'After link': '链接后',
-	'Before link': '链接前',
-	'Failed to download SVG file': '下载 SVG 文件失败',
+	'Before link': '链接前'
 } as const;
