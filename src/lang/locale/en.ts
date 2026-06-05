@@ -110,4 +110,5 @@ export default {
 	'Choose whether the icon appears before or after the link text.': 'Choose whether the icon appears before or after the link text.',
 	'After link': 'After link',
 	'Before link': 'Before link',
+	'Failed to download SVG file': 'Failed to download SVG file',
 } as const;
