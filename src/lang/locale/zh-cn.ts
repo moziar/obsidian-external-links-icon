@@ -28,6 +28,7 @@ export default {
 	'Failed to add icon': '添加图标失败',
 	'Invalid SVG file content.': '无效的 SVG 文件内容。',
 	'Failed to upload SVG file.': '上传 SVG 文件失败。',
+	'Failed to download SVG file.': '下载 SVG 文件失败。',
 	'Upload an SVG file': '上传 SVG 文件',
 	'Default icon (light mode)': '默认图标（亮色模式）',
 	'Dark mode icon (optional)': '暗色模式图标（可选）',

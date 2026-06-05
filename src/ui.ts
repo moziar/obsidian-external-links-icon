@@ -339,15 +339,20 @@ function renderPreview(doc: Document, previewDiv: HTMLElement, content: string, 
 }
 
 function downloadSvg(svgData: string, fileName: string): void {
-	const blob = new Blob([svgData], { type: 'image/svg+xml' });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = fileName;
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
+	try {
+		const doc = activeDocument;
+		const blob = new Blob([svgData], {type: 'image/svg+xml'});
+		const url = URL.createObjectURL(blob);
+		const a = doc.createElement('a');
+		a.href = url;
+		a.download = fileName;
+		doc.body.appendChild(a);
+		a.click();
+		doc.body.removeChild(a);
+		URL.revokeObjectURL(url);
+	} catch {
+		new Notice(t('Failed to download SVG file.'));
+	}
 }
 
 interface BadgeElements {

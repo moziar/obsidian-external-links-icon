@@ -28,6 +28,7 @@ export default {
 	'Failed to add icon': 'Failed to add icon',
 	'Invalid SVG file content.': 'Invalid SVG file content.',
 	'Failed to upload SVG file.': 'Failed to upload SVG file.',
+	'Failed to download SVG file.': 'Failed to download SVG file.',
 	'Upload an SVG file': 'Upload an SVG file',
 	'Default icon (light mode)': 'Default icon (light mode)',
 	'Dark mode icon (optional)': 'Dark mode icon (optional)',
