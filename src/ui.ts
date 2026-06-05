@@ -207,7 +207,7 @@ export class EditIconModal extends Modal {
 				if (removeBtn) removeBtn.classList.remove('is-active');
 				if (removeIndicator) removeIndicator.textContent = '';
 				darkBadge.classList.remove('external-links-icon-badge-empty');
-				renderPreview(doc, darkPreview, newDarkSvgData!, 'copied');
+				renderPreview(doc, darkPreview, newDarkSvgData, 'copied');
 				new Notice(t('Copied to dark'));
 			};
 		}
@@ -239,7 +239,7 @@ export class EditIconModal extends Modal {
 		if (this.icon.themeDarkSvgData) {
 			removeBtn = darkRow.createEl('button', { text: t('Remove'), cls: 'external-links-icon-btn external-links-icon-btn-danger' });
 			removeIndicator = darkRow.createSpan({ cls: 'external-links-icon-remove-indicator' });
-			removeBtn!.onclick = () => {
+			removeBtn.onclick = () => {
 				removeDark = !removeDark;
 				removeIndicator!.textContent = removeDark ? ` ✓ ${t('Will be removed on save')}` : '';
 				removeBtn!.classList.toggle('is-active', removeDark);
@@ -339,17 +339,18 @@ function renderPreview(doc: Document, previewDiv: HTMLElement, content: string, 
 
 function downloadSvg(svgData: string, fileName: string): void {
 	try {
+		const doc = activeDocument;
 		const blob = new Blob([svgData], { type: 'image/svg+xml' });
 		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
+		const a = doc.createElement('a');
 		a.href = url;
 		a.download = fileName;
-		document.body.appendChild(a);
+		doc.body.appendChild(a);
 		a.click();
-		document.body.removeChild(a);
+		doc.body.removeChild(a);
 		URL.revokeObjectURL(url);
 	} catch {
-		new Notice(t('Failed to download SVG file'));
+		new Notice(t('Failed to download SVG file.'));
 	}
 }
 
