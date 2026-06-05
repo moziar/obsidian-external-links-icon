@@ -1,7 +1,7 @@
 import type { ExternalLinksIconSettings, IconItem } from './types';
 import { DEFAULT_SETTINGS } from './constants';
 import { getCachedIconImage } from './utils';
-import { preferDarkThemeFromDocument, getSvgSourceForTheme } from './svg';
+import { preferDarkThemeFromDocument } from './svg';
 import { getMatchContext, iconMatchesContext, getAllIconsSorted } from './icon-matcher';
 
 
