@@ -12,7 +12,6 @@ const prod = (process.argv[2] === "production");
 
 const externals = [
 	"obsidian",
-	"electron",
 	"@codemirror/autocomplete",
 	"@codemirror/collab",
 	"@codemirror/commands",
@@ -32,7 +31,7 @@ const context = await esbuild.context({
 	},
 	entryPoints: ["src/main.ts"],
 	bundle: true,
-	platform: "node",
+	platform: "browser",
 	external: externals,
 	format: "cjs",
 	target: "es2018",
