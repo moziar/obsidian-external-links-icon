@@ -119,8 +119,26 @@ export function getSortedIcons(icons: Record<string, IconItem>): IconItem[] {
 	return Object.values(icons).sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
+export function getUrlTarget(icon: IconItem): string {
+	const webMap: Record<string, string> = ICON_CATEGORIES.WEB;
+	return (webMap[icon.id] || icon.target || icon.id || '').toLowerCase();
+}
+
 export function getAllIconsSorted(settings: ExternalLinksIconSettings): IconItem[] {
-	return getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(getSortedIcons(settings.customIcons || {}));
+	const customUrl = getSortedIcons(settings.customIcons || {}).filter(i => i.linkType === 'url');
+	const builtinUrl = getSortedIcons(DEFAULT_SETTINGS.icons || {}).filter(i => i.linkType === 'url');
+	const builtinScheme = getSortedIcons(DEFAULT_SETTINGS.icons || {}).filter(i => i.linkType === 'scheme');
+	const customScheme = getSortedIcons(settings.customIcons || {}).filter(i => i.linkType === 'scheme');
+
+	// URL: custom first, then builtin, sorted by target length descending (most specific first)
+	const urlIcons = [...customUrl, ...builtinUrl].sort((a, b) => {
+		return getUrlTarget(b).length - getUrlTarget(a).length;
+	});
+
+	// Scheme: builtin first, then custom, both sorted by order
+	const schemeIcons = [...builtinScheme, ...customScheme];
+
+	return [...urlIcons, ...schemeIcons];
 }
 
 export function matchIcon(
@@ -130,7 +148,7 @@ export function matchIcon(
 	settings: ExternalLinksIconSettings
 ): IconItem | null {
 	const ctx = getMatchContext(href, isExternal, isInternal, settings);
-	const icons: IconItem[] = getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(getSortedIcons(settings.customIcons || {}));
+	const icons = getAllIconsSorted(settings);
 	if (!icons.length) return null;
 
 	for (const icon of icons) {
