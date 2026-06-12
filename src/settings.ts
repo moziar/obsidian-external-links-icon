@@ -417,19 +417,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		previewContainer.createSpan({ text: getIconDisplayName(icon) });
 	}
 
-	private addNameInput(settingItem: Setting, icon: IconItem): void {
-		if (icon.linkType === 'scheme') {
-			// Scheme type: single input
-			const placeholder = t('Scheme identifier');
-			const targetStr = typeof icon.target === 'string' ? icon.target : (Array.isArray(icon.target) ? icon.target[0] || '' : '');
-			settingItem.addText(text => {
-				text.setPlaceholder(placeholder)
-					.setValue(targetStr)
-					.onChange((value) => {
-						this.debounceUpdateTarget(icon.id, value);
-					});
-			});
-		}
+	private addNameInput(_settingItem: Setting, _icon: IconItem): void {
+		// Domain/scheme editing has been moved to EditIconModal
 	}
 
 	private debounceUpdateTarget(id: string, newTarget: string | string[]): void {
