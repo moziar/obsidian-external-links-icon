@@ -1,4 +1,4 @@
-import { App, Modal, Notice, setIcon } from 'obsidian';
+import { App, Modal, Notice, Setting, setIcon } from 'obsidian';
 import type { IconItem, LinkType } from './types';
 import { t } from './lang/helper';
 import { prepareSvgForSettings } from './svg';
@@ -67,28 +67,29 @@ export class NewIconModal extends Modal {
 
 		// For URL type: multi-value domain input; for Scheme: single input
 		let domainList: string[] = [];
-		let targetInput: HTMLInputElement;
-		let domainTagsContainer: HTMLDivElement | undefined;
+		let targetInput!: HTMLInputElement;
+		let domainListEl: HTMLUListElement | undefined;
 
 		if (isUrl) {
-			targetInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
+			const inputRow = contentEl.createDiv({ cls: 'external-links-icon-domain-input-row' });
+			targetInput = inputRow.createEl('input', { cls: 'external-links-icon-domain-input' });
 			targetInput.type = 'text';
 			targetInput.placeholder = t('Domain (e.g. baike.baidu.com or baidu.com/about)');
+			const addBtn = inputRow.createEl('button', { cls: 'external-links-icon-domain-add-btn clickable-icon' });
+			setIcon(addBtn, 'lucide-plus');
 
-			const addRow = contentEl.createDiv({ cls: 'external-links-icon-domain-add-row' });
-			const addDomainBtn = addRow.createEl('button', { text: t('Add domain'), cls: 'external-links-icon-btn' });
-			domainTagsContainer = contentEl.createDiv({ cls: 'external-links-icon-domain-tags' });
+			domainListEl = contentEl.createEl('ul', { cls: 'external-links-icon-domain-list' });
 
-			const renderTags = () => {
-				domainTagsContainer!.empty();
+			const renderDomains = () => {
+				domainListEl!.empty();
 				domainList.forEach((domain, idx) => {
-					const tag = domainTagsContainer!.createDiv({ cls: 'external-links-icon-domain-tag' });
-					tag.createSpan({ text: domain });
-					const removeBtn = tag.createEl('button', { cls: 'external-links-icon-domain-tag-remove' });
+					const li = domainListEl!.createEl('li', { cls: 'external-links-icon-domain-item' });
+					li.createSpan({ text: domain });
+					const removeBtn = li.createEl('button', { cls: 'external-links-icon-domain-item-remove clickable-icon' });
 					setIcon(removeBtn, 'lucide-x');
 					removeBtn.onclick = () => {
 						domainList.splice(idx, 1);
-						renderTags();
+						renderDomains();
 					};
 				});
 			};
@@ -102,10 +103,10 @@ export class NewIconModal extends Modal {
 				}
 				domainList.push(val);
 				targetInput.value = '';
-				renderTags();
+				renderDomains();
 			};
 
-			addDomainBtn.onclick = addDomain;
+			addBtn.onclick = addDomain;
 			targetInput.addEventListener('keydown', (e) => {
 				if (e.key === 'Enter') {
 					e.preventDefault();
@@ -237,37 +238,35 @@ export class EditIconModal extends Modal {
 
 		// Domain editing for URL type
 		let domainList: string[] = [];
-		let domainTagsContainer: HTMLDivElement | undefined;
+		let domainListEl: HTMLUListElement | undefined;
 		let targetInput: HTMLInputElement | undefined;
 
 		if (this.icon.linkType === 'url') {
 			domainList = [this.icon.target || ''].flat().filter(Boolean);
 
-			const domainSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
-			domainSection.createEl('div', { text: t('Domains'), cls: 'external-links-icon-upload-label' });
+			const inputRow = contentEl.createDiv({ cls: 'external-links-icon-domain-input-row' });
+			targetInput = inputRow.createEl('input', { cls: 'external-links-icon-domain-input' });
+			targetInput.type = 'text';
+			targetInput.placeholder = t('Domain (e.g. baike.baidu.com or baidu.com/about)');
+			const addBtn = inputRow.createEl('button', { cls: 'external-links-icon-domain-add-btn clickable-icon' });
+			setIcon(addBtn, 'lucide-plus');
 
-			domainTagsContainer = domainSection.createDiv({ cls: 'external-links-icon-domain-tags' });
+			domainListEl = contentEl.createEl('ul', { cls: 'external-links-icon-domain-list' });
 
-			const renderTags = () => {
-				domainTagsContainer!.empty();
+			const renderDomains = () => {
+				domainListEl!.empty();
 				domainList.forEach((domain, idx) => {
-					const tag = domainTagsContainer!.createDiv({ cls: 'external-links-icon-domain-tag' });
-					tag.createSpan({ text: domain });
-					const removeBtn = tag.createEl('button', { cls: 'external-links-icon-domain-tag-remove' });
+					const li = domainListEl!.createEl('li', { cls: 'external-links-icon-domain-item' });
+					li.createSpan({ text: domain });
+					const removeBtn = li.createEl('button', { cls: 'external-links-icon-domain-item-remove clickable-icon' });
 					setIcon(removeBtn, 'lucide-x');
 					removeBtn.onclick = () => {
 						domainList.splice(idx, 1);
-						renderTags();
+						renderDomains();
 					};
 				});
 			};
-			renderTags();
-
-			const addRow = domainSection.createDiv({ cls: 'external-links-icon-domain-add-row' });
-			targetInput = addRow.createEl('input', { cls: 'external-links-icon-modal-input' });
-			targetInput.type = 'text';
-			targetInput.placeholder = t('Domain (e.g. baike.baidu.com or baidu.com/about)');
-			const addDomainBtn = addRow.createEl('button', { text: t('Add domain'), cls: 'external-links-icon-btn' });
+			renderDomains();
 
 			const addDomain = () => {
 				const val = targetInput!.value.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
@@ -278,11 +277,11 @@ export class EditIconModal extends Modal {
 				}
 				domainList.push(val);
 				targetInput!.value = '';
-				renderTags();
+				renderDomains();
 			};
 
-			addDomainBtn.onclick = addDomain;
-			targetInput.addEventListener('keydown', (e) => {
+			addBtn.onclick = addDomain;
+			targetInput!.addEventListener('keydown', (e) => {
 				if (e.key === 'Enter') {
 					e.preventDefault();
 					addDomain();
@@ -290,13 +289,14 @@ export class EditIconModal extends Modal {
 			});
 		} else {
 			// Scheme type: single target input
-			const schemeSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
-			schemeSection.createEl('div', { text: t('Scheme identifier'), cls: 'external-links-icon-upload-label' });
-			targetInput = schemeSection.createEl('input', { cls: 'external-links-icon-modal-input' });
-			targetInput.type = 'text';
-			targetInput.placeholder = t('Scheme identifier (e.g. zotero)');
-			const targetStr = typeof this.icon.target === 'string' ? this.icon.target : (Array.isArray(this.icon.target) ? this.icon.target[0] || '' : '');
-			targetInput.value = targetStr;
+			new Setting(contentEl)
+				.setName(t('Scheme identifier'))
+				.addText(text => {
+					targetInput = text.inputEl;
+					text.setPlaceholder(t('Scheme identifier (e.g. zotero)'));
+					const targetStr = typeof this.icon.target === 'string' ? this.icon.target : (Array.isArray(this.icon.target) ? this.icon.target[0] || '' : '');
+					text.setValue(targetStr);
+				});
 		}
 
 		let newSvgData: string | undefined;
