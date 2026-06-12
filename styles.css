@@ -364,6 +364,16 @@ body.theme-dark .external-links-icon-badge-dark {
 
 .external-links-icon-desc { margin-bottom: 10px; }
 
+.external-links-icon-upload-columns {
+	display: flex;
+	gap: 16px;
+}
+
+.external-links-icon-upload-columns > .external-links-icon-upload-section {
+	flex: 1;
+	min-width: 0;
+}
+
 .external-links-icon-upload-section {
 	margin-bottom: 16px;
 }

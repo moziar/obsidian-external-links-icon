@@ -36,7 +36,7 @@ export default {
 	'Edit': '编辑',
 	'Save': '保存',
 	'Failed to save': '保存失败',
-	'Upload new icon': '上传新图标',
+	'Update': '更新',
 	'Remove': '移除',
 	'Will be removed on save': '保存后将移除',
 	'Default icon is required when uploading a dark mode icon': '上传暗色模式图标时，默认图标为必选',

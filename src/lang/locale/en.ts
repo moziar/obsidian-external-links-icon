@@ -36,7 +36,7 @@ export default {
 	'Edit': 'Edit',
 	'Save': 'Save',
 	'Failed to save': 'Failed to save',
-	'Upload new icon': 'Upload new icon',
+	'Update': 'Update',
 	'Remove': 'Remove',
 	'Will be removed on save': 'Will be removed on save',
 	'Default icon is required when uploading a dark mode icon': 'Default icon is required when uploading a dark mode icon',

@@ -1,4 +1,4 @@
-import { App, Modal, Notice, Setting, setIcon } from 'obsidian';
+import { App, Modal, Notice, Platform, Setting, setIcon } from 'obsidian';
 import type { IconItem, LinkType } from './types';
 import { t } from './lang/helper';
 import { prepareSvgForSettings } from './svg';
@@ -122,7 +122,10 @@ export class NewIconModal extends Modal {
 		let uploadedSvgData: string | undefined;
 		let uploadedDarkSvgData: string | undefined;
 
-		const defaultSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
+		const isDesktop = !Platform.isMobile;
+		const iconContainer = contentEl.createDiv({ cls: isDesktop ? 'external-links-icon-upload-columns' : '' });
+
+		const defaultSection = iconContainer.createDiv({ cls: 'external-links-icon-upload-section' });
 		defaultSection.createEl('div', { text: t('Default icon (light mode)'), cls: 'external-links-icon-upload-label' });
 
 		const lightBody = defaultSection.createDiv({ cls: 'external-links-icon-section-body' });
@@ -144,7 +147,7 @@ export class NewIconModal extends Modal {
 		doc.body.appendChild(lightInput);
 		lightUploadBtn.onclick = () => lightInput.click();
 
-		const darkSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
+		const darkSection = iconContainer.createDiv({ cls: 'external-links-icon-upload-section' });
 		darkSection.createEl('div', { text: t('Dark mode icon (optional)'), cls: 'external-links-icon-upload-label' });
 
 		const darkBody = darkSection.createDiv({ cls: 'external-links-icon-section-body' });
@@ -156,7 +159,6 @@ export class NewIconModal extends Modal {
 		const darkUploadBtn = darkRow.createEl('button', { cls: 'external-links-icon-btn' });
 		setIcon(darkUploadBtn, 'lucide-upload');
 		darkUploadBtn.appendText(` ${t('Upload icon')}`);
-		darkSection.createEl('div', { text: t('Dark mode icon hint'), cls: 'external-links-icon-upload-hint' });
 
 		const darkInput = createFileInput(doc, (content) => {
 			uploadedDarkSvgData = content;
@@ -307,7 +309,10 @@ export class EditIconModal extends Modal {
 		let darkBadge: HTMLDivElement;
 		let darkPreview: HTMLDivElement;
 
-		const lightSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
+		const isDesktop = !Platform.isMobile;
+		const iconContainer = contentEl.createDiv({ cls: isDesktop ? 'external-links-icon-upload-columns' : '' });
+
+		const lightSection = iconContainer.createDiv({ cls: 'external-links-icon-upload-section' });
 		lightSection.createEl('div', { text: t('Default icon (light mode)'), cls: 'external-links-icon-upload-label' });
 
 		const lightBody = lightSection.createDiv({ cls: 'external-links-icon-section-body' });
@@ -318,12 +323,19 @@ export class EditIconModal extends Modal {
 		const lightRow = lightControls.createDiv({ cls: 'external-links-icon-control-row' });
 		const lightUploadBtn = lightRow.createEl('button', { cls: 'external-links-icon-btn' });
 		setIcon(lightUploadBtn, 'lucide-upload');
-		lightUploadBtn.appendText(` ${t('Upload new icon')}`);
+		lightUploadBtn.appendText(` ${t('Update')}`);
 
 		if (this.icon.svgData && !this.icon.themeDarkSvgData) {
-			const copyBtn = lightRow.createEl('button', { cls: 'external-links-icon-btn external-links-icon-btn-copy' });
-			setIcon(copyBtn, 'lucide-copy');
-			copyBtn.appendText(` ${t('Copy to dark')}`);
+			const copyBtnCls = isDesktop ? 'clickable-icon' : 'external-links-icon-btn external-links-icon-btn-copy';
+			const copyBtn = lightRow.createEl('button', { cls: copyBtnCls });
+			if (isDesktop) {
+				setIcon(copyBtn, 'lucide-square-arrow-right');
+				copyBtn.setAttribute('aria-label', t('Copy to dark'));
+				copyBtn.style.marginLeft = 'auto';
+			} else {
+				setIcon(copyBtn, 'lucide-copy');
+				copyBtn.appendText(` ${t('Copy to dark')}`);
+			}
 			copyBtn.onclick = () => {
 				newDarkSvgData = newSvgData || this.icon.svgData;
 				removeDark = false;
@@ -344,7 +356,7 @@ export class EditIconModal extends Modal {
 		doc.body.appendChild(lightInput);
 		lightUploadBtn.onclick = () => lightInput.click();
 
-		const darkSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
+		const darkSection = iconContainer.createDiv({ cls: 'external-links-icon-upload-section' });
 		darkSection.createEl('div', { text: t('Dark mode icon (optional)'), cls: 'external-links-icon-upload-label' });
 
 		const darkBody = darkSection.createDiv({ cls: 'external-links-icon-section-body' });
@@ -357,7 +369,7 @@ export class EditIconModal extends Modal {
 		const darkRow = darkControls.createDiv({ cls: 'external-links-icon-control-row' });
 		const darkUploadBtn = darkRow.createEl('button', { cls: 'external-links-icon-btn' });
 		setIcon(darkUploadBtn, 'lucide-upload');
-		darkUploadBtn.appendText(` ${t('Upload new icon')}`);
+		darkUploadBtn.appendText(` ${this.icon.themeDarkSvgData ? t('Update') : t('Upload icon')}`);
 
 		if (this.icon.themeDarkSvgData) {
 			removeBtn = darkRow.createEl('button', { text: t('Remove'), cls: 'external-links-icon-btn external-links-icon-btn-danger' });
@@ -366,10 +378,12 @@ export class EditIconModal extends Modal {
 				removeDark = !removeDark;
 				removeIndicator!.textContent = removeDark ? ` ✓ ${t('Will be removed on save')}` : '';
 				removeBtn!.classList.toggle('is-active', removeDark);
+				if (isDesktop) {
+					darkUploadBtn.style.display = removeDark ? 'none' : '';
+				}
 			};
 		}
 
-		darkSection.createEl('div', { text: t('Dark mode icon hint'), cls: 'external-links-icon-upload-hint' });
 
 		const darkInput = createFileInput(doc, (content) => {
 			newDarkSvgData = content;
