@@ -11,7 +11,7 @@ export default {
 	'Add URL scheme': 'Add URL scheme',
 	'Icon name (unique)': 'Icon name (unique)',
 	'Website or scheme identifier': 'Website or scheme identifier',
-	'Domain (e.g. baidu.com or https://baidu.com)': 'Domain (e.g. baidu.com or https://baidu.com)',
+	'Domain (e.g. baike.baidu.com or baidu.com/about)': 'Domain (e.g. baike.baidu.com or baidu.com/about)',
 	'Scheme identifier (e.g. zotero)': 'Scheme identifier (e.g. zotero)',
 	'Upload icon': 'Upload icon',
 	'Cancel': 'Cancel',
@@ -40,6 +40,7 @@ export default {
 	'Remove': 'Remove',
 	'Will be removed on save': 'Will be removed on save',
 	'Default icon is required when uploading a dark mode icon': 'Default icon is required when uploading a dark mode icon',
+	'Default icon is required': 'Default icon is required',
 	'Are you sure you want to delete the icon': 'Are you sure you want to delete the icon',
 	'Download icon': 'Download icon',
 	'Copy to dark': 'Copy to dark',
@@ -110,5 +111,8 @@ export default {
 	'Icon position': 'Icon position',
 	'Choose whether the icon appears before or after the link text.': 'Choose whether the icon appears before or after the link text.',
 	'After link': 'After link',
-	'Before link': 'Before link'
+	'Before link': 'Before link',
+	'Add domain': 'Add domain',
+	'Domains': 'Domains',
+	'Domain already added': 'Domain already added',
 } as const;

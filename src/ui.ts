@@ -35,7 +35,7 @@ export class ConfirmModal extends Modal {
 export interface NewIconData {
 	linkType: LinkType;
 	name: string;
-	target: string;
+	target: string | string[];
 	svgData?: string;
 	themeDarkSvgData?: string;
 }
@@ -63,11 +63,60 @@ export class NewIconModal extends Modal {
 		nameInput.placeholder = t('Icon name (unique)');
 		nameInput.type = 'text';
 
-		const targetInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
-		targetInput.type = 'text';
+		const isUrl = this._defaultLinkType === 'url';
 
-		const defaultType = this._defaultLinkType || 'url';
-		targetInput.placeholder = defaultType === 'url' ? t('Domain (e.g. baidu.com or https://baidu.com)') : t('Scheme identifier (e.g. zotero)');
+		// For URL type: multi-value domain input; for Scheme: single input
+		let domainList: string[] = [];
+		let targetInput: HTMLInputElement;
+		let domainTagsContainer: HTMLDivElement | undefined;
+
+		if (isUrl) {
+			targetInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
+			targetInput.type = 'text';
+			targetInput.placeholder = t('Domain (e.g. baike.baidu.com or baidu.com/about)');
+
+			const addRow = contentEl.createDiv({ cls: 'external-links-icon-domain-add-row' });
+			const addDomainBtn = addRow.createEl('button', { text: t('Add domain'), cls: 'external-links-icon-btn' });
+			domainTagsContainer = contentEl.createDiv({ cls: 'external-links-icon-domain-tags' });
+
+			const renderTags = () => {
+				domainTagsContainer!.empty();
+				domainList.forEach((domain, idx) => {
+					const tag = domainTagsContainer!.createDiv({ cls: 'external-links-icon-domain-tag' });
+					tag.createSpan({ text: domain });
+					const removeBtn = tag.createEl('button', { cls: 'external-links-icon-domain-tag-remove' });
+					setIcon(removeBtn, 'lucide-x');
+					removeBtn.onclick = () => {
+						domainList.splice(idx, 1);
+						renderTags();
+					};
+				});
+			};
+
+			const addDomain = () => {
+				const val = targetInput.value.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
+				if (!val) return;
+				if (domainList.includes(val)) {
+					new Notice(t('Domain already added'));
+					return;
+				}
+				domainList.push(val);
+				targetInput.value = '';
+				renderTags();
+			};
+
+			addDomainBtn.onclick = addDomain;
+			targetInput.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					addDomain();
+				}
+			});
+		} else {
+			targetInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
+			targetInput.type = 'text';
+			targetInput.placeholder = t('Scheme identifier (e.g. zotero)');
+		}
 
 		let uploadedSvgData: string | undefined;
 		let uploadedDarkSvgData: string | undefined;
@@ -123,15 +172,25 @@ export class NewIconModal extends Modal {
 		const addBtn = buttonContainer.createEl('button', { text: t('Add icon') });
 		addBtn.onclick = () => {
 			const name = nameInput.value.trim();
-			let target = targetInput.value.trim();
 			if (!name) { new Notice(t('Name is required')); return; }
-			if (!target) { new Notice(t('Target is required')); return; }
-			if (!uploadedSvgData && uploadedDarkSvgData) {
-				new Notice(t('Default icon is required when uploading a dark mode icon'));
-				return;
+
+			let target: string | string[];
+			if (isUrl) {
+				// Also pick up any text still in the input that hasn't been added
+				const remaining = targetInput.value.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
+				if (remaining && !domainList.includes(remaining)) {
+					domainList.push(remaining);
+				}
+				if (domainList.length === 0) { new Notice(t('Target is required')); return; }
+				target = domainList.length === 1 ? domainList[0] : domainList;
+			} else {
+				target = targetInput.value.trim();
+				if (!target) { new Notice(t('Target is required')); return; }
 			}
-			if (this._defaultLinkType === 'url') {
-				target = target.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+
+			if (!uploadedSvgData) {
+				new Notice(t('Default icon is required'));
+				return;
 			}
 			const result = this.onSubmit({ linkType: this._defaultLinkType, name, target, svgData: uploadedSvgData, themeDarkSvgData: uploadedDarkSvgData });
 			if (result instanceof Promise) {
@@ -156,13 +215,13 @@ export class NewIconModal extends Modal {
 
 export class EditIconModal extends Modal {
 	private icon: IconItem;
-	private onSave: (data: { svgData?: string; themeDarkSvgData?: string | null }) => void | Promise<void>;
+	private onSave: (data: { svgData?: string; themeDarkSvgData?: string | null; target?: string | string[] }) => void | Promise<void>;
 	private hiddenInputs: HTMLInputElement[] = [];
 
 	constructor(
 		app: App,
 		icon: IconItem,
-		onSave: (data: { svgData?: string; themeDarkSvgData?: string | null }) => void | Promise<void>,
+		onSave: (data: { svgData?: string; themeDarkSvgData?: string | null; target?: string | string[] }) => void | Promise<void>,
 	) {
 		super(app);
 		this.icon = icon;
@@ -175,6 +234,70 @@ export class EditIconModal extends Modal {
 		const doc = contentEl.ownerDocument;
 
 		contentEl.createEl('h3', { text: `${t('Edit icon')}: ${this.icon.name}` });
+
+		// Domain editing for URL type
+		let domainList: string[] = [];
+		let domainTagsContainer: HTMLDivElement | undefined;
+		let targetInput: HTMLInputElement | undefined;
+
+		if (this.icon.linkType === 'url') {
+			domainList = [this.icon.target || ''].flat().filter(Boolean);
+
+			const domainSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
+			domainSection.createEl('div', { text: t('Domains'), cls: 'external-links-icon-upload-label' });
+
+			domainTagsContainer = domainSection.createDiv({ cls: 'external-links-icon-domain-tags' });
+
+			const renderTags = () => {
+				domainTagsContainer!.empty();
+				domainList.forEach((domain, idx) => {
+					const tag = domainTagsContainer!.createDiv({ cls: 'external-links-icon-domain-tag' });
+					tag.createSpan({ text: domain });
+					const removeBtn = tag.createEl('button', { cls: 'external-links-icon-domain-tag-remove' });
+					setIcon(removeBtn, 'lucide-x');
+					removeBtn.onclick = () => {
+						domainList.splice(idx, 1);
+						renderTags();
+					};
+				});
+			};
+			renderTags();
+
+			const addRow = domainSection.createDiv({ cls: 'external-links-icon-domain-add-row' });
+			targetInput = addRow.createEl('input', { cls: 'external-links-icon-modal-input' });
+			targetInput.type = 'text';
+			targetInput.placeholder = t('Domain (e.g. baike.baidu.com or baidu.com/about)');
+			const addDomainBtn = addRow.createEl('button', { text: t('Add domain'), cls: 'external-links-icon-btn' });
+
+			const addDomain = () => {
+				const val = targetInput!.value.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
+				if (!val) return;
+				if (domainList.includes(val)) {
+					new Notice(t('Domain already added'));
+					return;
+				}
+				domainList.push(val);
+				targetInput!.value = '';
+				renderTags();
+			};
+
+			addDomainBtn.onclick = addDomain;
+			targetInput.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					addDomain();
+				}
+			});
+		} else {
+			// Scheme type: single target input
+			const schemeSection = contentEl.createDiv({ cls: 'external-links-icon-upload-section' });
+			schemeSection.createEl('div', { text: t('Scheme identifier'), cls: 'external-links-icon-upload-label' });
+			targetInput = schemeSection.createEl('input', { cls: 'external-links-icon-modal-input' });
+			targetInput.type = 'text';
+			targetInput.placeholder = t('Scheme identifier (e.g. zotero)');
+			const targetStr = typeof this.icon.target === 'string' ? this.icon.target : (Array.isArray(this.icon.target) ? this.icon.target[0] || '' : '');
+			targetInput.value = targetStr;
+		}
 
 		let newSvgData: string | undefined;
 		let newDarkSvgData: string | undefined;
@@ -269,13 +392,39 @@ export class EditIconModal extends Modal {
 				new Notice(t('Default icon is required when uploading a dark mode icon'));
 				return;
 			}
-			const data: { svgData?: string; themeDarkSvgData?: string | null } = {};
+			const data: { svgData?: string; themeDarkSvgData?: string | null; target?: string | string[] } = {};
 			if (newSvgData) data.svgData = newSvgData;
 			if (removeDark) {
 				data.themeDarkSvgData = null;
 			} else if (newDarkSvgData) {
 				data.themeDarkSvgData = newDarkSvgData;
 			}
+
+			// Target editing
+			if (this.icon.linkType === 'url') {
+				// Also pick up any text still in the input
+				const remaining = targetInput!.value.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
+				if (remaining && !domainList.includes(remaining)) {
+					domainList.push(remaining);
+				}
+				if (domainList.length > 0) {
+					const newTarget = domainList.length === 1 ? domainList[0] : [...domainList];
+					// Only include target if it changed
+					const oldTargets = [this.icon.target || ''].flat().filter(Boolean);
+					if (JSON.stringify(oldTargets) !== JSON.stringify(domainList)) {
+						data.target = newTarget;
+					}
+				} else {
+					data.target = '';
+				}
+			} else {
+				// Scheme type
+				const newSchemeTarget = targetInput!.value.trim();
+				if (newSchemeTarget !== (typeof this.icon.target === 'string' ? this.icon.target : '')) {
+					data.target = newSchemeTarget;
+				}
+			}
+
 			const result = this.onSave(data);
 			if (result instanceof Promise) {
 				result.catch((e) => {

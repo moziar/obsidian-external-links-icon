@@ -535,3 +535,56 @@ details.builtin-list summary {
 	box-shadow: none;
 	margin: 0;
 }
+
+/***
+Domain tags (multi-target UI)
+***/
+
+.external-links-icon-domain-add-row {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+	margin-bottom: 6px;
+}
+
+.external-links-icon-domain-add-row input {
+	flex: 1;
+	min-width: 0;
+}
+
+.external-links-icon-domain-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-bottom: 6px;
+}
+
+.external-links-icon-domain-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 8px;
+	border-radius: 4px;
+	background: var(--background-modifier-hover);
+	font-size: 12px;
+	color: var(--text-normal);
+}
+
+.external-links-icon-domain-tag-remove {
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	color: var(--text-muted);
+	display: inline-flex;
+	align-items: center;
+}
+
+.external-links-icon-domain-tag-remove:hover {
+	color: var(--text-error);
+}
+
+.external-links-icon-domain-tag-remove svg {
+	width: 12px;
+	height: 12px;
+}

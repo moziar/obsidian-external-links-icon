@@ -11,7 +11,7 @@ export default {
 	'Add URL scheme': '添加 URL Scheme',
 	'Icon name (unique)': '图标名称（唯一）',
 	'Website or scheme identifier': '网站或协议标识符',
-	'Domain (e.g. baidu.com or https://baidu.com)': '域名（例如 baidu.com 或 https://baidu.com）',
+	'Domain (e.g. baike.baidu.com or baidu.com/about)': '域名（例如 baike.baidu.com 或 baidu.com/about）',
 	'Scheme identifier (e.g. zotero)': '协议标识符（例如 zotero）',
 	'Upload icon': '上传图标',
 	'Cancel': '取消',
@@ -40,6 +40,7 @@ export default {
 	'Remove': '移除',
 	'Will be removed on save': '保存后将移除',
 	'Default icon is required when uploading a dark mode icon': '上传暗色模式图标时，默认图标为必选',
+	'Default icon is required': '请上传默认图标',
 	'Are you sure you want to delete the icon': '确定要删除图标',
 	'Download icon': '下载图标',
 	'Copy to dark': '复制到暗色',
@@ -110,5 +111,8 @@ export default {
 	'Icon position': '图标位置',
 	'Choose whether the icon appears before or after the link text.': '选择图标显示在链接文字的前面还是后面。',
 	'After link': '链接后',
-	'Before link': '链接前'
+	'Before link': '链接前',
+	'Add domain': '添加域名',
+	'Domains': '域名',
+	'Domain already added': '域名已添加',
 } as const;

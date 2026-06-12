@@ -7,7 +7,7 @@ export interface IconItem {
 	order: number;
 	linkType: LinkType;
 	themeDarkSvgData?: string;
-	target?: string;
+	target?: string | string[];
 }
 
 export interface ExternalLinksIconSettings {

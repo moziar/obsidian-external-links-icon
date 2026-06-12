@@ -96,7 +96,7 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 		const idx = hrefLower.indexOf('://');
 		if (idx <= 0) return false;
 		const scheme = hrefLower.slice(0, idx);
-		const expected = (icon.target || icon.id || '').toLowerCase();
+		const expected = ((icon.target as string) || icon.id || '').toLowerCase();
 		if (!expected) return false;
 		return scheme === expected;
 	}
@@ -107,9 +107,8 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 		if (!hrefLower.startsWith('http://') && !hrefLower.startsWith('https://')) return false;
 		const webMap: Record<string, string> = ICON_CATEGORIES.WEB;
 		const mapped = webMap[icon.id];
-		const pattern = (mapped || icon.target || icon.id || '').toLowerCase();
-		if (!pattern) return false;
-		return hrefLower.indexOf(pattern) !== -1;
+		const patterns = [mapped || icon.target || icon.id || ''].flat().map(p => p.toLowerCase());
+		return patterns.some(p => p && hrefLower.indexOf(p) !== -1);
 	}
 
 	return false;
@@ -121,7 +120,9 @@ export function getSortedIcons(icons: Record<string, IconItem>): IconItem[] {
 
 export function getUrlTarget(icon: IconItem): string {
 	const webMap: Record<string, string> = ICON_CATEGORIES.WEB;
-	return (webMap[icon.id] || icon.target || icon.id || '').toLowerCase();
+	const mapped = webMap[icon.id];
+	const targets = [mapped || icon.target || icon.id || ''].flat();
+	return targets.reduce((a, b) => b.length > a.length ? b : a, '').toLowerCase();
 }
 
 export function getAllIconsSorted(settings: ExternalLinksIconSettings): IconItem[] {

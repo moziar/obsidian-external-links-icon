@@ -272,7 +272,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		};
 	}
 
-	private async addIconWithData(data: { linkType: LinkType; name: string; target: string; svgData?: string; themeDarkSvgData?: string }) {
+	private async addIconWithData(data: { linkType: LinkType; name: string; target: string | string[]; svgData?: string; themeDarkSvgData?: string }) {
 		const { linkType, name, target, svgData, themeDarkSvgData } = data;
 		const id = name;
 		const customIcons = this.plugin.settings.customIcons || {};
@@ -281,9 +281,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			return;
 		}
 
-		let normalized = target.trim();
+		let normalized: string | string[];
 		if (linkType === 'url') {
-			normalized = normalized.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+			normalized = [target].flat().map(t => t.trim().replace(/^https?:\/\//i, '').replace(/\/$/, ''));
+			if (normalized.length === 1) normalized = normalized[0];
+		} else {
+			normalized = (target as string).trim();
 		}
 
 		const maxOrder = Object.values(customIcons).reduce((max, ic: IconItem) => Math.max(max, ic.order || 0), -1);
@@ -415,17 +418,21 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	}
 
 	private addNameInput(settingItem: Setting, icon: IconItem): void {
-		const placeholder = icon.linkType === 'url' ? t('Example.com') : t('Scheme identifier');
-		settingItem.addText(text => {
-			text.setPlaceholder(placeholder)
-				.setValue(icon.target || '')
-				.onChange((value) => {
-					this.debounceUpdateTarget(icon.id, value);
-				});
-		});
+		if (icon.linkType === 'scheme') {
+			// Scheme type: single input
+			const placeholder = t('Scheme identifier');
+			const targetStr = typeof icon.target === 'string' ? icon.target : (Array.isArray(icon.target) ? icon.target[0] || '' : '');
+			settingItem.addText(text => {
+				text.setPlaceholder(placeholder)
+					.setValue(targetStr)
+					.onChange((value) => {
+						this.debounceUpdateTarget(icon.id, value);
+					});
+			});
+		}
 	}
 
-	private debounceUpdateTarget(id: string, newTarget: string): void {
+	private debounceUpdateTarget(id: string, newTarget: string | string[]): void {
 		const timerId = this.debounceTimers.get(`target-${id}`);
 		if (timerId) {
 			window.clearTimeout(timerId);
@@ -435,7 +442,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			(async () => {
 				const icons = this.plugin.settings.customIcons || {};
 				if (icons[id]) {
-					icons[id].target = newTarget.trim();
+					icons[id].target = typeof newTarget === 'string' ? newTarget.trim() : newTarget;
 					await this.plugin.saveSettings();
 					this.update();
 				}
@@ -458,6 +465,9 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 							delete icon.themeDarkSvgData;
 						} else if (data.themeDarkSvgData) {
 							icon.themeDarkSvgData = data.themeDarkSvgData;
+						}
+						if (data.target !== undefined) {
+							icon.target = data.target;
 						}
 						await this.plugin.saveSettings();
 						this.update();
