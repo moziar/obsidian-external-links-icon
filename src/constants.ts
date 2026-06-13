@@ -26,9 +26,12 @@ export const ICON_CATEGORIES = {
 		'v.flomo': 'v.flomoapp.com',
 		'wikipedia': 'wikipedia.org',
 		'archive': 'archive.org',
-		'google': 'google.com',
 		'docs.google': 'docs.google.com',
-		'cloud.google': 'cloud.google.com',
+		'google sheet': 'docs.google.com/spreadsheets',
+		'google slides': 'docs.google.com/presentation',
+		'google play': 'play.google.com/store',
+		'cloud.google': 'cloud.google.com/document',
+		'google': 'google.com',
 		'zhihu': 'zhihu.com',
 		'latepost': 'latepost.com'
 	}
