@@ -2,39 +2,17 @@ import type { ExternalLinksIconSettings } from './types';
 
 export const ICON_CATEGORIES = {
 	URL_SCHEME: [
-		'goodlinks', 'zotero', 'snippetslab', 'siyuan', 'eagle', 
+		'goodlinks', 'zotero', 'snippetslab', 'siyuan', 'eagle',
 		'bear', 'prodrafts', 'things', 'shortcut', 'file', 'craft', 'obsidiannote', 'advancedurisetting'
 	] as const,
-	WEB: {
-		'github': 'github.com',
-		'sspai': 'sspai.com',
-		'mp.weixin.qq': 'mp.weixin.qq.com',
-		'xiaoyuzhoufm': 'xiaoyuzhoufm.com',
-		'douban': 'douban.com',
-		'bilibili': 'bilibili.com',
-		'youtube': 'youtube.com',
-		'medium': 'medium.com',
-		'ollama': 'ollama.com',
-		'modelscope': 'modelscope.cn',
-		'huggingface': 'huggingface.co',
-		'openrouter': 'openrouter.ai',
-		'siliconflow': 'siliconflow.cn',
-		'douyin': 'douyin.com',
-		'v.douyin': 'v.douyin.com',
-		'tiktok': 'tiktok.com',
-		'baidu': 'baidu.com',
-		'v.flomo': 'v.flomoapp.com',
-		'wikipedia': 'wikipedia.org',
-		'archive': 'archive.org',
-		'docs.google': 'docs.google.com',
-		'google sheet': 'docs.google.com/spreadsheets',
-		'google slides': 'docs.google.com/presentation',
-		'google play': 'play.google.com/store',
-		'cloud.google': 'cloud.google.com/document',
-		'google': 'google.com',
-		'zhihu': 'zhihu.com',
-		'latepost': 'latepost.com'
-	}
+	WEB: [
+		'github', 'sspai', 'mp.weixin.qq', 'xiaoyuzhoufm', 'douban',
+		'bilibili', 'youtube', 'medium', 'ollama', 'modelscope',
+		'huggingface', 'openrouter', 'siliconflow', 'douyin', 'baidu',
+		'flomo', 'wikipedia', 'archive', 'docs.google', 'google sheet',
+		'google slides', 'google play', 'cloud.google', 'google maps',
+		'google', 'obsidianweb', 'zhihu', 'latepost'
+	] as const,
 };
 
 import { BUILTIN_ICONS } from './builtin-icons';

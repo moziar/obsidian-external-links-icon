@@ -4,7 +4,7 @@ export interface IconItem {
 	id: string;
 	name: string;
 	svgData: string;
-	order: number;
+	order?: number;
 	linkType: LinkType;
 	themeDarkSvgData?: string;
 	target?: string | string[];

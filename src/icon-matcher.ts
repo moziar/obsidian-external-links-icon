@@ -105,9 +105,7 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 		if (!ctx.fancyWebLink) return false;
 		if (!ctx.isExternal) return false;
 		if (!hrefLower.startsWith('http://') && !hrefLower.startsWith('https://')) return false;
-		const webMap: Record<string, string> = ICON_CATEGORIES.WEB;
-		const mapped = webMap[icon.id];
-		const patterns = [mapped || icon.target || icon.id || ''].flat().map(p => p.toLowerCase());
+		const patterns = [icon.target || icon.id || ''].flat().map(p => p.toLowerCase());
 		return patterns.some(p => p && hrefLower.indexOf(p) !== -1);
 	}
 
@@ -119,16 +117,14 @@ export function getSortedIcons(icons: Record<string, IconItem>): IconItem[] {
 }
 
 export function getUrlTarget(icon: IconItem): string {
-	const webMap: Record<string, string> = ICON_CATEGORIES.WEB;
-	const mapped = webMap[icon.id];
-	const targets = [mapped || icon.target || icon.id || ''].flat();
+	const targets = [icon.target || icon.id || ''].flat();
 	return targets.reduce((a, b) => b.length > a.length ? b : a, '').toLowerCase();
 }
 
 export function getAllIconsSorted(settings: ExternalLinksIconSettings): IconItem[] {
 	const customUrl = getSortedIcons(settings.customIcons || {}).filter(i => i.linkType === 'url');
-	const builtinUrl = getSortedIcons(DEFAULT_SETTINGS.icons || {}).filter(i => i.linkType === 'url');
-	const builtinScheme = getSortedIcons(DEFAULT_SETTINGS.icons || {}).filter(i => i.linkType === 'scheme');
+	const builtinUrl = getBuiltinIconsByOrder('url');
+	const builtinScheme = getBuiltinIconsByOrder('scheme');
 	const customScheme = getSortedIcons(settings.customIcons || {}).filter(i => i.linkType === 'scheme');
 
 	// URL: custom first, then builtin, sorted by target length descending (most specific first)
@@ -136,10 +132,16 @@ export function getAllIconsSorted(settings: ExternalLinksIconSettings): IconItem
 		return getUrlTarget(b).length - getUrlTarget(a).length;
 	});
 
-	// Scheme: builtin first, then custom, both sorted by order
+	// Scheme: builtin first, then custom
 	const schemeIcons = [...builtinScheme, ...customScheme];
 
 	return [...urlIcons, ...schemeIcons];
+}
+
+function getBuiltinIconsByOrder(linkType: 'url' | 'scheme'): IconItem[] {
+	const keys = linkType === 'url' ? ICON_CATEGORIES.WEB : ICON_CATEGORIES.URL_SCHEME;
+	const icons = DEFAULT_SETTINGS.icons || {};
+	return keys.map(key => icons[key]).filter(Boolean);
 }
 
 export function matchIcon(

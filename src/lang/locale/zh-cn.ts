@@ -79,7 +79,6 @@ export default {
 	'icon-name.openrouter': 'OpenRouter',
 	'icon-name.siliconflow': '硅基流动',
 	'icon-name.douyin': '抖音',
-	'icon-name.tiktok': 'TikTok',
 	'icon-name.baidu': '百度',
 	'icon-name.flomo': 'flomo',
 	'icon-name.wikipedia': '维基百科',

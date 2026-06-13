@@ -194,15 +194,14 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				builtinsDetails.createEl('summary', { text: t('Built-in icons') });
 				const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
 
-				const builtinIconsMap: Record<string, IconItem> = Object.assign({}, DEFAULT_SETTINGS.icons || {});
-				const builtinIcons = Object.values(builtinIconsMap)
-					.sort((a: IconItem, b: IconItem) => (a.order || 0) - (b.order || 0))
-					.filter((ic: IconItem) => ic.linkType === 'url');
-				builtinIcons.forEach((icon: IconItem) => {
-					const box = builtinRow.createDiv({ cls: 'website-item' });
-					const iconEl = box.createDiv({ cls: 'item-icon' });
-					renderIconImage(iconEl, icon, 'url', true);
-					box.createSpan({ text: getIconDisplayName(icon) });
+				(ICON_CATEGORIES.WEB || []).forEach((key: string) => {
+					const icon = (DEFAULT_SETTINGS.icons || {})[key] || (this.plugin.settings.icons || {})[key];
+					if (icon) {
+						const box = builtinRow.createDiv({ cls: 'website-item' });
+						const iconEl = box.createDiv({ cls: 'item-icon' });
+						renderIconImage(iconEl, icon, 'url', true);
+						box.createSpan({ text: getIconDisplayName(icon) });
+					}
 				});
 			},
 		});
