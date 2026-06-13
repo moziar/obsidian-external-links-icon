@@ -65,27 +65,6 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 			if (!hrefLower.startsWith('obsidian://adv-uri')) return false;
 			return hrefLower.indexOf('settingid') !== -1;
 		}
-		case 'google': {
-			if (!ctx.fancyWebLink) return false;
-			if (!ctx.isExternal) return false;
-			if (!hrefLower.startsWith('https://')) return false;
-			if (hrefLower.indexOf('google.com') === -1) return false;
-			if (hrefLower.indexOf('docs.google.com') !== -1) return false;
-			if (hrefLower.indexOf('cloud.google.com') !== -1) return false;
-			return true;
-		}
-		case 'docs.google': {
-			if (!ctx.fancyWebLink) return false;
-			if (!ctx.isExternal) return false;
-			if (!hrefLower.startsWith('https://')) return false;
-			return hrefLower.indexOf('docs.google.com') !== -1;
-		}
-		case 'cloud.google': {
-			if (!ctx.fancyWebLink) return false;
-			if (!ctx.isExternal) return false;
-			if (!hrefLower.startsWith('https://')) return false;
-			return hrefLower.indexOf('cloud.google.com') !== -1;
-		}
 		default:
 			break;
 	}
