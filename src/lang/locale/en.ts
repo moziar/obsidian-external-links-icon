@@ -99,6 +99,7 @@ export default {
 	'icon-name.feishu': 'Lark',
 	'icon-name.notion': 'Notion',
 	'icon-name.app store': 'App Store',
+	'icon-name.notion-scheme': 'Notion',
 	'Appearance': 'Appearance',
 	'Fancy url scheme': 'Fancy url scheme',
 	'Enable icons for url schemes.': 'Enable icons for url schemes.',
