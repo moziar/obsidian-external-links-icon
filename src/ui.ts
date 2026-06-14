@@ -283,7 +283,7 @@ export class EditIconModal extends Modal {
 			};
 
 			addBtn.onclick = addDomain;
-			targetInput!.addEventListener('keydown', (e) => {
+			targetInput?.addEventListener('keydown', (e) => {
 				if (e.key === 'Enter') {
 					e.preventDefault();
 					addDomain();
