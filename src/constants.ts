@@ -27,7 +27,6 @@ export const ICON_CATEGORIES = {
 		'wikipedia': 'wikipedia.org',
 		'archive': 'archive.org',
 		'google': 'google.com',
-		'docs.google': 'docs.google.com',
 		'cloud.google': 'cloud.google.com',
 		'zhihu': 'zhihu.com',
 		'latepost': 'latepost.com'

@@ -95,4 +95,8 @@ export default {
 	'icon-name.craft': 'Craft',
 	'icon-name.zhihu': '知乎',
 	'icon-name.latepost': '晚点',
+	'icon-name.google sheet': 'Google 表格',
+	'icon-name.google slides': 'Google 幻灯片',
+	'icon-name.google play': 'Google Play',
+	'icon-name.google maps': 'Google 地图',
 } as const;

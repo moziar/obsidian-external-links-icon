@@ -95,4 +95,8 @@ export default {
 	'icon-name.craft': 'Craft',
 	'icon-name.zhihu': 'Zhihu',
 	'icon-name.latepost': 'LatePost',
+	'icon-name.google sheet': 'Google Sheet',
+	'icon-name.google slides': 'Google Slides',
+	'icon-name.google play': 'Google Play',
+	'icon-name.google maps': 'Google Maps',
 } as const;

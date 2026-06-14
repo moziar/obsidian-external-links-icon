@@ -84,7 +84,25 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 			if (!ctx.fancyWebLink) return false;
 			if (!ctx.isExternal) return false;
 			if (!hrefLower.startsWith('https://')) return false;
-			return hrefLower.indexOf('docs.google.com') !== -1;
+			return hrefLower.indexOf('docs.google.com/document') !== -1;
+		}
+		case 'google sheet': {
+			if (!ctx.fancyWebLink) return false;
+			if (!ctx.isExternal) return false;
+			if (!hrefLower.startsWith('https://')) return false;
+			return hrefLower.indexOf('docs.google.com/spreadsheets') !== -1;
+		}
+		case 'google slides': {
+			if (!ctx.fancyWebLink) return false;
+			if (!ctx.isExternal) return false;
+			if (!hrefLower.startsWith('https://')) return false;
+			return hrefLower.indexOf('docs.google.com/presentation') !== -1;
+		}
+		case 'google maps': {
+			if (!ctx.fancyWebLink) return false;
+			if (!ctx.isExternal) return false;
+			if (!hrefLower.startsWith('https://')) return false;
+			return hrefLower.indexOf('google.com/maps') !== -1 || hrefLower.indexOf('maps.google.com') !== -1;
 		}
 		case 'cloud.google': {
 			if (!ctx.fancyWebLink) return false;
