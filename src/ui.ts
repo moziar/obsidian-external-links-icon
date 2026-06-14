@@ -331,7 +331,7 @@ export class EditIconModal extends Modal {
 			if (isDesktop) {
 				setIcon(copyBtn, 'lucide-square-arrow-right');
 				copyBtn.setAttribute('aria-label', t('Copy to dark'));
-				copyBtn.style.marginLeft = 'auto';
+				copyBtn.classList.add('external-links-icon-btn-copy');
 			} else {
 				setIcon(copyBtn, 'lucide-copy');
 				copyBtn.appendText(` ${t('Copy to dark')}`);
