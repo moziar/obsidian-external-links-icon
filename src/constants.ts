@@ -11,7 +11,7 @@ export const ICON_CATEGORIES = {
 		'huggingface', 'openrouter', 'siliconflow', 'douyin', 'baidu',
 		'flomo', 'wikipedia', 'archive', 'docs.google', 'google sheet',
 		'google slides', 'google play', 'cloud.google', 'google maps',
-		'google', 'obsidianweb', 'zhihu', 'latepost'
+		'google', 'obsidianweb', 'zhihu', 'latepost', 'feishu', 'notion', 'app store'
 	] as const,
 };
 
