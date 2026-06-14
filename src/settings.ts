@@ -11,7 +11,8 @@ function getIconDisplayName(icon: IconItem): string {
 		const key = `icon-name.${icon.id}` as keyof typeof import('./lang/locale/en').default;
 		return t(key);
 	}
-	return icon.name;
+	// return icon id if icon name did not provide
+	return icon.name ?? icon.id;
 }
 import { preferDarkThemeFromDocument, prepareSvgForSettings, getSvgSourceForTheme } from './svg';
 import { clearIconCache } from './utils';

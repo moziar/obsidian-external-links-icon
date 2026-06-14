@@ -2,7 +2,7 @@ export type LinkType = 'url' | 'scheme';
 
 export interface IconItem {
 	id: string;
-	name: string;
+	name?: string;
 	svgData: string;
 	order?: number;
 	linkType: LinkType;
