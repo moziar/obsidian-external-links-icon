@@ -30,6 +30,7 @@
 - Apple 快捷指令
 - Advanced-URI
 - Craft
+- Notion
 
 ### 网站
 - Github
@@ -50,11 +51,18 @@
 - flomo
 - 维基百科
 - Archive.org
-- Google Docs
+- Google 文档
+- Google 表格
+- Google 幻灯片
+- Google Play
 - Google Cloud
+- Google 地图
 - 其他 Google 站点
 - 知乎
 - 晚点
+- 飞书
+- Notion
+- App Store
 
 ### Obsidian
 - 网站
@@ -86,12 +94,19 @@
 - 仅支持 **SVG** 格式。
 - 插件会自动压缩图标以提升性能。
 - 默认图标（亮色模式）是必选的，暗色模式图标是可选的。
+- 对于网站图标，你可以配置多个匹配的域名。域名支持以下格式：
+	- `baidu`
+	- `baidu.com`
+	- `http://baidu.com`
+	- `https://baidu.com`
+	- `baike.baidu.com`
+	- `baidu.com/about`
 
 ![add-icon_zh.png](images/add-icon_zh.png)
 
 ### 编辑图标
 - 你可以点击图标旁边的下载按钮来下载图标。
-- 如果你误将暗色图标上传到亮色区域，`复制到暗色` 按钮将派上用场。
+- 如果你误将暗色图标上传到亮色区域，`复制到暗色` 按钮（页面中间的向右箭头）将派上用场。
 - 如果用不到暗色图标，你可以使用 `移除` 按钮删除它。
 
 ![edit-icon_zh.png](images/edit-icon_zh.png)

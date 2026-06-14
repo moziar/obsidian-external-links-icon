@@ -30,6 +30,7 @@
 - Apple Shortcuts
 - Advanced-URI
 - Craft
+- Notion
 
 ### WebSite
 - Github
@@ -51,10 +52,17 @@
 - Wikipedia
 - Archive.org
 - Google Docs
+- Google Sheets
+- Google Slides
+- Google Play
 - Google Cloud
+- Google Maps
 - Other Google site
 - 知乎 / zhihu
 - 晚点 / latepost
+- 飞书 / Lark
+- Notion
+- App Store
 
 ### Obsidian
 - Website
@@ -86,12 +94,19 @@ To add a custom icon, click **Add Website** or **Add URL Scheme** in the setting
 - Only **SVG** format is supported.
 - The plugin will auto compress icons to improve performance.
 - The default icon (light mode) is required, while the dark mode icon is optional.
+- For web icon, you can set multiple target for each icon. Domain supports the following format: 
+  - `baidu`
+  - `baidu.com`
+  - `http://baidu.com`
+  - `https://baidu.com`
+  - `baike.baidu.com`
+  - `baidu.com/about`
 
 ![add-icon.png](docs/images/add-icon.png)
 
 ### Edit Icons
 - You can download the icon via the download button besides it.
-- `Copy to dark` is a useful button if you upload the dark mode icon to the light one. 
+- `Copy to dark` (right arrow in the middle) is a useful button if you upload the dark mode icon to the light one. 
 - You can remove the dark mode icon if you don't need it. 
 
 ![edit-icon.png](docs/images/edit-icon.png)
