@@ -99,4 +99,8 @@ export default {
 	'icon-name.google slides': 'Google Slides',
 	'icon-name.google play': 'Google Play',
 	'icon-name.google maps': 'Google Maps',
+	'icon-name.feishu': 'Lark',
+	'icon-name.notion': 'Notion',
+	'icon-name.app store': 'App Store',
+	'icon-name.notion-scheme': 'Notion'
 } as const;

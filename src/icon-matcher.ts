@@ -110,6 +110,18 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 			if (!hrefLower.startsWith('https://')) return false;
 			return hrefLower.indexOf('cloud.google.com') !== -1;
 		}
+		case 'feishu': {
+			if (!ctx.fancyWebLink) return false;
+			if (!ctx.isExternal) return false;
+			if (!hrefLower.startsWith('https://')) return false;
+			return hrefLower.indexOf('feishu.cn') !== -1 || hrefLower.indexOf('larksuite.com') !== -1;
+		}
+		case 'notion': {
+			if (!ctx.fancyWebLink) return false;
+			if (!ctx.isExternal) return false;
+			if (!hrefLower.startsWith('https://')) return false;
+			return hrefLower.indexOf('notion.com') !== -1 || hrefLower.indexOf('notion.so') !== -1;
+		}
 		default:
 			break;
 	}
