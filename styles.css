@@ -364,6 +364,16 @@ body.theme-dark .external-links-icon-badge-dark {
 
 .external-links-icon-desc { margin-bottom: 10px; }
 
+.external-links-icon-upload-columns {
+	display: flex;
+	gap: 16px;
+}
+
+.external-links-icon-upload-columns > .external-links-icon-upload-section {
+	flex: 1;
+	min-width: 0;
+}
+
 .external-links-icon-upload-section {
 	margin-bottom: 16px;
 }
@@ -534,4 +544,119 @@ details.builtin-list summary {
 	display: block;
 	box-shadow: none;
 	margin: 0;
+}
+
+/***
+Domain list (multi-target UI in Modal)
+***/
+
+.external-links-icon-domain-input-row {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	margin-bottom: 8px;
+}
+
+.external-links-icon-domain-input-row + .external-links-icon-domain-list {
+	max-width: calc(100% - 30px);
+}
+
+.external-links-icon-domain-input {
+	flex: 1;
+	min-width: 0;
+	padding: 6px 10px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-modifier-form-field);
+	color: var(--text-normal);
+	font-size: 13px;
+}
+
+.external-links-icon-domain-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px var(--background-modifier-active);
+}
+
+.external-links-icon-domain-input::placeholder {
+	color: var(--text-faint);
+}
+
+.external-links-icon-domain-add-btn {
+	background: none;
+	border: none;
+	padding: 6px;
+	cursor: pointer;
+	color: var(--text-muted);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 4px;
+	flex-shrink: 0;
+}
+
+.external-links-icon-domain-add-btn:hover {
+	color: var(--interactive-accent);
+	background: var(--background-modifier-hover);
+}
+
+.external-links-icon-domain-add-btn svg {
+	width: 18px;
+	height: 18px;
+}
+
+.external-links-icon-domain-list {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 12px 0;
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.external-links-icon-domain-item {
+	display: flex;
+	align-items: center;
+	padding: 6px 10px;
+	font-size: 13px;
+	color: var(--text-normal);
+	background: var(--setting-items-background);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.external-links-icon-domain-item:last-child {
+	border-bottom: none;
+}
+
+.external-links-icon-domain-item span {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.external-links-icon-domain-item-remove {
+	background: none;
+	border: none;
+	padding: 2px;
+	cursor: pointer;
+	color: var(--text-faint);
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+	opacity: 0;
+	transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.external-links-icon-domain-item:hover .external-links-icon-domain-item-remove {
+	opacity: 1;
+}
+
+.external-links-icon-domain-item-remove:hover {
+	color: var(--text-error);
+}
+
+.external-links-icon-domain-item-remove svg {
+	width: 14px;
+	height: 14px;
 }

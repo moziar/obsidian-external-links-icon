@@ -11,7 +11,8 @@ function getIconDisplayName(icon: IconItem): string {
 		const key = `icon-name.${icon.id}` as keyof typeof import('./lang/locale/en').default;
 		return t(key);
 	}
-	return icon.name;
+	// return icon id if icon name did not provide
+	return icon.name ?? icon.id;
 }
 import { preferDarkThemeFromDocument, prepareSvgForSettings, getSvgSourceForTheme } from './svg';
 import { clearIconCache } from './utils';
@@ -194,15 +195,14 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				builtinsDetails.createEl('summary', { text: t('Built-in icons') });
 				const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
 
-				const builtinIconsMap: Record<string, IconItem> = Object.assign({}, DEFAULT_SETTINGS.icons || {});
-				const builtinIcons = Object.values(builtinIconsMap)
-					.sort((a: IconItem, b: IconItem) => (a.order || 0) - (b.order || 0))
-					.filter((ic: IconItem) => ic.linkType === 'url');
-				builtinIcons.forEach((icon: IconItem) => {
-					const box = builtinRow.createDiv({ cls: 'website-item' });
-					const iconEl = box.createDiv({ cls: 'item-icon' });
-					renderIconImage(iconEl, icon, 'url', true);
-					box.createSpan({ text: getIconDisplayName(icon) });
+				(ICON_CATEGORIES.WEB || []).forEach((key: string) => {
+					const icon = (DEFAULT_SETTINGS.icons || {})[key] || (this.plugin.settings.icons || {})[key];
+					if (icon) {
+						const box = builtinRow.createDiv({ cls: 'website-item' });
+						const iconEl = box.createDiv({ cls: 'item-icon' });
+						renderIconImage(iconEl, icon, 'url', true);
+						box.createSpan({ text: getIconDisplayName(icon) });
+					}
 				});
 			},
 		});
@@ -272,7 +272,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		};
 	}
 
-	private async addIconWithData(data: { linkType: LinkType; name: string; target: string; svgData?: string; themeDarkSvgData?: string }) {
+	private async addIconWithData(data: { linkType: LinkType; name: string; target: string | string[]; svgData?: string; themeDarkSvgData?: string }) {
 		const { linkType, name, target, svgData, themeDarkSvgData } = data;
 		const id = name;
 		const customIcons = this.plugin.settings.customIcons || {};
@@ -281,9 +281,12 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			return;
 		}
 
-		let normalized = target.trim();
+		let normalized: string | string[];
 		if (linkType === 'url') {
-			normalized = normalized.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+			normalized = [target].flat().map(t => t.trim().replace(/^https?:\/\//i, '').replace(/\/$/, ''));
+			if (normalized.length === 1) normalized = normalized[0];
+		} else {
+			normalized = (target as string).trim();
 		}
 
 		const maxOrder = Object.values(customIcons).reduce((max, ic: IconItem) => Math.max(max, ic.order || 0), -1);
@@ -414,18 +417,11 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		previewContainer.createSpan({ text: getIconDisplayName(icon) });
 	}
 
-	private addNameInput(settingItem: Setting, icon: IconItem): void {
-		const placeholder = icon.linkType === 'url' ? t('Example.com') : t('Scheme identifier');
-		settingItem.addText(text => {
-			text.setPlaceholder(placeholder)
-				.setValue(icon.target || '')
-				.onChange((value) => {
-					this.debounceUpdateTarget(icon.id, value);
-				});
-		});
+	private addNameInput(_settingItem: Setting, _icon: IconItem): void {
+		// Domain/scheme editing has been moved to EditIconModal
 	}
 
-	private debounceUpdateTarget(id: string, newTarget: string): void {
+	private debounceUpdateTarget(id: string, newTarget: string | string[]): void {
 		const timerId = this.debounceTimers.get(`target-${id}`);
 		if (timerId) {
 			window.clearTimeout(timerId);
@@ -435,7 +431,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			(async () => {
 				const icons = this.plugin.settings.customIcons || {};
 				if (icons[id]) {
-					icons[id].target = newTarget.trim();
+					icons[id].target = typeof newTarget === 'string' ? newTarget.trim() : newTarget;
 					await this.plugin.saveSettings();
 					this.update();
 				}
@@ -458,6 +454,9 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 							delete icon.themeDarkSvgData;
 						} else if (data.themeDarkSvgData) {
 							icon.themeDarkSvgData = data.themeDarkSvgData;
+						}
+						if (data.target !== undefined) {
+							icon.target = data.target;
 						}
 						await this.plugin.saveSettings();
 						this.update();

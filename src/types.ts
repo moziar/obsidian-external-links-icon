@@ -2,12 +2,12 @@ export type LinkType = 'url' | 'scheme';
 
 export interface IconItem {
 	id: string;
-	name: string;
+	name?: string;
 	svgData: string;
-	order: number;
+	order?: number;
 	linkType: LinkType;
 	themeDarkSvgData?: string;
-	target?: string;
+	target?: string | string[];
 }
 
 export interface ExternalLinksIconSettings {

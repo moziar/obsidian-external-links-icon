@@ -65,27 +65,6 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 			if (!hrefLower.startsWith('obsidian://adv-uri')) return false;
 			return hrefLower.indexOf('settingid') !== -1;
 		}
-		case 'google': {
-			if (!ctx.fancyWebLink) return false;
-			if (!ctx.isExternal) return false;
-			if (!hrefLower.startsWith('https://')) return false;
-			if (hrefLower.indexOf('google.com') === -1) return false;
-			if (hrefLower.indexOf('docs.google.com') !== -1) return false;
-			if (hrefLower.indexOf('cloud.google.com') !== -1) return false;
-			return true;
-		}
-		case 'docs.google': {
-			if (!ctx.fancyWebLink) return false;
-			if (!ctx.isExternal) return false;
-			if (!hrefLower.startsWith('https://')) return false;
-			return hrefLower.indexOf('docs.google.com') !== -1;
-		}
-		case 'cloud.google': {
-			if (!ctx.fancyWebLink) return false;
-			if (!ctx.isExternal) return false;
-			if (!hrefLower.startsWith('https://')) return false;
-			return hrefLower.indexOf('cloud.google.com') !== -1;
-		}
 		default:
 			break;
 	}
@@ -96,7 +75,7 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 		const idx = hrefLower.indexOf('://');
 		if (idx <= 0) return false;
 		const scheme = hrefLower.slice(0, idx);
-		const expected = (icon.target || icon.id || '').toLowerCase();
+		const expected = ((icon.target as string) || icon.id || '').toLowerCase();
 		if (!expected) return false;
 		return scheme === expected;
 	}
@@ -105,11 +84,8 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 		if (!ctx.fancyWebLink) return false;
 		if (!ctx.isExternal) return false;
 		if (!hrefLower.startsWith('http://') && !hrefLower.startsWith('https://')) return false;
-		const webMap: Record<string, string> = ICON_CATEGORIES.WEB;
-		const mapped = webMap[icon.id];
-		const pattern = (mapped || icon.target || icon.id || '').toLowerCase();
-		if (!pattern) return false;
-		return hrefLower.indexOf(pattern) !== -1;
+		const patterns = [icon.target || icon.id || ''].flat().map(p => p.toLowerCase());
+		return patterns.some(p => p && hrefLower.indexOf(p) !== -1);
 	}
 
 	return false;
@@ -119,8 +95,32 @@ export function getSortedIcons(icons: Record<string, IconItem>): IconItem[] {
 	return Object.values(icons).sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
+export function getUrlTarget(icon: IconItem): string {
+	const targets = [icon.target || icon.id || ''].flat();
+	return targets.reduce((a, b) => b.length > a.length ? b : a, '').toLowerCase();
+}
+
 export function getAllIconsSorted(settings: ExternalLinksIconSettings): IconItem[] {
-	return getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(getSortedIcons(settings.customIcons || {}));
+	const customUrl = getSortedIcons(settings.customIcons || {}).filter(i => i.linkType === 'url');
+	const builtinUrl = getBuiltinIconsByOrder('url');
+	const builtinScheme = getBuiltinIconsByOrder('scheme');
+	const customScheme = getSortedIcons(settings.customIcons || {}).filter(i => i.linkType === 'scheme');
+
+	// URL: custom first, then builtin, sorted by target length descending (most specific first)
+	const urlIcons = [...customUrl, ...builtinUrl].sort((a, b) => {
+		return getUrlTarget(b).length - getUrlTarget(a).length;
+	});
+
+	// Scheme: builtin first, then custom
+	const schemeIcons = [...builtinScheme, ...customScheme];
+
+	return [...urlIcons, ...schemeIcons];
+}
+
+function getBuiltinIconsByOrder(linkType: 'url' | 'scheme'): IconItem[] {
+	const keys = linkType === 'url' ? ICON_CATEGORIES.WEB : ICON_CATEGORIES.URL_SCHEME;
+	const icons = DEFAULT_SETTINGS.icons || {};
+	return keys.map(key => icons[key]).filter(Boolean);
 }
 
 export function matchIcon(
@@ -130,7 +130,7 @@ export function matchIcon(
 	settings: ExternalLinksIconSettings
 ): IconItem | null {
 	const ctx = getMatchContext(href, isExternal, isInternal, settings);
-	const icons: IconItem[] = getSortedIcons(DEFAULT_SETTINGS.icons || {}).concat(getSortedIcons(settings.customIcons || {}));
+	const icons = getAllIconsSorted(settings);
 	if (!icons.length) return null;
 
 	for (const icon of icons) {
