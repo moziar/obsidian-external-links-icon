@@ -2,10 +2,12 @@ import { App, Modal, Notice, Platform, Setting, setIcon } from 'obsidian';
 import type { IconItem, LinkType } from './types';
 import { t } from './lang/helper';
 import { prepareSvgForSettings } from './svg';
+import { encodeSvgData } from './utils';
 
 export class ConfirmModal extends Modal {
 	private _message: string;
 	private _resolver: (value: boolean) => void = () => {};
+	private resolved = false;
 	public result: Promise<boolean>;
 
 	constructor(app: App, message: string) {
@@ -21,12 +23,12 @@ export class ConfirmModal extends Modal {
 		const actions = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
 		const cancelBtn = actions.createEl('button', { text: t('Cancel'), cls: 'external-links-icon-cancel-btn' });
 		const okBtn = actions.createEl('button', { text: t('Confirm'), cls: 'external-links-icon-add-btn' });
-		cancelBtn.onclick = () => { this._resolver(false); this.close(); };
-		okBtn.onclick = () => { this._resolver(true); this.close(); };
+		cancelBtn.onclick = () => { if (!this.resolved) { this.resolved = true; this._resolver(false); } this.close(); };
+		okBtn.onclick = () => { if (!this.resolved) { this.resolved = true; this._resolver(true); } this.close(); };
 	}
 
 	onClose(): void {
-		this._resolver(false);
+		if (!this.resolved) { this.resolved = true; this._resolver(false); }
 		const { contentEl } = this;
 		contentEl.empty();
 	}
@@ -35,9 +37,164 @@ export class ConfirmModal extends Modal {
 export interface NewIconData {
 	linkType: LinkType;
 	name: string;
-	target: string | string[];
+	target: string[];
 	svgData?: string;
 	themeDarkSvgData?: string;
+}
+
+interface DomainListEditorOptions {
+	container: HTMLElement;
+	initialDomains: string[];
+	placeholder?: string;
+	onChange?: (domains: string[]) => void;
+}
+
+function createDomainListEditor(options: DomainListEditorOptions): { getDomains: () => string[] } {
+	const { container, initialDomains, placeholder, onChange } = options;
+	const domains: string[] = [...initialDomains];
+
+	const inputRow = container.createDiv({ cls: 'external-links-icon-domain-input-row' });
+	const targetInput = inputRow.createEl('input', { cls: 'external-links-icon-domain-input' });
+	targetInput.type = 'text';
+	if (placeholder) targetInput.placeholder = placeholder;
+	const addBtn = inputRow.createEl('button', { cls: 'external-links-icon-domain-add-btn clickable-icon' });
+	setIcon(addBtn, 'lucide-plus');
+
+	const domainListEl = container.createEl('ul', { cls: 'external-links-icon-domain-list' });
+
+	const renderDomains = () => {
+		domainListEl.empty();
+		domains.forEach((domain, idx) => {
+			const li = domainListEl.createEl('li', { cls: 'external-links-icon-domain-item' });
+			li.createSpan({ text: domain });
+			const removeBtn = li.createEl('button', { cls: 'external-links-icon-domain-item-remove clickable-icon' });
+			setIcon(removeBtn, 'lucide-x');
+			removeBtn.onclick = () => {
+				domains.splice(idx, 1);
+				renderDomains();
+				onChange?.(domains);
+			};
+		});
+	};
+
+	const addDomain = () => {
+		const val = targetInput.value.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
+		if (!val) return;
+		if (domains.includes(val)) {
+			new Notice(t('Domain already added'));
+			return;
+		}
+		domains.push(val);
+		targetInput.value = '';
+		renderDomains();
+		onChange?.(domains);
+	};
+
+	addBtn.onclick = addDomain;
+	targetInput.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			addDomain();
+		}
+	});
+
+	renderDomains();
+
+	return {
+		getDomains: () => {
+			// Pick up any text still in the input that hasn't been added
+			const remaining = targetInput.value.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
+			if (remaining && !domains.includes(remaining)) {
+				domains.push(remaining);
+			}
+			return [...domains];
+		}
+	};
+}
+
+interface IconUploadSectionOptions {
+	container: HTMLElement;
+	label: string;
+	initialSvgData?: string;
+	isDark?: boolean;
+	iconName?: string;
+	hiddenInputs?: HTMLInputElement[];
+	onUpload?: (svgData: string) => void;
+	onRemove?: (removed: boolean) => void;
+}
+
+function createIconUploadSection(options: IconUploadSectionOptions): {
+	getSvgData: () => string | undefined;
+	setSvgData: (svgData: string | undefined) => void;
+	controlRow: HTMLDivElement;
+} {
+	const { container, label, initialSvgData, isDark, iconName, hiddenInputs, onUpload, onRemove } = options;
+	const doc = container.ownerDocument;
+	const variant = isDark ? 'dark' : 'light';
+	const isDesktop = !Platform.isMobile;
+
+	let newSvgData: string | undefined;
+	let removeState = false;
+
+	const section = container.createDiv({ cls: 'external-links-icon-upload-section' });
+	section.createEl('div', { text: label, cls: 'external-links-icon-upload-label' });
+
+	const body = section.createDiv({ cls: 'external-links-icon-section-body' });
+
+	const { badge, preview } = createBadgeWithPreview(body, variant, initialSvgData, iconName);
+
+	const controls = body.createDiv({ cls: 'external-links-icon-controls-col' });
+	const row = controls.createDiv({ cls: 'external-links-icon-control-row' });
+	const uploadBtn = row.createEl('button', { cls: 'external-links-icon-btn' });
+	setIcon(uploadBtn, 'lucide-upload');
+	uploadBtn.appendText(` ${initialSvgData ? t('Update') : t('Upload icon')}`);
+
+	let removeBtn: HTMLButtonElement | undefined;
+	let removeIndicator: HTMLSpanElement | undefined;
+
+	if (onRemove && initialSvgData) {
+		removeBtn = row.createEl('button', { text: t('Remove'), cls: 'external-links-icon-btn external-links-icon-btn-danger' });
+		removeIndicator = row.createSpan({ cls: 'external-links-icon-remove-indicator' });
+		removeBtn.onclick = () => {
+			removeState = !removeState;
+			if (removeIndicator) removeIndicator.textContent = removeState ? ` ✓ ${t('Will be removed on save')}` : '';
+			removeBtn?.classList.toggle('is-active', removeState);
+			if (isDesktop) {
+				uploadBtn.style.display = removeState ? 'none' : '';
+			}
+			onRemove(removeState);
+		};
+	}
+
+	const clearRemoveState = () => {
+		removeState = false;
+		if (removeBtn) removeBtn.classList.remove('is-active');
+		if (removeIndicator) removeIndicator.textContent = '';
+		onRemove?.(false);
+	};
+
+	const input = createFileInput(doc, (content) => {
+		newSvgData = content;
+		clearRemoveState();
+		badge.classList.remove('external-links-icon-badge-empty');
+		renderPreview(doc, preview, content, 'uploaded');
+		onUpload?.(content);
+	});
+	if (hiddenInputs) hiddenInputs.push(input);
+	doc.body.appendChild(input);
+	uploadBtn.onclick = () => input.click();
+
+	return {
+		getSvgData: () => newSvgData,
+		setSvgData: (svgData: string | undefined) => {
+			if (!svgData) return;
+			newSvgData = svgData;
+			clearRemoveState();
+			badge.classList.remove('external-links-icon-badge-empty');
+			renderPreview(doc, preview, svgData, 'copied');
+		},
+		controlRow: row,
+	};
 }
 
 export class NewIconModal extends Modal {
@@ -55,7 +212,6 @@ export class NewIconModal extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.empty();
-		const doc = contentEl.ownerDocument;
 
 		contentEl.createEl('h3', { text: t('Add new icon') });
 
@@ -66,52 +222,14 @@ export class NewIconModal extends Modal {
 		const isUrl = this._defaultLinkType === 'url';
 
 		// For URL type: multi-value domain input; for Scheme: single input
-		let domainList: string[] = [];
-		let targetInput!: HTMLInputElement;
-		let domainListEl: HTMLUListElement | undefined;
+		let domainEditor: { getDomains: () => string[] } | undefined;
+		let targetInput: HTMLInputElement | undefined;
 
 		if (isUrl) {
-			const inputRow = contentEl.createDiv({ cls: 'external-links-icon-domain-input-row' });
-			targetInput = inputRow.createEl('input', { cls: 'external-links-icon-domain-input' });
-			targetInput.type = 'text';
-			targetInput.placeholder = t('Domain (e.g. baike.baidu.com or baidu.com/about)');
-			const addBtn = inputRow.createEl('button', { cls: 'external-links-icon-domain-add-btn clickable-icon' });
-			setIcon(addBtn, 'lucide-plus');
-
-			domainListEl = contentEl.createEl('ul', { cls: 'external-links-icon-domain-list' });
-
-			const renderDomains = () => {
-				domainListEl!.empty();
-				domainList.forEach((domain, idx) => {
-					const li = domainListEl!.createEl('li', { cls: 'external-links-icon-domain-item' });
-					li.createSpan({ text: domain });
-					const removeBtn = li.createEl('button', { cls: 'external-links-icon-domain-item-remove clickable-icon' });
-					setIcon(removeBtn, 'lucide-x');
-					removeBtn.onclick = () => {
-						domainList.splice(idx, 1);
-						renderDomains();
-					};
-				});
-			};
-
-			const addDomain = () => {
-				const val = targetInput.value.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
-				if (!val) return;
-				if (domainList.includes(val)) {
-					new Notice(t('Domain already added'));
-					return;
-				}
-				domainList.push(val);
-				targetInput.value = '';
-				renderDomains();
-			};
-
-			addBtn.onclick = addDomain;
-			targetInput.addEventListener('keydown', (e) => {
-				if (e.key === 'Enter') {
-					e.preventDefault();
-					addDomain();
-				}
+			domainEditor = createDomainListEditor({
+				container: contentEl,
+				initialDomains: [],
+				placeholder: t('Domain (e.g. baike.baidu.com or baidu.com/about)'),
 			});
 		} else {
 			targetInput = contentEl.createEl('input', { cls: 'external-links-icon-modal-input' });
@@ -119,55 +237,22 @@ export class NewIconModal extends Modal {
 			targetInput.placeholder = t('Scheme identifier (e.g. zotero)');
 		}
 
-		let uploadedSvgData: string | undefined;
-		let uploadedDarkSvgData: string | undefined;
-
 		const isDesktop = !Platform.isMobile;
 		const iconContainer = contentEl.createDiv({ cls: isDesktop ? 'external-links-icon-upload-columns' : '' });
 
-		const defaultSection = iconContainer.createDiv({ cls: 'external-links-icon-upload-section' });
-		defaultSection.createEl('div', { text: t('Default icon (light mode)'), cls: 'external-links-icon-upload-label' });
-
-		const lightBody = defaultSection.createDiv({ cls: 'external-links-icon-section-body' });
-
-		const { badge: lightBadge, preview: lightPreview } = createBadgeWithPreview(lightBody, 'light');
-
-		const lightControls = lightBody.createDiv({ cls: 'external-links-icon-controls-col' });
-		const lightRow = lightControls.createDiv({ cls: 'external-links-icon-control-row' });
-		const lightUploadBtn = lightRow.createEl('button', { cls: 'external-links-icon-btn' });
-		setIcon(lightUploadBtn, 'lucide-upload');
-		lightUploadBtn.appendText(` ${t('Upload icon')}`);
-
-	const lightInput = createFileInput(doc, (content) => {
-			uploadedSvgData = content;
-			lightBadge.classList.remove('external-links-icon-badge-empty');
-			renderPreview(doc, lightPreview, content, 'uploaded');
+		const lightSection = createIconUploadSection({
+			container: iconContainer,
+			label: t('Default icon (light mode)'),
+			isDark: false,
+			hiddenInputs: this.hiddenInputs,
 		});
-		this.hiddenInputs.push(lightInput);
-		doc.body.appendChild(lightInput);
-		lightUploadBtn.onclick = () => lightInput.click();
 
-		const darkSection = iconContainer.createDiv({ cls: 'external-links-icon-upload-section' });
-		darkSection.createEl('div', { text: t('Dark mode icon (optional)'), cls: 'external-links-icon-upload-label' });
-
-		const darkBody = darkSection.createDiv({ cls: 'external-links-icon-section-body' });
-
-		const { badge: darkBadge, preview: darkPreview } = createBadgeWithPreview(darkBody, 'dark');
-
-		const darkControls = darkBody.createDiv({ cls: 'external-links-icon-controls-col' });
-		const darkRow = darkControls.createDiv({ cls: 'external-links-icon-control-row' });
-		const darkUploadBtn = darkRow.createEl('button', { cls: 'external-links-icon-btn' });
-		setIcon(darkUploadBtn, 'lucide-upload');
-		darkUploadBtn.appendText(` ${t('Upload icon')}`);
-
-		const darkInput = createFileInput(doc, (content) => {
-			uploadedDarkSvgData = content;
-			darkBadge.classList.remove('external-links-icon-badge-empty');
-			renderPreview(doc, darkPreview, content, 'uploaded');
+		const darkSection = createIconUploadSection({
+			container: iconContainer,
+			label: t('Dark mode icon (optional)'),
+			isDark: true,
+			hiddenInputs: this.hiddenInputs,
 		});
-		this.hiddenInputs.push(darkInput);
-		doc.body.appendChild(darkInput);
-		darkUploadBtn.onclick = () => darkInput.click();
 
 		const buttonContainer = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
 		const cancelBtn = buttonContainer.createEl('button', { text: t('Cancel') });
@@ -177,24 +262,21 @@ export class NewIconModal extends Modal {
 			const name = nameInput.value.trim();
 			if (!name) { new Notice(t('Name is required')); return; }
 
-			let target: string | string[];
+			let target: string[];
 			if (isUrl) {
-				// Also pick up any text still in the input that hasn't been added
-				const remaining = targetInput.value.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
-				if (remaining && !domainList.includes(remaining)) {
-					domainList.push(remaining);
-				}
-				if (domainList.length === 0) { new Notice(t('Target is required')); return; }
-				target = domainList.length === 1 ? domainList[0] : domainList;
+				target = domainEditor!.getDomains();
+				if (target.length === 0) { new Notice(t('Target is required')); return; }
 			} else {
-				target = targetInput.value.trim();
-				if (!target) { new Notice(t('Target is required')); return; }
+				target = [targetInput!.value.trim()];
+				if (!target[0]) { new Notice(t('Target is required')); return; }
 			}
 
+			const uploadedSvgData = lightSection.getSvgData();
 			if (!uploadedSvgData) {
 				new Notice(t('Default icon is required'));
 				return;
 			}
+			const uploadedDarkSvgData = darkSection.getSvgData();
 			const result = this.onSubmit({ linkType: this._defaultLinkType, name, target, svgData: uploadedSvgData, themeDarkSvgData: uploadedDarkSvgData });
 			if (result instanceof Promise) {
 				result.catch((e) => {
@@ -218,13 +300,13 @@ export class NewIconModal extends Modal {
 
 export class EditIconModal extends Modal {
 	private icon: IconItem;
-	private onSave: (data: { svgData?: string; themeDarkSvgData?: string | null; target?: string | string[] }) => void | Promise<void>;
+	private onSave: (data: { svgData?: string; themeDarkSvgData?: string | null; target?: string[] }) => void | Promise<void>;
 	private hiddenInputs: HTMLInputElement[] = [];
 
 	constructor(
 		app: App,
 		icon: IconItem,
-		onSave: (data: { svgData?: string; themeDarkSvgData?: string | null; target?: string | string[] }) => void | Promise<void>,
+		onSave: (data: { svgData?: string; themeDarkSvgData?: string | null; target?: string[] }) => void | Promise<void>,
 	) {
 		super(app);
 		this.icon = icon;
@@ -234,60 +316,18 @@ export class EditIconModal extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.empty();
-		const doc = contentEl.ownerDocument;
 
 		contentEl.createEl('h3', { text: `${t('Edit icon')}: ${this.icon.name}` });
 
 		// Domain editing for URL type
-		let domainList: string[] = [];
-		let domainListEl: HTMLUListElement | undefined;
+		let domainEditor: { getDomains: () => string[] } | undefined;
 		let targetInput: HTMLInputElement | undefined;
 
 		if (this.icon.linkType === 'url') {
-			domainList = [this.icon.target || ''].flat().filter(Boolean);
-
-			const inputRow = contentEl.createDiv({ cls: 'external-links-icon-domain-input-row' });
-			targetInput = inputRow.createEl('input', { cls: 'external-links-icon-domain-input' });
-			targetInput.type = 'text';
-			targetInput.placeholder = t('Domain (e.g. baike.baidu.com or baidu.com/about)');
-			const addBtn = inputRow.createEl('button', { cls: 'external-links-icon-domain-add-btn clickable-icon' });
-			setIcon(addBtn, 'lucide-plus');
-
-			domainListEl = contentEl.createEl('ul', { cls: 'external-links-icon-domain-list' });
-
-			const renderDomains = () => {
-				domainListEl!.empty();
-				domainList.forEach((domain, idx) => {
-					const li = domainListEl!.createEl('li', { cls: 'external-links-icon-domain-item' });
-					li.createSpan({ text: domain });
-					const removeBtn = li.createEl('button', { cls: 'external-links-icon-domain-item-remove clickable-icon' });
-					setIcon(removeBtn, 'lucide-x');
-					removeBtn.onclick = () => {
-						domainList.splice(idx, 1);
-						renderDomains();
-					};
-				});
-			};
-			renderDomains();
-
-			const addDomain = () => {
-				const val = targetInput!.value.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
-				if (!val) return;
-				if (domainList.includes(val)) {
-					new Notice(t('Domain already added'));
-					return;
-				}
-				domainList.push(val);
-				targetInput!.value = '';
-				renderDomains();
-			};
-
-			addBtn.onclick = addDomain;
-			targetInput?.addEventListener('keydown', (e) => {
-				if (e.key === 'Enter') {
-					e.preventDefault();
-					addDomain();
-				}
+			domainEditor = createDomainListEditor({
+				container: contentEl,
+				initialDomains: this.icon.target.filter(Boolean),
+				placeholder: t('Domain (e.g. baike.baidu.com or baidu.com/about)'),
 			});
 		} else {
 			// Scheme type: single target input
@@ -296,38 +336,29 @@ export class EditIconModal extends Modal {
 				.addText(text => {
 					targetInput = text.inputEl;
 					text.setPlaceholder(t('Scheme identifier (e.g. zotero)'));
-					const targetStr = typeof this.icon.target === 'string' ? this.icon.target : (Array.isArray(this.icon.target) ? this.icon.target[0] || '' : '');
+					const targetStr = this.icon.target[0] || '';
 					text.setValue(targetStr);
 				});
 		}
 
-		let newSvgData: string | undefined;
-		let newDarkSvgData: string | undefined;
 		let removeDark = false;
-		let removeBtn: HTMLButtonElement | undefined;
-		let removeIndicator: HTMLSpanElement | undefined;
-		let darkBadge: HTMLDivElement;
-		let darkPreview: HTMLDivElement;
 
 		const isDesktop = !Platform.isMobile;
 		const iconContainer = contentEl.createDiv({ cls: isDesktop ? 'external-links-icon-upload-columns' : '' });
 
-		const lightSection = iconContainer.createDiv({ cls: 'external-links-icon-upload-section' });
-		lightSection.createEl('div', { text: t('Default icon (light mode)'), cls: 'external-links-icon-upload-label' });
+		const lightSection = createIconUploadSection({
+			container: iconContainer,
+			label: t('Default icon (light mode)'),
+			initialSvgData: this.icon.svgData,
+			isDark: false,
+			iconName: this.icon.name,
+			hiddenInputs: this.hiddenInputs,
+		});
 
-		const lightBody = lightSection.createDiv({ cls: 'external-links-icon-section-body' });
-
-		const { badge: lightBadge, preview: lightPreview } = createBadgeWithPreview(lightBody, 'light', this.icon.svgData, this.icon.name);
-
-		const lightControls = lightBody.createDiv({ cls: 'external-links-icon-controls-col' });
-		const lightRow = lightControls.createDiv({ cls: 'external-links-icon-control-row' });
-		const lightUploadBtn = lightRow.createEl('button', { cls: 'external-links-icon-btn' });
-		setIcon(lightUploadBtn, 'lucide-upload');
-		lightUploadBtn.appendText(` ${t('Update')}`);
-
+		// Copy to dark button (only when light icon exists and no dark icon)
 		if (this.icon.svgData && !this.icon.themeDarkSvgData) {
 			const copyBtnCls = isDesktop ? 'clickable-icon' : 'external-links-icon-btn external-links-icon-btn-copy';
-			const copyBtn = lightRow.createEl('button', { cls: copyBtnCls });
+			const copyBtn = lightSection.controlRow.createEl('button', { cls: copyBtnCls });
 			if (isDesktop) {
 				setIcon(copyBtn, 'lucide-square-arrow-right');
 				copyBtn.setAttribute('aria-label', t('Copy to dark'));
@@ -337,76 +368,33 @@ export class EditIconModal extends Modal {
 				copyBtn.appendText(` ${t('Copy to dark')}`);
 			}
 			copyBtn.onclick = () => {
-				newDarkSvgData = newSvgData || this.icon.svgData;
-				removeDark = false;
-				if (removeBtn) removeBtn.classList.remove('is-active');
-				if (removeIndicator) removeIndicator.textContent = '';
-				darkBadge.classList.remove('external-links-icon-badge-empty');
-				renderPreview(doc, darkPreview, newDarkSvgData, 'copied');
+				darkSection.setSvgData(lightSection.getSvgData() || this.icon.svgData);
 				new Notice(t('Copied to dark'));
 			};
 		}
 
-		const lightInput = createFileInput(doc, (content) => {
-			newSvgData = content;
-			lightBadge.classList.remove('external-links-icon-badge-empty');
-			renderPreview(doc, lightPreview, content, 'uploaded');
+		const darkSection = createIconUploadSection({
+			container: iconContainer,
+			label: t('Dark mode icon (optional)'),
+			initialSvgData: this.icon.themeDarkSvgData,
+			isDark: true,
+			iconName: this.icon.name,
+			hiddenInputs: this.hiddenInputs,
+			onRemove: (removed) => { removeDark = removed; },
 		});
-		this.hiddenInputs.push(lightInput);
-		doc.body.appendChild(lightInput);
-		lightUploadBtn.onclick = () => lightInput.click();
-
-		const darkSection = iconContainer.createDiv({ cls: 'external-links-icon-upload-section' });
-		darkSection.createEl('div', { text: t('Dark mode icon (optional)'), cls: 'external-links-icon-upload-label' });
-
-		const darkBody = darkSection.createDiv({ cls: 'external-links-icon-section-body' });
-
-		const darkBadgeResult = createBadgeWithPreview(darkBody, 'dark', this.icon.themeDarkSvgData, this.icon.name);
-		darkBadge = darkBadgeResult.badge;
-		darkPreview = darkBadgeResult.preview;
-
-		const darkControls = darkBody.createDiv({ cls: 'external-links-icon-controls-col' });
-		const darkRow = darkControls.createDiv({ cls: 'external-links-icon-control-row' });
-		const darkUploadBtn = darkRow.createEl('button', { cls: 'external-links-icon-btn' });
-		setIcon(darkUploadBtn, 'lucide-upload');
-		darkUploadBtn.appendText(` ${this.icon.themeDarkSvgData ? t('Update') : t('Upload icon')}`);
-
-		if (this.icon.themeDarkSvgData) {
-			removeBtn = darkRow.createEl('button', { text: t('Remove'), cls: 'external-links-icon-btn external-links-icon-btn-danger' });
-			removeIndicator = darkRow.createSpan({ cls: 'external-links-icon-remove-indicator' });
-			removeBtn.onclick = () => {
-				removeDark = !removeDark;
-				removeIndicator!.textContent = removeDark ? ` ✓ ${t('Will be removed on save')}` : '';
-				removeBtn!.classList.toggle('is-active', removeDark);
-				if (isDesktop) {
-					darkUploadBtn.style.display = removeDark ? 'none' : '';
-				}
-			};
-		}
-
-
-		const darkInput = createFileInput(doc, (content) => {
-			newDarkSvgData = content;
-			removeDark = false;
-			if (removeBtn) removeBtn.classList.remove('is-active');
-			if (removeIndicator) removeIndicator.textContent = '';
-			darkBadge.classList.remove('external-links-icon-badge-empty');
-			renderPreview(doc, darkPreview, content, 'uploaded');
-		});
-		this.hiddenInputs.push(darkInput);
-		doc.body.appendChild(darkInput);
-		darkUploadBtn.onclick = () => darkInput.click();
 
 		const buttonContainer = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
 		const cancelBtn = buttonContainer.createEl('button', { text: t('Cancel') });
 		cancelBtn.onclick = () => { this.close(); };
 		const saveBtn = buttonContainer.createEl('button', { text: t('Save'), cls: 'external-links-icon-add-btn' });
 		saveBtn.onclick = () => {
+			const newSvgData = lightSection.getSvgData();
+			const newDarkSvgData = darkSection.getSvgData();
 			if (newDarkSvgData && !this.icon.svgData && !newSvgData) {
 				new Notice(t('Default icon is required when uploading a dark mode icon'));
 				return;
 			}
-			const data: { svgData?: string; themeDarkSvgData?: string | null; target?: string | string[] } = {};
+			const data: { svgData?: string; themeDarkSvgData?: string | null; target?: string[] } = {};
 			if (newSvgData) data.svgData = newSvgData;
 			if (removeDark) {
 				data.themeDarkSvgData = null;
@@ -416,26 +404,22 @@ export class EditIconModal extends Modal {
 
 			// Target editing
 			if (this.icon.linkType === 'url') {
-				// Also pick up any text still in the input
-				const remaining = targetInput!.value.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
-				if (remaining && !domainList.includes(remaining)) {
-					domainList.push(remaining);
-				}
+				const domainList = domainEditor!.getDomains();
 				if (domainList.length > 0) {
-					const newTarget = domainList.length === 1 ? domainList[0] : [...domainList];
+					const newTarget = [...domainList];
 					// Only include target if it changed
-					const oldTargets = [this.icon.target || ''].flat().filter(Boolean);
+					const oldTargets = this.icon.target.filter(Boolean);
 					if (JSON.stringify(oldTargets) !== JSON.stringify(domainList)) {
 						data.target = newTarget;
 					}
 				} else {
-					data.target = '';
+					data.target = [];
 				}
 			} else {
 				// Scheme type
 				const newSchemeTarget = targetInput!.value.trim();
-				if (newSchemeTarget !== (typeof this.icon.target === 'string' ? this.icon.target : '')) {
-					data.target = newSchemeTarget;
+				if (newSchemeTarget !== (this.icon.target[0] || '')) {
+					data.target = [newSchemeTarget];
 				}
 			}
 
@@ -491,7 +475,7 @@ function createFileInput(doc: Document, onValid: (content: string, fileName: str
 function renderPreview(doc: Document, previewDiv: HTMLElement, content: string, fileName: string): void {
 	try {
 		const img = doc.createElement('img');
-		img.src = `data:image/svg+xml;utf8,${encodeURIComponent(content)}`;
+		img.src = encodeSvgData(content);
 		img.alt = fileName;
 		while (previewDiv.firstChild) previewDiv.removeChild(previewDiv.firstChild);
 		previewDiv.appendChild(img);
@@ -537,7 +521,7 @@ function createBadgeWithPreview(
 		try {
 			const prepared = prepareSvgForSettings(svgData, preview);
 			const img = badge.ownerDocument.createElement('img');
-			img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
+			img.src = encodeSvgData(prepared);
 			img.alt = variant === 'light' ? 'current' : 'current dark';
 			preview.appendChild(img);
 		} catch { preview.textContent = '🔧'; }
