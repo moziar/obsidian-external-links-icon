@@ -1,6 +1,9 @@
 import type { ExternalLinksIconSettings, IconItem } from './types';
 import { ICON_CATEGORIES, DEFAULT_SETTINGS } from './constants';
 
+let cachedIcons: IconItem[] | null = null;
+let cachedVersion: number = -1;
+
 export interface MatchContext {
 	href: string;
 	isExternal: boolean;
@@ -9,7 +12,7 @@ export interface MatchContext {
 	fancyWebLink: boolean;
 	fancyObsidianWeb: boolean;
 	fancyAdvancedUri: boolean;
-	obsidianNoteMode: 'internal' | 'external' | 'both' | 'none';
+	obsidianNoteMode: 'none' | 'internal' | 'external' | 'both';
 }
 
 export function getMatchContext(
@@ -35,9 +38,7 @@ export function getMatchContext(
 	};
 }
 
-export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
-	if (!ctx.isExternal && !ctx.isInternal) return false;
-
+function matchSpecialIcon(icon: IconItem, ctx: MatchContext): boolean | null {
 	const hrefLower = ctx.href.toLowerCase();
 
 	switch (icon.id) {
@@ -66,8 +67,12 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 			return hrefLower.indexOf('settingid') !== -1;
 		}
 		default:
-			break;
+			return null;
 	}
+}
+
+function matchGenericIcon(icon: IconItem, ctx: MatchContext): boolean {
+	const hrefLower = ctx.href.toLowerCase();
 
 	if (icon.linkType === 'scheme') {
 		if (!ctx.fancyUrlScheme) return false;
@@ -75,7 +80,7 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 		const idx = hrefLower.indexOf('://');
 		if (idx <= 0) return false;
 		const scheme = hrefLower.slice(0, idx);
-		const expected = ((icon.target as string) || icon.id || '').toLowerCase();
+		const expected = (icon.target.length > 0 ? icon.target[0] : icon.id || '').toLowerCase();
 		if (!expected) return false;
 		return scheme === expected;
 	}
@@ -84,11 +89,18 @@ export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
 		if (!ctx.fancyWebLink) return false;
 		if (!ctx.isExternal) return false;
 		if (!hrefLower.startsWith('http://') && !hrefLower.startsWith('https://')) return false;
-		const patterns = [icon.target || icon.id || ''].flat().map(p => p.toLowerCase());
+		const patterns = (icon.target.length > 0 ? icon.target : [icon.id || '']).map(p => p.toLowerCase());
 		return patterns.some(p => p && hrefLower.indexOf(p) !== -1);
 	}
 
 	return false;
+}
+
+export function iconMatchesContext(icon: IconItem, ctx: MatchContext): boolean {
+	if (!ctx.isExternal && !ctx.isInternal) return false;
+	const special = matchSpecialIcon(icon, ctx);
+	if (special !== null) return special;
+	return matchGenericIcon(icon, ctx);
 }
 
 export function getSortedIcons(icons: Record<string, IconItem>): IconItem[] {
@@ -96,11 +108,15 @@ export function getSortedIcons(icons: Record<string, IconItem>): IconItem[] {
 }
 
 export function getUrlTarget(icon: IconItem): string {
-	const targets = [icon.target || icon.id || ''].flat();
+	const targets = icon.target.length > 0 ? icon.target : [icon.id || ''];
 	return targets.reduce((a, b) => b.length > a.length ? b : a, '').toLowerCase();
 }
 
-export function getAllIconsSorted(settings: ExternalLinksIconSettings): IconItem[] {
+export function getAllIconsSorted(settings: ExternalLinksIconSettings, settingsVersion: number = 0): IconItem[] {
+	if (cachedIcons !== null && cachedVersion === settingsVersion) {
+		return cachedIcons;
+	}
+
 	const customUrl = getSortedIcons(settings.customIcons || {}).filter(i => i.linkType === 'url');
 	const builtinUrl = getBuiltinIconsByOrder('url');
 	const builtinScheme = getBuiltinIconsByOrder('scheme');
@@ -114,7 +130,11 @@ export function getAllIconsSorted(settings: ExternalLinksIconSettings): IconItem
 	// Scheme: builtin first, then custom
 	const schemeIcons = [...builtinScheme, ...customScheme];
 
-	return [...urlIcons, ...schemeIcons];
+	const result = [...urlIcons, ...schemeIcons];
+
+	cachedIcons = result;
+	cachedVersion = settingsVersion;
+	return result;
 }
 
 function getBuiltinIconsByOrder(linkType: 'url' | 'scheme'): IconItem[] {
@@ -127,10 +147,11 @@ export function matchIcon(
 	href: string,
 	isExternal: boolean,
 	isInternal: boolean,
-	settings: ExternalLinksIconSettings
+	settings: ExternalLinksIconSettings,
+	settingsVersion: number = 0
 ): IconItem | null {
 	const ctx = getMatchContext(href, isExternal, isInternal, settings);
-	const icons = getAllIconsSorted(settings);
+	const icons = getAllIconsSorted(settings, settingsVersion);
 	if (!icons.length) return null;
 
 	for (const icon of icons) {
