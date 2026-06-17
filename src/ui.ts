@@ -46,11 +46,10 @@ interface DomainListEditorOptions {
 	container: HTMLElement;
 	initialDomains: string[];
 	placeholder?: string;
-	onChange?: (domains: string[]) => void;
 }
 
 function createDomainListEditor(options: DomainListEditorOptions): { getDomains: () => string[] } {
-	const { container, initialDomains, placeholder, onChange } = options;
+	const { container, initialDomains, placeholder } = options;
 	const domains: string[] = [...initialDomains];
 
 	const inputRow = container.createDiv({ cls: 'external-links-icon-domain-input-row' });
@@ -70,10 +69,9 @@ function createDomainListEditor(options: DomainListEditorOptions): { getDomains:
 			const removeBtn = li.createEl('button', { cls: 'external-links-icon-domain-item-remove clickable-icon' });
 			setIcon(removeBtn, 'lucide-x');
 			removeBtn.onclick = () => {
-				domains.splice(idx, 1);
-				renderDomains();
-				onChange?.(domains);
-			};
+			domains.splice(idx, 1);
+			renderDomains();
+		};
 		});
 	};
 
@@ -87,7 +85,6 @@ function createDomainListEditor(options: DomainListEditorOptions): { getDomains:
 		domains.push(val);
 		targetInput.value = '';
 		renderDomains();
-		onChange?.(domains);
 	};
 
 	addBtn.onclick = addDomain;
@@ -119,7 +116,6 @@ interface IconUploadSectionOptions {
 	isDark?: boolean;
 	iconName?: string;
 	hiddenInputs?: HTMLInputElement[];
-	onUpload?: (svgData: string) => void;
 	onRemove?: (removed: boolean) => void;
 }
 
@@ -128,7 +124,7 @@ function createIconUploadSection(options: IconUploadSectionOptions): {
 	setSvgData: (svgData: string | undefined) => void;
 	controlRow: HTMLDivElement;
 } {
-	const { container, label, initialSvgData, isDark, iconName, hiddenInputs, onUpload, onRemove } = options;
+	const { container, label, initialSvgData, isDark, iconName, hiddenInputs, onRemove } = options;
 	const doc = container.ownerDocument;
 	const variant = isDark ? 'dark' : 'light';
 	const isDesktop = !Platform.isMobile;
@@ -178,7 +174,6 @@ function createIconUploadSection(options: IconUploadSectionOptions): {
 		clearRemoveState();
 		badge.classList.remove('external-links-icon-badge-empty');
 		renderPreview(doc, preview, content, 'uploaded');
-		onUpload?.(content);
 	});
 	if (hiddenInputs) hiddenInputs.push(input);
 	doc.body.appendChild(input);
