@@ -6,17 +6,20 @@ import { getMatchContext, iconMatchesContext, getAllIconsSorted } from './icon-m
 
 
 export type GetSettingsFn = () => ExternalLinksIconSettings;
+export type GetSettingsVersionFn = () => number;
 
 export class Scanner {
 	private getSettings: GetSettingsFn;
+	private getSettingsVersion: GetSettingsVersionFn;
 	private scanTimerId: number | null = null;
 	private mutationObserver: MutationObserver | null = null;
 	private observedRoots: Element[] = [];
 	private observeSelectors: string[];
 	private iconElementsByName: Map<string, Set<HTMLElement>> = new Map();
 
-	constructor(getSettings: GetSettingsFn, observeSelectors?: string[]) {
+	constructor(getSettings: GetSettingsFn, observeSelectors?: string[], getSettingsVersion?: GetSettingsVersionFn) {
 		this.getSettings = getSettings;
+		this.getSettingsVersion = getSettingsVersion || (() => 0);
 		this.observeSelectors = observeSelectors || ['.markdown-preview-view', '.view-content', '.workspace-leaf-content'];
 	}
 
@@ -122,7 +125,8 @@ export class Scanner {
 				doc.body.classList.add('external-links-icon-position-before');
 			}
 			const applied = new Set<Element>();
-			const icons: IconItem[] = getAllIconsSorted(settings);
+			const settingsVersion = this.getSettingsVersion();
+			const icons: IconItem[] = getAllIconsSorted(settings, settingsVersion);
 			if (!icons.length) return;
 
 			const iconImages = new Map<string, string>();
