@@ -1,9 +1,12 @@
 import { PluginSettingTab, Setting, App, Notice } from 'obsidian';
 import type { SettingDefinitionItem, SettingGroupItem } from 'obsidian';
 import type ExternalLinksIcon from './main';
-import type { IconItem, LinkType } from './types';
+import type { IconItem, LinkType, ExternalLinksIconSettings } from './types';
 import { ICON_CATEGORIES, DEFAULT_SETTINGS } from './constants';
 import { t } from './lang/helper';
+import { preferDarkThemeFromDocument, prepareSvgForSettings, getSvgSourceForTheme } from './svg';
+import { clearIconCache } from './utils';
+import { ConfirmModal, EditIconModal, NewIconModal } from './ui';
 
 function getIconDisplayName(icon: IconItem): string {
 	const isBuiltin = Boolean((DEFAULT_SETTINGS.icons || {})[icon.id]);
@@ -14,37 +17,34 @@ function getIconDisplayName(icon: IconItem): string {
 	// return icon id if icon name did not provide
 	return icon.name ?? icon.id;
 }
-import { preferDarkThemeFromDocument, prepareSvgForSettings, getSvgSourceForTheme } from './svg';
-import { clearIconCache } from './utils';
-import { ConfirmModal, EditIconModal, NewIconModal } from './ui';
+
+function setIconImgDataset(img: HTMLImageElement, icon: IconItem, isBuiltin: boolean): void {
+	img.dataset.iconId = icon.id;
+	img.dataset.iconLinkType = icon.linkType;
+	img.dataset.builtin = String(isBuiltin);
+}
 
 function renderIconImage(
 	container: HTMLElement,
 	icon: IconItem,
-	linkType: string,
 	isBuiltin: boolean
 ): void {
 	const doc = container.ownerDocument;
 	const hasDual = !!(icon.svgData && icon.themeDarkSvgData);
-	const builtinStr = isBuiltin ? 'true' : 'false';
 	try {
 		if (hasDual) {
 			const lightPrepared = prepareSvgForSettings(icon.svgData || '', container);
 			const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', container);
 
 			const imgLight = doc.createElement('img');
-			imgLight.dataset.iconId = icon.id || '';
-			imgLight.dataset.iconLinkType = linkType;
-			imgLight.dataset.builtin = builtinStr;
+			setIconImgDataset(imgLight, icon, isBuiltin);
 			imgLight.dataset.iconVariant = 'light';
 			imgLight.dataset.dualVariant = 'true';
 			imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
 			imgLight.alt = getIconDisplayName(icon);
 
 			const imgDark = doc.createElement('img');
-			imgDark.dataset.iconId = icon.id || '';
-			imgDark.dataset.iconLinkType = linkType;
-			imgDark.dataset.builtin = builtinStr;
+			setIconImgDataset(imgDark, icon, isBuiltin);
 			imgDark.dataset.iconVariant = 'dark';
 			imgDark.dataset.dualVariant = 'true';
 			imgDark.src = `data:image/svg+xml;utf8,${encodeURIComponent(darkPrepared)}`;
@@ -57,9 +57,7 @@ function renderIconImage(
 			const svgSource = getSvgSourceForTheme(icon, preferDark);
 			const prepared = prepareSvgForSettings(svgSource, container);
 			const img = doc.createElement('img');
-			img.dataset.iconId = icon.id || '';
-			img.dataset.iconLinkType = linkType;
-			img.dataset.builtin = builtinStr;
+			setIconImgDataset(img, icon, isBuiltin);
 			img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 			img.alt = getIconDisplayName(icon);
 			container.appendChild(img);
@@ -73,7 +71,6 @@ function renderIconImage(
 export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	icon: string = 'external-link';
 	plugin: ExternalLinksIcon;
-	private debounceTimers: Map<string, number> = new Map();
 
 	private themeMediaQuery: MediaQueryList | null = null;
 	private mqHandler: EventListener | null = null;
@@ -95,10 +92,10 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 						dropdown
 							.addOption('auto', t('Adapt to Obsidian setting (Auto)'))
 							.addOption('en', t('English'))
-							.addOption('zh', t('Chinese (Simplified)'))
+							.addOption('zh-cn', t('Chinese (Simplified)'))
 							.setValue(this.plugin.settings.language || 'auto')
 							.onChange(async (value) => {
-								this.plugin.settings.language = value;
+								this.plugin.settings.language = value as ExternalLinksIconSettings['language'];
 								await this.plugin.saveSettings();
 								this.plugin.applyLanguage();
 								this.update();
@@ -200,8 +197,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					if (icon) {
 						const box = builtinRow.createDiv({ cls: 'website-item' });
 						const iconEl = box.createDiv({ cls: 'item-icon' });
-						renderIconImage(iconEl, icon, 'url', true);
-						box.createSpan({ text: getIconDisplayName(icon) });
+						renderIconImage(iconEl, icon, true);
+					box.createSpan({ text: getIconDisplayName(icon) });
 					}
 				});
 			},
@@ -237,8 +234,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					if (icon) {
 						const box = builtinRow.createDiv({ cls: 'scheme-item' });
 						const iconEl = box.createDiv({ cls: 'item-icon' });
-						renderIconImage(iconEl, icon, 'scheme', true);
-						box.createSpan({ text: getIconDisplayName(icon) });
+						renderIconImage(iconEl, icon, true);
+					box.createSpan({ text: getIconDisplayName(icon) });
 					}
 				});
 			},
@@ -265,14 +262,13 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				setting.setClass('icon-setting-item');
 				setting.nameEl.empty();
 				this.addIconPreview(setting, icon);
-				this.addNameInput(setting, icon);
-				this.addUploadButton(setting, icon);
+			this.addUploadButton(setting, icon);
 				this.addControlButtons(setting, icon);
 			},
 		};
 	}
 
-	private async addIconWithData(data: { linkType: LinkType; name: string; target: string | string[]; svgData?: string; themeDarkSvgData?: string }) {
+	private async addIconWithData(data: { linkType: LinkType; name: string; target: string[]; svgData?: string; themeDarkSvgData?: string }) {
 		const { linkType, name, target, svgData, themeDarkSvgData } = data;
 		const id = name;
 		const customIcons = this.plugin.settings.customIcons || {};
@@ -281,15 +277,14 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			return;
 		}
 
-		let normalized: string | string[];
+		let normalized: string[];
 		if (linkType === 'url') {
-			normalized = [target].flat().map(t => t.trim().replace(/^https?:\/\//i, '').replace(/\/$/, ''));
-			if (normalized.length === 1) normalized = normalized[0];
+			normalized = target.map(t => t.trim().replace(/^https?:\/\//i, '').replace(/\/$/, ''));
 		} else {
-			normalized = (target as string).trim();
+			normalized = [target[0]?.trim() || ''];
 		}
 
-		const maxOrder = Object.values(customIcons).reduce((max, ic: IconItem) => Math.max(max, ic.order || 0), -1);
+		const maxOrder = Object.values(customIcons).reduce((max, ic: IconItem) => Math.max(max, ic.order ?? -1), -1);
 
 		const newIcon: IconItem = {
 			id,
@@ -412,33 +407,9 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		const builtinOverride = (DEFAULT_SETTINGS.icons || {})[icon.id];
 		const effectiveIcon = builtinOverride ? builtinOverride : icon;
 		const isBuiltin = Boolean(builtinOverride);
-		renderIconImage(previewIcon, effectiveIcon, icon.linkType || 'url', isBuiltin);
+		renderIconImage(previewIcon, effectiveIcon, isBuiltin);
 
 		previewContainer.createSpan({ text: getIconDisplayName(icon) });
-	}
-
-	private addNameInput(_settingItem: Setting, _icon: IconItem): void {
-		// Domain/scheme editing has been moved to EditIconModal
-	}
-
-	private debounceUpdateTarget(id: string, newTarget: string | string[]): void {
-		const timerId = this.debounceTimers.get(`target-${id}`);
-		if (timerId) {
-			window.clearTimeout(timerId);
-		}
-
-		const newTimerId = window.setTimeout(() => {
-			(async () => {
-				const icons = this.plugin.settings.customIcons || {};
-				if (icons[id]) {
-					icons[id].target = typeof newTarget === 'string' ? newTarget.trim() : newTarget;
-					await this.plugin.saveSettings();
-					this.update();
-				}
-				this.debounceTimers.delete(`target-${id}`);
-			})().catch(console.error);
-		}, 500);
-		this.debounceTimers.set(`target-${id}`, newTimerId);
 	}
 
 	private addUploadButton(settingItem: Setting, icon: IconItem): void {

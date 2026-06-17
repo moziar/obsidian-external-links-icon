@@ -1,4 +1,5 @@
 import type { ExternalLinksIconSettings } from './types';
+import { BUILTIN_ICONS } from './builtin-icons';
 
 export const ICON_CATEGORIES = {
 	URL_SCHEME: [
@@ -14,8 +15,6 @@ export const ICON_CATEGORIES = {
 		'google', 'obsidianweb', 'zhihu', 'latepost', 'feishu', 'notion', 'app store'
 	] as const,
 };
-
-import { BUILTIN_ICONS } from './builtin-icons';
 
 export const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
 	icons: BUILTIN_ICONS,
