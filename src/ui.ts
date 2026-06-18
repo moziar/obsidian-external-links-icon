@@ -480,19 +480,20 @@ function renderPreview(doc: Document, previewDiv: HTMLElement, content: string, 
 }
 
 function downloadSvg(svgData: string, fileName: string): void {
+	const doc = activeDocument;
+	const blob = new Blob([svgData], { type: 'image/svg+xml' });
+	const url = URL.createObjectURL(blob);
 	try {
-		const doc = activeDocument;
-		const blob = new Blob([svgData], { type: 'image/svg+xml' });
-		const url = URL.createObjectURL(blob);
 		const a = doc.createElement('a');
 		a.href = url;
 		a.download = fileName;
 		doc.body.appendChild(a);
 		a.click();
 		doc.body.removeChild(a);
-		URL.revokeObjectURL(url);
 	} catch {
 		new Notice(t('Failed to download SVG file.'));
+	} finally {
+		URL.revokeObjectURL(url);
 	}
 }
 
