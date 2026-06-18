@@ -26,7 +26,7 @@ export class Scanner {
 	start(): void {
 		this.mutationObserver = new MutationObserver((mutations) => {
 			if (this.isOwnMutation(mutations)) return;
-			window.requestAnimationFrame(() => this.scheduleScan(0));
+			activeWindow.requestAnimationFrame(() => this.scheduleScan(0));
 		});
 
 		const observeSelectors = this.observeSelectors;
