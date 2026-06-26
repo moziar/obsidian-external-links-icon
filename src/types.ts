@@ -7,13 +7,13 @@ export interface IconItem {
 	order?: number;
 	linkType: LinkType;
 	themeDarkSvgData?: string;
-	target?: string | string[];
+	target: string[];
 }
 
 export interface ExternalLinksIconSettings {
-	icons: Record<string, IconItem>;
+	icons: Readonly<Record<string, IconItem>>;
 	customIcons: Record<string, IconItem>;
-	language: string;
+	language: 'auto' | 'en' | 'zh-cn';
 	fancyUrlScheme: boolean;
 	fancyWebLink: boolean;
 	fancyObsidianWebLink: boolean;

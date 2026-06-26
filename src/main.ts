@@ -4,7 +4,7 @@ import type { EditorView } from '@codemirror/view';
 
 import { ExternalLinksIconSettings, type IconItem } from './types';
 import { DEFAULT_SETTINGS } from './constants';
-import { isValidSvgData } from './utils';
+import { isValidSvgData, clearIconCache } from './utils';
 import { ExternalLinksIconSettingTab } from './settings';
 import { createLivePreviewExtension } from './live-preview';
 import { setLanguage } from './lang/helper';
@@ -71,7 +71,7 @@ export default class ExternalLinksIcon extends Plugin {
 
 		try {
 			const Scanner = (await import('./scanner')).Scanner;
-			this.scanner = new Scanner(() => this.settings);
+			this.scanner = new Scanner(() => this.settings, undefined, () => this.settingsVersion);
 			this.scanner.start();
 			this.registerEvent(this.app.workspace.on('active-leaf-change', () => { this.scanner?.reobserveIfChanged(); this.scanner?.scheduleScan(0); }));
 			this.registerEvent(this.app.workspace.on('layout-change', () => { this.scanner?.reobserveIfChanged(); this.scanner?.scheduleScan(40); }));
@@ -84,26 +84,67 @@ export default class ExternalLinksIcon extends Plugin {
 
 	onunload(): void {
 		this.scanner?.stop();
+		clearIconCache();
 	}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as ExternalLinksIconSettings;
+		const loaded = (await this.loadData()) as Record<string, unknown> | null;
+		// Migrate language: 'zh' → 'zh-cn', validate against union type
+		const loadedLang = loaded?.language as string | undefined;
+		let language: ExternalLinksIconSettings['language'];
+		if (loadedLang === 'zh') {
+			language = 'zh-cn';
+		} else if (loadedLang === 'en' || loadedLang === 'auto' || loadedLang === 'zh-cn') {
+			language = loadedLang;
+		} else {
+			language = DEFAULT_SETTINGS.language;
+		}
+		this.settings = {
+			icons: DEFAULT_SETTINGS.icons,
+			customIcons: (loaded?.customIcons as Record<string, IconItem>) || {},
+			language,
+			fancyUrlScheme: typeof loaded?.fancyUrlScheme === 'boolean' ? loaded.fancyUrlScheme : DEFAULT_SETTINGS.fancyUrlScheme,
+			fancyWebLink: typeof loaded?.fancyWebLink === 'boolean' ? loaded.fancyWebLink : DEFAULT_SETTINGS.fancyWebLink,
+			fancyObsidianWebLink: typeof loaded?.fancyObsidianWebLink === 'boolean' ? loaded.fancyObsidianWebLink : DEFAULT_SETTINGS.fancyObsidianWebLink,
+			fancyObsidianNoteLink: ['none', 'internal', 'external', 'both'].includes(loaded?.fancyObsidianNoteLink as string)
+				? loaded?.fancyObsidianNoteLink as ExternalLinksIconSettings['fancyObsidianNoteLink']
+				: DEFAULT_SETTINGS.fancyObsidianNoteLink,
+			fancyAdvancedUriLink: typeof loaded?.fancyAdvancedUriLink === 'boolean' ? loaded.fancyAdvancedUriLink : DEFAULT_SETTINGS.fancyAdvancedUriLink,
+			iconPosition: ['after', 'before'].includes(loaded?.iconPosition as string)
+				? loaded?.iconPosition as ExternalLinksIconSettings['iconPosition']
+				: DEFAULT_SETTINGS.iconPosition,
+		};
 		this.validateAndFixSettings();
 		this.applyLanguage();
 	}
 
 	private validateAndFixSettings(): void {
+		// customIcons migration: target string → string[], name/order fallback
 		let order = 0;
 		const migrated: Record<string, IconItem> = {};
 		for (const key in this.settings.customIcons) {
 			if (Object.prototype.hasOwnProperty.call(this.settings.customIcons, key)) {
 				const icon = this.settings.customIcons[key];
-				if (typeof icon.order !== 'number') icon.order = order++;
+				// Migrate target: string | string[] → string[]
+				if (typeof icon.target === 'string') {
+					icon.target = icon.target ? [icon.target] : [];
+				} else if (!Array.isArray(icon.target)) {
+					icon.target = [];
+				}
+				// Migrate name: fallback to id
+				if (typeof icon.name !== 'string' || !icon.name) {
+					icon.name = icon.id || key;
+				}
+				// Migrate order: assign sequential if missing
+				if (typeof icon.order !== 'number') {
+					icon.order = order++;
+				} else {
+					order = icon.order + 1;
+				}
 				if (!icon.linkType) icon.linkType = 'url';
 				if (!icon.svgData || !isValidSvgData(icon.svgData)) icon.svgData = this.getDefaultSvgData();
 				if (!icon.id) icon.id = key;
 				migrated[icon.id] = icon;
-				order = (icon.order || 0) + 1;
 			}
 		}
 		this.settings.customIcons = migrated;

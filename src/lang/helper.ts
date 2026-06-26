@@ -5,6 +5,7 @@ import zhCN from './locale/zh-cn';
 const localeMap: Record<string, Record<keyof typeof en, string>> = {
 	en,
 	zh: zhCN,
+	'zh-cn': zhCN,
 	'zh-CN': zhCN,
 	'zh-TW': zhCN,
 	'zh-Hans': zhCN,

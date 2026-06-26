@@ -120,6 +120,7 @@ class LivePreviewIconPlugin implements PluginValue {
 	buildDecorations(view: EditorView): DecorationSet {
 		const builder = new RangeSetBuilder<Decoration>();
 		const settings = this.getSettings();
+		const settingsVersion = view.state.facet(settingsVersionFacet);
 		const preferDark = preferDarkThemeFromDocument();
 		const cursorPos = view.state.selection.main.head;
 		const cursorLine = view.state.doc.lineAt(cursorPos).number;
@@ -139,7 +140,7 @@ class LivePreviewIconPlugin implements PluginValue {
 						const linkLine = view.state.doc.lineAt(info.linkFrom);
 						if (linkLine.number === cursorLine) return;
 
-						const chosen = matchIcon(info.href, true, false, settings);
+						const chosen = matchIcon(info.href, true, false, settings, settingsVersion);
 						if (!chosen) return;
 
 						let image: string | undefined;
@@ -183,7 +184,7 @@ class LivePreviewIconPlugin implements PluginValue {
 
 						if (!href) return;
 
-						const chosen = matchIcon(href, false, true, settings);
+						const chosen = matchIcon(href, false, true, settings, settingsVersion);
 						if (!chosen) return;
 
 						let image: string | undefined;
