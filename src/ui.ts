@@ -1,7 +1,7 @@
 import { App, Modal, Notice, Platform, Setting, setIcon } from 'obsidian';
 import type { IconItem, LinkType } from './types';
 import { t } from './lang/helper';
-import { prepareSvgForSettings } from './svg';
+import { prepareSvgForSettings, removeBackground } from './svg';
 import { encodeSvgData } from './utils';
 
 export class ConfirmModal extends Modal {
@@ -117,6 +117,7 @@ interface IconUploadSectionOptions {
 	iconName?: string;
 	hiddenInputs?: HTMLInputElement[];
 	onRemove?: (removed: boolean) => void;
+	autoRemoveBackground?: boolean;
 }
 
 function createIconUploadSection(options: IconUploadSectionOptions): {
@@ -124,7 +125,7 @@ function createIconUploadSection(options: IconUploadSectionOptions): {
 	setSvgData: (svgData: string | undefined) => void;
 	controlRow: HTMLDivElement;
 } {
-	const { container, label, initialSvgData, isDark, iconName, hiddenInputs, onRemove } = options;
+	const { container, label, initialSvgData, isDark, iconName, hiddenInputs, onRemove, autoRemoveBackground } = options;
 	const doc = container.ownerDocument;
 	const variant = isDark ? 'dark' : 'light';
 	const isDesktop = !Platform.isMobile;
@@ -169,11 +170,19 @@ function createIconUploadSection(options: IconUploadSectionOptions): {
 		onRemove?.(false);
 	};
 
-	const input = createFileInput(doc, (content) => {
-		newSvgData = content;
+	const input = createFileInput(doc, (content, fileName) => {
+		let processed = content;
+		if (autoRemoveBackground) {
+			const result = removeBackground(content);
+			if (result.removed) {
+				processed = result.svg;
+				new Notice(t('Background removed'));
+			}
+		}
+		newSvgData = processed;
 		clearRemoveState();
 		badge.classList.remove('external-links-icon-badge-empty');
-		renderPreview(doc, preview, content, 'uploaded');
+		renderPreview(doc, preview, processed, fileName);
 	});
 	if (hiddenInputs) hiddenInputs.push(input);
 	doc.body.appendChild(input);
@@ -195,13 +204,15 @@ function createIconUploadSection(options: IconUploadSectionOptions): {
 export class NewIconModal extends Modal {
 	onSubmit: (data: NewIconData) => void | Promise<void>;
 
-	constructor(app: App, onSubmit: (data: NewIconData) => void | Promise<void>, defaultLinkType?: LinkType) {
+	constructor(app: App, onSubmit: (data: NewIconData) => void | Promise<void>, defaultLinkType?: LinkType, autoRemoveBackground?: boolean) {
 		super(app);
 		this.onSubmit = onSubmit;
 		this._defaultLinkType = defaultLinkType || 'url';
+		this._autoRemoveBackground = autoRemoveBackground ?? false;
 	}
 
 	private _defaultLinkType: LinkType = 'url';
+	private _autoRemoveBackground: boolean = false;
 	private hiddenInputs: HTMLInputElement[] = [];
 
 	onOpen(): void {
@@ -240,6 +251,7 @@ export class NewIconModal extends Modal {
 			label: t('Default icon (light mode)'),
 			isDark: false,
 			hiddenInputs: this.hiddenInputs,
+			autoRemoveBackground: this._autoRemoveBackground,
 		});
 
 		const darkSection = createIconUploadSection({
@@ -247,6 +259,7 @@ export class NewIconModal extends Modal {
 			label: t('Dark mode icon (optional)'),
 			isDark: true,
 			hiddenInputs: this.hiddenInputs,
+			autoRemoveBackground: this._autoRemoveBackground,
 		});
 
 		const buttonContainer = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
@@ -297,15 +310,18 @@ export class EditIconModal extends Modal {
 	private icon: IconItem;
 	private onSave: (data: { svgData?: string; themeDarkSvgData?: string | null; target?: string[] }) => void | Promise<void>;
 	private hiddenInputs: HTMLInputElement[] = [];
+	private _autoRemoveBackground: boolean;
 
 	constructor(
 		app: App,
 		icon: IconItem,
 		onSave: (data: { svgData?: string; themeDarkSvgData?: string | null; target?: string[] }) => void | Promise<void>,
+		autoRemoveBackground?: boolean,
 	) {
 		super(app);
 		this.icon = icon;
 		this.onSave = onSave;
+		this._autoRemoveBackground = autoRemoveBackground ?? false;
 	}
 
 	onOpen(): void {
@@ -348,6 +364,7 @@ export class EditIconModal extends Modal {
 			isDark: false,
 			iconName: this.icon.name,
 			hiddenInputs: this.hiddenInputs,
+			autoRemoveBackground: this._autoRemoveBackground,
 		});
 
 		// Copy to dark button (only when light icon exists and no dark icon)
@@ -376,6 +393,7 @@ export class EditIconModal extends Modal {
 			iconName: this.icon.name,
 			hiddenInputs: this.hiddenInputs,
 			onRemove: (removed) => { removeDark = removed; },
+			autoRemoveBackground: this._autoRemoveBackground,
 		});
 
 		const buttonContainer = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });

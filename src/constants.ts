@@ -26,4 +26,5 @@ export const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
 	fancyObsidianNoteLink: 'none',
 	fancyAdvancedUriLink: true,
 	iconPosition: 'after',
+	autoRemoveBackground: true,
 };

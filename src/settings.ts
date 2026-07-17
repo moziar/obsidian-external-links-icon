@@ -116,7 +116,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					const addWebsiteBtn = doc.createElement('button');
 					addWebsiteBtn.textContent = t('Add website');
 					addWebsiteBtn.onclick = () => {
-						const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'url');
+						const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'url', this.plugin.settings.autoRemoveBackground);
 						modal.open();
 					};
 					btnContainer.appendChild(addWebsiteBtn);
@@ -124,7 +124,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					const addSchemeBtn = doc.createElement('button');
 					addSchemeBtn.textContent = t('Add URL scheme');
 					addSchemeBtn.onclick = () => {
-						const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'scheme');
+						const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'scheme', this.plugin.settings.autoRemoveBackground);
 						modal.open();
 					};
 					btnContainer.appendChild(addSchemeBtn);
@@ -154,18 +154,23 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					},
 					{ name: t('Fancy advanced uri link'), desc: t('Enable icons for advanced uri links.'), control: { type: 'toggle', key: 'fancyAdvancedUriLink' } },
 					{
-						name: t('Icon position'),
-						desc: t('Choose whether the icon appears before or after the link text.'),
-						control: {
-							type: 'dropdown',
-							key: 'iconPosition',
-							defaultValue: 'after',
-							options: {
-								before: t('Before link'),
-								after: t('After link'),
-							},
+					name: t('Icon position'),
+					desc: t('Choose whether the icon appears before or after the link text.'),
+					control: {
+						type: 'dropdown',
+						key: 'iconPosition',
+						defaultValue: 'after',
+						options: {
+							before: t('Before link'),
+							after: t('After link'),
 						},
 					},
+				},
+				{
+					name: t('Auto-remove icon background'),
+					desc: t('Automatically detect and remove solid background color from uploaded SVG icons.'),
+					control: { type: 'toggle', key: 'autoRemoveBackground' },
+				},
 				],
 			},
 			{
@@ -431,7 +436,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 						}
 						await this.plugin.saveSettings();
 						this.update();
-					});
+					}, this.plugin.settings.autoRemoveBackground);
 					modal.open();
 				});
 		});
