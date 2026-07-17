@@ -116,17 +116,17 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					const addWebsiteBtn = doc.createElement('button');
 					addWebsiteBtn.textContent = t('Add website');
 					addWebsiteBtn.onclick = () => {
-						const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'url', this.plugin.settings.autoRemoveBackground);
-						modal.open();
-					};
-					btnContainer.appendChild(addWebsiteBtn);
+					const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'url', this.plugin.settings.autoRemoveBackground, this.plugin.settings.autoFitIcon);
+					modal.open();
+				};
+				btnContainer.appendChild(addWebsiteBtn);
 
-					const addSchemeBtn = doc.createElement('button');
-					addSchemeBtn.textContent = t('Add URL scheme');
-					addSchemeBtn.onclick = () => {
-						const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'scheme', this.plugin.settings.autoRemoveBackground);
-						modal.open();
-					};
+				const addSchemeBtn = doc.createElement('button');
+				addSchemeBtn.textContent = t('Add URL scheme');
+				addSchemeBtn.onclick = () => {
+					const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'scheme', this.plugin.settings.autoRemoveBackground, this.plugin.settings.autoFitIcon);
+					modal.open();
+				};
 					btnContainer.appendChild(addSchemeBtn);
 				},
 			},
@@ -167,11 +167,16 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 					},
 				},
 				{
-					name: t('Auto-remove icon background'),
-					desc: t('Automatically detect and remove solid background color from uploaded SVG icons.'),
-					control: { type: 'toggle', key: 'autoRemoveBackground' },
-				},
-				],
+				name: t('Auto-remove icon background'),
+				desc: t('Automatically detect and remove solid background color from uploaded SVG icons.'),
+				control: { type: 'toggle', key: 'autoRemoveBackground' },
+			},
+			{
+				name: t('Auto-adjust icon size'),
+				desc: t('Automatically resize SVG viewBox to fit the icon content.'),
+				control: { type: 'toggle', key: 'autoFitIcon' },
+			},
+			],
 			},
 			{
 				type: 'group',
@@ -423,20 +428,20 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				.setTooltip(t('Edit icon'))
 				.onClick(() => {
 					const modal = new EditIconModal(this.app, icon, async (data) => {
-						if (data.svgData) {
-							icon.svgData = data.svgData;
-						}
-						if (data.themeDarkSvgData === null) {
-							delete icon.themeDarkSvgData;
-						} else if (data.themeDarkSvgData) {
-							icon.themeDarkSvgData = data.themeDarkSvgData;
-						}
-						if (data.target !== undefined) {
-							icon.target = data.target;
-						}
-						await this.plugin.saveSettings();
-						this.update();
-					}, this.plugin.settings.autoRemoveBackground);
+					if (data.svgData) {
+						icon.svgData = data.svgData;
+					}
+					if (data.themeDarkSvgData === null) {
+						delete icon.themeDarkSvgData;
+					} else if (data.themeDarkSvgData) {
+						icon.themeDarkSvgData = data.themeDarkSvgData;
+					}
+					if (data.target !== undefined) {
+						icon.target = data.target;
+					}
+					await this.plugin.saveSettings();
+					this.update();
+				}, this.plugin.settings.autoRemoveBackground, this.plugin.settings.autoFitIcon);
 					modal.open();
 				});
 		});

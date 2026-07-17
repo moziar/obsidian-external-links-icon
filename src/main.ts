@@ -114,6 +114,7 @@ export default class ExternalLinksIcon extends Plugin {
 				? loaded?.iconPosition as ExternalLinksIconSettings['iconPosition']
 				: DEFAULT_SETTINGS.iconPosition,
 			autoRemoveBackground: typeof loaded?.autoRemoveBackground === 'boolean' ? loaded.autoRemoveBackground : DEFAULT_SETTINGS.autoRemoveBackground,
+			autoFitIcon: typeof loaded?.autoFitIcon === 'boolean' ? loaded.autoFitIcon : DEFAULT_SETTINGS.autoFitIcon,
 		};
 		this.validateAndFixSettings();
 		this.applyLanguage();

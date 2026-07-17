@@ -121,6 +121,8 @@ export default {
 	'Before link': 'Before link',
 	'Auto-remove icon background': 'Auto-remove icon background',
 	'Automatically detect and remove solid background color from uploaded SVG icons.': 'Automatically detect and remove solid background color from uploaded SVG icons.',
+	'Auto-adjust icon size': 'Auto-adjust icon size',
+	'Automatically resize SVG viewBox to fit the icon content.': 'Automatically resize SVG viewBox to fit the icon content.',
 	'Background removed': 'Background removed!',
 	'Add domain': 'Add domain',
 	'Domains': 'Domains',

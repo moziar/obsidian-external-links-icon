@@ -339,3 +339,86 @@ export function removeBackground(svgString: string): { svg: string; removed: boo
 	const serializer = new XMLSerializer();
 	return { svg: serializer.serializeToString(doc), removed: true, color };
 }
+
+// ─── Fit viewBox to content ──────────────────────────────────────────────────
+
+/**
+ * Refit SVG viewBox to its content bbox if the content fills too little of the canvas.
+ * Uses native getBBox() for accuracy (handles curves). Synchronous within a microtask,
+ * but requires temporary DOM insertion. Returns refit=true if viewBox was changed.
+ *
+ * Judgement is based on the LONG edge fill ratio (max(fillW, fillH)), because SVG
+ * preserves aspect ratio by default — a thin icon that already fills its long edge
+ * should not be stretched.
+ *
+ * @param paddingRatio Padding around content as a fraction of content size (default 0.025 = 2.5%).
+ *                     With 0.025, content fills ~95.2% of the new viewBox long edge.
+ * @param minFillRatio Trigger refit if content's LONG edge fills less than this (default 0.9)
+ */
+export function fitSvgToContent(
+	svgString: string,
+	paddingRatio = 0.025,
+	minFillRatio = 0.9
+): { svg: string; refit: boolean } {
+	let doc: Document;
+	try {
+		doc = new DOMParser().parseFromString(svgString, 'image/svg+xml');
+	} catch {
+		return { svg: svgString, refit: false };
+	}
+	if (doc.querySelector('parsererror')) return { svg: svgString, refit: false };
+	const svg = doc.documentElement;
+	if (!svg || svg.tagName.toLowerCase() !== 'svg') return { svg: svgString, refit: false };
+
+	const viewBox = getViewBox(svg);
+	if (!viewBox) return { svg: svgString, refit: false };
+
+	// Compute content bbox via native getBBox() — accurate for curves/transforms.
+	// Requires the SVG to be attached to a rendered DOM tree.
+	let contentBBox: { x: number; y: number; w: number; h: number };
+	const host = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	host.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+	host.style.position = 'absolute';
+	host.style.left = '-9999px';
+	host.style.top = '0';
+	host.style.width = '1px';
+	host.style.height = '1px';
+	host.style.visibility = 'hidden';
+	activeDocument.body.appendChild(host);
+	try {
+		host.appendChild(svg);
+		const bbox = (svg as unknown as SVGSVGElement).getBBox();
+		contentBBox = { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height };
+	} catch {
+		return { svg: svgString, refit: false };
+	} finally {
+		host.remove();
+	}
+
+	// Guard: skip if content is empty
+	if (contentBBox.w <= 0 || contentBBox.h <= 0) {
+		return { svg: svgString, refit: false };
+	}
+
+	// Skip if content's LONG edge already fills enough of viewBox
+	const fillW = contentBBox.w / viewBox.w;
+	const fillH = contentBBox.h / viewBox.h;
+	if (Math.max(fillW, fillH) >= minFillRatio) {
+		return { svg: svgString, refit: false };
+	}
+
+	// Refit: pad content by paddingRatio of content size, set new viewBox
+	const padX = contentBBox.w * paddingRatio;
+	const padY = contentBBox.h * paddingRatio;
+	const newX = contentBBox.x - padX;
+	const newY = contentBBox.y - padY;
+	const newW = contentBBox.w + 2 * padX;
+	const newH = contentBBox.h + 2 * padY;
+
+	svg.setAttribute('viewBox', `${newX} ${newY} ${newW} ${newH}`);
+	svg.removeAttribute('width');
+	svg.removeAttribute('height');
+
+	const serializer = new XMLSerializer();
+	return { svg: serializer.serializeToString(svg), refit: true };
+}

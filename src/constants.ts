@@ -27,4 +27,5 @@ export const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
 	fancyAdvancedUriLink: true,
 	iconPosition: 'after',
 	autoRemoveBackground: true,
+	autoFitIcon: true,
 };

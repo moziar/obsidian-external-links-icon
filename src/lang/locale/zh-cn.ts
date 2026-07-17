@@ -121,6 +121,8 @@ export default {
 	'Before link': '链接前',
 	'Auto-remove icon background': '自动移除图标背景',
 	'Automatically detect and remove solid background color from uploaded SVG icons.': '自动检测并移除上传的 SVG 图标的纯色背景。',
+	'Auto-adjust icon size': '自动调整图标大小',
+	'Automatically resize SVG viewBox to fit the icon content.': '自动调整 SVG viewBox 以适配图标内容。',
 	'Background removed': '已移除背景！',
 	'Add domain': '添加域名',
 	'Domains': '域名',

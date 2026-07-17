@@ -21,4 +21,5 @@ export interface ExternalLinksIconSettings {
 	fancyAdvancedUriLink: boolean;
 	iconPosition: 'after' | 'before';
 	autoRemoveBackground: boolean;
+	autoFitIcon: boolean;
 }
