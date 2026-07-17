@@ -1,16 +1,5 @@
 const iconImageCache = new Map<string, { svgData: string; darkSvgData: string; light?: string; dark?: string }>();
 
-export function minifySvg(svgData: string): string {
-	if (!svgData) return '';
-	return svgData
-		.replace(/[\n\r\t]/g, '') // Remove newlines and tabs
-		.replace(/\s+/g, ' ') // Collapse spaces
-		.replace(/>\s+</g, '><') // Remove spaces between tags
-		.replace(/<!--[\s\S]*?-->/g, '') // Remove comments
-		.replace(/\s*xmlns:v="[^"]*"/g, '') // Remove Vecta namespace
-		.trim();
-}
-
 export function encodeSvgData(svgData: string): string {
 	if (!svgData) {
 		throw new Error('SVG data is empty');
@@ -24,9 +13,7 @@ export function encodeSvgData(svgData: string): string {
 	// Raw SVG
 	if (svgData.trim().startsWith('<svg')) {
 		try {
-			// Minify before encoding to save space
-			const minified = minifySvg(svgData);
-			return `data:image/svg+xml;utf8,${encodeURIComponent(minified)}`;
+			return `data:image/svg+xml;utf8,${encodeURIComponent(svgData)}`;
 		} catch (error) {
 			console.warn('Failed to encode SVG data:', error);
 			throw new Error('Invalid SVG data format');

@@ -1,5 +1,16 @@
 import type { IconItem } from './types';
 
+export function minifySvg(svgData: string): string {
+	if (!svgData) return '';
+	return svgData
+		.replace(/[\n\r\t]/g, ' ') // Replace newlines and tabs with space
+		.replace(/\s+/g, ' ') // Collapse spaces
+		.replace(/>\s+</g, '><') // Remove spaces between tags
+		.replace(/<!--[\s\S]*?-->/g, '') // Remove comments
+		.replace(/\s*xmlns:v="[^"]*"/g, '') // Remove Vecta namespace
+		.trim();
+}
+
 export function sanitizeSvg(svg: string): string {
 	let s = svg.trim();
 	// remove xml prolog and doctype
@@ -31,7 +42,7 @@ export function sanitizeSvg(svg: string): string {
 			}
 		}
 	}
-	return s;
+	return minifySvg(s);
 }
 
 export function prepareSvgForSettings(svg: string, container: HTMLElement): string {
