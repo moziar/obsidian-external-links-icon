@@ -378,12 +378,14 @@ export function fitSvgToContent(
 	let contentBBox: { x: number; y: number; w: number; h: number };
 	const host = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
 	host.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-	host.style.position = 'absolute';
-	host.style.left = '-9999px';
-	host.style.top = '0';
-	host.style.width = '1px';
-	host.style.height = '1px';
-	host.style.visibility = 'hidden';
+	host.setCssProps({
+		position: 'absolute',
+		left: '-9999px',
+		top: '0',
+		width: '1px',
+		height: '1px',
+		visibility: 'hidden',
+	});
 	activeDocument.body.appendChild(host);
 	try {
 		host.appendChild(svg);
