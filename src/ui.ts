@@ -19,7 +19,7 @@ export class ConfirmModal extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.createEl('div', { text: this._message });
+		contentEl.createDiv({ text: this._message });
 		const actions = contentEl.createDiv({ cls: 'external-links-icon-modal-actions' });
 		const cancelBtn = actions.createEl('button', { text: t('Cancel'), cls: 'external-links-icon-cancel-btn' });
 		const okBtn = actions.createEl('button', { text: t('Confirm'), cls: 'external-links-icon-add-btn' });
@@ -135,7 +135,7 @@ function createIconUploadSection(options: IconUploadSectionOptions): {
 	let removeState = false;
 
 	const section = container.createDiv({ cls: 'external-links-icon-upload-section' });
-	section.createEl('div', { text: label, cls: 'external-links-icon-upload-label' });
+	section.createDiv({ text: label, cls: 'external-links-icon-upload-label' });
 
 	const body = section.createDiv({ cls: 'external-links-icon-section-body' });
 

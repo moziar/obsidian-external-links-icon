@@ -377,8 +377,7 @@ export function fitSvgToContent(
 	// Compute content bbox via native getBBox() — accurate for curves/transforms.
 	// Requires the SVG to be attached to a rendered DOM tree.
 	let contentBBox: { x: number; y: number; w: number; h: number };
-	// eslint-disable-next-line obsidianmd/prefer-create-el
-	const host = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	const host = createSvg('svg');
 	host.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 	host.setCssProps({
 		position: 'absolute',
