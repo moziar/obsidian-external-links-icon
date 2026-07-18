@@ -19,7 +19,7 @@ class IconWidget extends WidgetType {
 	constructor(readonly iconImage: string, readonly hideSuffix: boolean, readonly isBefore: boolean) { super(); }
 
 	toDOM(_view: EditorView): HTMLElement {
-		const span = activeDocument.createElement('span');
+		const span = createSpan();
 		span.className = 'external-links-icon-inline'
 			+ (this.hideSuffix ? ' external-links-icon-hide-suffix' : '')
 			+ (this.isBefore ? ' external-links-icon-position-before' : '');

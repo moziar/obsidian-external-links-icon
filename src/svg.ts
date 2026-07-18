@@ -103,7 +103,7 @@ function normalizeColor(color: string): string | null {
 	}
 	try {
 		if (!_normalizeCtx) {
-			const canvas = activeDocument.createElement('canvas');
+			const canvas = createEl('canvas');
 			canvas.width = 1;
 			canvas.height = 1;
 			_normalizeCtx = canvas.getContext('2d');
@@ -112,6 +112,7 @@ function normalizeColor(color: string): string | null {
 		_normalizeCtx.fillStyle = '#abcdef'; // sentinel
 		_normalizeCtx.fillStyle = c;
 		const result = _normalizeCtx.fillStyle;
+		if (typeof result !== 'string') return null;
 		if (result === '#abcdef') return null; // invalid, kept previous
 		// Modern browsers return #rrggbb for opaque, rgba(...) for alpha < 1
 		const rgbaMatch = result.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/i);
@@ -376,6 +377,7 @@ export function fitSvgToContent(
 	// Compute content bbox via native getBBox() — accurate for curves/transforms.
 	// Requires the SVG to be attached to a rendered DOM tree.
 	let contentBBox: { x: number; y: number; w: number; h: number };
+	// eslint-disable-next-line obsidianmd/prefer-create-el
 	const host = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
 	host.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 	host.setCssProps({

@@ -29,21 +29,20 @@ function renderIconImage(
 	icon: IconItem,
 	isBuiltin: boolean
 ): void {
-	const doc = container.ownerDocument;
 	const hasDual = !!(icon.svgData && icon.themeDarkSvgData);
 	try {
 		if (hasDual) {
 			const lightPrepared = prepareSvgForSettings(icon.svgData || '', container);
 			const darkPrepared = prepareSvgForSettings(icon.themeDarkSvgData || '', container);
 
-			const imgLight = doc.createElement('img');
+			const imgLight = createEl('img');
 			setIconImgDataset(imgLight, icon, isBuiltin);
 			imgLight.dataset.iconVariant = 'light';
 			imgLight.dataset.dualVariant = 'true';
 			imgLight.src = `data:image/svg+xml;utf8,${encodeURIComponent(lightPrepared)}`;
 			imgLight.alt = getIconDisplayName(icon);
 
-			const imgDark = doc.createElement('img');
+			const imgDark = createEl('img');
 			setIconImgDataset(imgDark, icon, isBuiltin);
 			imgDark.dataset.iconVariant = 'dark';
 			imgDark.dataset.dualVariant = 'true';
@@ -56,7 +55,7 @@ function renderIconImage(
 			const preferDark = preferDarkThemeFromDocument();
 			const svgSource = getSvgSourceForTheme(icon, preferDark);
 			const prepared = prepareSvgForSettings(svgSource, container);
-			const img = doc.createElement('img');
+			const img = createEl('img');
 			setIconImgDataset(img, icon, isBuiltin);
 			img.src = `data:image/svg+xml;utf8,${encodeURIComponent(prepared)}`;
 			img.alt = getIconDisplayName(icon);
@@ -111,17 +110,16 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				desc: t('Add website or URL scheme icon. The icon name must be unique.'),
 				render: (setting) => {
 					const btnContainer = setting.controlEl.createDiv({ cls: 'add-buttons' });
-					const doc = btnContainer.ownerDocument;
 
-					const addWebsiteBtn = doc.createElement('button');
-					addWebsiteBtn.textContent = t('Add website');
-					addWebsiteBtn.onclick = () => {
+					const addWebsiteBtn = createEl('button');
+				addWebsiteBtn.textContent = t('Add website');
+				addWebsiteBtn.onclick = () => {
 					const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'url', this.plugin.settings.autoRemoveBackground, this.plugin.settings.autoFitIcon);
 					modal.open();
 				};
 				btnContainer.appendChild(addWebsiteBtn);
 
-				const addSchemeBtn = doc.createElement('button');
+				const addSchemeBtn = createEl('button');
 				addSchemeBtn.textContent = t('Add URL scheme');
 				addSchemeBtn.onclick = () => {
 					const modal = new NewIconModal(this.app, (data) => this.addIconWithData(data), 'scheme', this.plugin.settings.autoRemoveBackground, this.plugin.settings.autoFitIcon);
@@ -281,7 +279,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	private async addIconWithData(data: { linkType: LinkType; name: string; target: string[]; svgData?: string; themeDarkSvgData?: string }) {
 		const { linkType, name, target, svgData, themeDarkSvgData } = data;
 		const id = name;
-		const customIcons = this.plugin.settings.customIcons || {};
+		const customIcons: Record<string, IconItem> = this.plugin.settings.customIcons || {};
 		if (customIcons[id]) {
 			new Notice(`Icon name "${name}" already exists. Please choose a unique name.`);
 			return;
@@ -404,9 +402,14 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		}
 	}
 
+	private getCustomIconList(): IconItem[] {
+		const map: Record<string, IconItem> = this.plugin.settings.customIcons || {};
+		return Object.values(map);
+	}
+
 	private getSortedCustomIcons(): IconItem[] {
-		return Object.values(this.plugin.settings.customIcons || {})
-			.sort((a: IconItem, b: IconItem) => (a.order || 0) - (b.order || 0));
+		return this.getCustomIconList()
+			.sort((a, b) => (a.order || 0) - (b.order || 0));
 	}
 
 	private addIconPreview(settingItem: Setting, icon: IconItem): void {
@@ -448,7 +451,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	}
 
 	private addControlButtons(settingItem: Setting, icon: IconItem): void {
-		const allCustom = Object.values(this.plugin.settings.customIcons || {});
+		const allCustom = this.getCustomIconList();
 		const groupSorted = allCustom
 			.filter(i => i.linkType === icon.linkType)
 			.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -494,7 +497,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 	}
 
 	private async moveIcon(icon: IconItem, direction: number): Promise<void> {
-		const allCustom = Object.values(this.plugin.settings.customIcons || {});
+		const allCustom = this.getCustomIconList();
 		const group = allCustom.filter(i => i.linkType === icon.linkType).sort((a, b) => (a.order || 0) - (b.order || 0));
 		const currentIndex = group.findIndex(i => i.id === icon.id);
 		const targetIndex = currentIndex + direction;
@@ -507,7 +510,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 		arr.forEach((it, idx) => { it.order = idx; });
 
 		const newMap: Record<string, IconItem> = {};
-		Object.values(this.plugin.settings.customIcons || {}).forEach(it => {
+		this.getCustomIconList().forEach(it => {
 			if (it.linkType !== icon.linkType) {
 				newMap[it.id] = it;
 			}

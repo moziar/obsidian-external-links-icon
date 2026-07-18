@@ -9,6 +9,8 @@ import { ExternalLinksIconSettingTab } from './settings';
 import { createLivePreviewExtension } from './live-preview';
 import { setLanguage } from './lang/helper';
 
+declare const process: { env: { NODE_ENV?: string } };
+
 export default class ExternalLinksIcon extends Plugin {
 	settings!: ExternalLinksIconSettings;
 	private scanner: import('./scanner').Scanner | null = null;

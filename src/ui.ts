@@ -171,7 +171,7 @@ function createIconUploadSection(options: IconUploadSectionOptions): {
 		onRemove?.(false);
 	};
 
-	const input = createFileInput(doc, (content, fileName) => {
+	const input = createFileInput((content, fileName) => {
 		let processed = content;
 		if (autoRemoveBackground) {
 			const result = removeBackground(content);
@@ -189,7 +189,7 @@ function createIconUploadSection(options: IconUploadSectionOptions): {
 		newSvgData = processed;
 		clearRemoveState();
 		badge.classList.remove('external-links-icon-badge-empty');
-		renderPreview(doc, preview, processed, fileName);
+		renderPreview(preview, processed, fileName);
 	});
 	if (hiddenInputs) hiddenInputs.push(input);
 	doc.body.appendChild(input);
@@ -202,7 +202,7 @@ function createIconUploadSection(options: IconUploadSectionOptions): {
 			newSvgData = svgData;
 			clearRemoveState();
 			badge.classList.remove('external-links-icon-badge-empty');
-			renderPreview(doc, preview, svgData, 'copied');
+			renderPreview(preview, svgData, 'copied');
 		},
 		controlRow: row,
 	};
@@ -473,8 +473,8 @@ export class EditIconModal extends Modal {
 	}
 }
 
-function createFileInput(doc: Document, onValid: (content: string, fileName: string) => void): HTMLInputElement {
-	const input = doc.createElement('input');
+function createFileInput(onValid: (content: string, fileName: string) => void): HTMLInputElement {
+	const input = createEl('input');
 	input.type = 'file';
 	input.accept = '.svg,image/svg+xml';
 	input.classList.add('external-links-icon-hidden-input');
@@ -501,9 +501,9 @@ function createFileInput(doc: Document, onValid: (content: string, fileName: str
 	return input;
 }
 
-function renderPreview(doc: Document, previewDiv: HTMLElement, content: string, fileName: string): void {
+function renderPreview(previewDiv: HTMLElement, content: string, fileName: string): void {
 	try {
-		const img = doc.createElement('img');
+		const img = createEl('img');
 		img.src = encodeSvgData(content);
 		img.alt = fileName;
 		while (previewDiv.firstChild) previewDiv.removeChild(previewDiv.firstChild);
@@ -518,7 +518,7 @@ function downloadSvg(svgData: string, fileName: string): void {
 	const blob = new Blob([svgData], { type: 'image/svg+xml' });
 	const url = URL.createObjectURL(blob);
 	try {
-		const a = doc.createElement('a');
+		const a = createEl('a');
 		a.href = url;
 		a.download = fileName;
 		doc.body.appendChild(a);
@@ -550,7 +550,7 @@ function createBadgeWithPreview(
 	if (svgData) {
 		try {
 			const prepared = prepareSvgForSettings(svgData, preview);
-			const img = badge.ownerDocument.createElement('img');
+			const img = createEl('img');
 			img.src = encodeSvgData(prepared);
 			img.alt = variant === 'light' ? 'current' : 'current dark';
 			preview.appendChild(img);
