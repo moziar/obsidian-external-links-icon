@@ -73,12 +73,20 @@ export default class ExternalLinksIcon extends Plugin {
 
 		try {
 			const Scanner = (await import('./scanner')).Scanner;
+			const { IconLinkRenderChild } = await import('./scanner');
 			this.scanner = new Scanner(() => this.settings, undefined, () => this.settingsVersion);
 			this.scanner.start();
 			this.registerEvent(this.app.workspace.on('active-leaf-change', () => { this.scanner?.reobserveIfChanged(); this.scanner?.scheduleScan(0); }));
 			this.registerEvent(this.app.workspace.on('layout-change', () => { this.scanner?.reobserveIfChanged(); this.scanner?.scheduleScan(40); }));
 			this.registerEvent(this.app.workspace.on('css-change', () => this.scanner?.handleCssChange()))
-			this.scanner.scheduleScan();
+			// Reading mode: each rendered section gets its own IconLinkRenderChild.
+			// The child's onload/onunload follows the section's DOM lifecycle, so when
+			// core post-processors (callouts, task lists) rebuild the DOM, icons are
+			// cleanly removed and re-applied without flicker. This is the officially
+			// recommended pattern per MarkdownPostProcessor docs.
+			this.registerMarkdownPostProcessor((el, ctx) => {
+				ctx.addChild(new IconLinkRenderChild(el, this.scanner!));
+			});
 		} catch {
 			this.scanner?.scanAndAnnotateLinks();
 		}
