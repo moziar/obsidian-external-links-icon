@@ -16,6 +16,8 @@ export class Scanner {
 	private observedRoots: Element[] = [];
 	private observeSelectors: string[];
 	private iconElementsByName: Map<string, Set<HTMLElement>> = new Map();
+	private lastSettingsVersion = -1;
+	private lastPreferDark: boolean | null = null;
 
 	constructor(getSettings: GetSettingsFn, observeSelectors?: string[], getSettingsVersion?: GetSettingsVersionFn) {
 		this.getSettings = getSettings;
@@ -103,7 +105,6 @@ export class Scanner {
 	scanAndAnnotateLinks(): void {
 		try {
 			const preferDark = preferDarkThemeFromDocument();
-			this.iconElementsByName.clear();
 			const doc = activeDocument;
 
 			const settings = this.getSettings();
@@ -118,21 +119,10 @@ export class Scanner {
 
 			const previewRoots = doc.querySelectorAll('.markdown-preview-view');
 
-			if (!icons.length) {
-				// No icons: clear all existing icons
-				previewRoots.forEach(el => {
-					el.querySelectorAll('.external-links-icon-enabled').forEach(child => {
-						child.classList.remove('external-links-icon-enabled');
-						child.classList.remove('external-links-icon-hide-suffix');
-						if (child.instanceOf(HTMLElement)) {
-							child.style.removeProperty('--external-link-icon-image');
-						}
-					});
-				});
-				return;
-			}
-
-			// Phase 1: Pre-compute all icon images (no DOM mutation)
+			// Check if anything has actually changed
+			const settingsOrThemeChanged = this.lastSettingsVersion !== settingsVersion || this.lastPreferDark !== preferDark;
+			
+			// Pre-compute all icon images
 			const iconImages = new Map<string, string>();
 			for (const icon of icons) {
 				try {
@@ -143,17 +133,22 @@ export class Scanner {
 				}
 			}
 
-			// Phase 2: Compute all link-icon matches (no DOM mutation yet)
 			const rootSources = (this.observedRoots && this.observedRoots.length) ? this.observedRoots : Array.from(previewRoots);
-			const pendingUpdates: Array<{ el: HTMLElement; iconId: string; image: string; hideSuffix: boolean }> = [];
-			const applied = new Set<Element>();
+			const newIconElementsByName = new Map<string, Set<HTMLElement>>();
+
+			// Track elements that need icon changes
+			const elementsToUpdate: Array<{ el: HTMLElement; shouldHaveIcon: boolean; iconId?: string; image?: string; hideSuffix?: boolean }> = [];
+			const processedElements = new Set<Element>();
 
 			for (const root of rootSources) {
 				const elements = root.querySelectorAll('.external-link, .internal-link');
 				if (!elements || elements.length === 0) continue;
+				
 				for (const el of Array.from(elements)) {
-					if (applied.has(el)) continue;
+					if (processedElements.has(el)) continue;
 					if (!el.instanceOf(HTMLElement)) continue;
+
+					processedElements.add(el);
 
 					const href = el.getAttribute('href') || '';
 					const isExternal = el.classList.contains('external-link');
@@ -173,56 +168,121 @@ export class Scanner {
 						chosen = icons.find(icon => icon.id === dataIcon) || null;
 					}
 
-					if (!chosen) continue;
-					const image = iconImages.get(chosen.id);
-					if (!image) continue;
+					if (chosen) {
+						const image = iconImages.get(chosen.id);
+						if (image) {
+							const hideSuffix = chosen.linkType === 'scheme' &&
+								(Boolean((DEFAULT_SETTINGS.icons || {})[chosen.id]) ||
+									Boolean(settings?.customIcons?.[chosen.id]));
 
-					const hideSuffix = chosen.linkType === 'scheme' &&
-						(Boolean((DEFAULT_SETTINGS.icons || {})[chosen.id]) ||
-							Boolean(settings?.customIcons?.[chosen.id]));
+							elementsToUpdate.push({
+								el,
+								shouldHaveIcon: true,
+								iconId: chosen.id,
+								image,
+								hideSuffix
+							});
 
-					pendingUpdates.push({ el, iconId: chosen.id, image, hideSuffix });
-					applied.add(el);
+							let set = newIconElementsByName.get(chosen.id);
+							if (!set) {
+								set = new Set<HTMLElement>();
+								newIconElementsByName.set(chosen.id, set);
+							}
+							set.add(el);
+						} else {
+							elementsToUpdate.push({ el, shouldHaveIcon: false });
+						}
+					} else {
+						elementsToUpdate.push({ el, shouldHaveIcon: false });
+					}
 				}
 			}
 
-			// Phase 3: Atomic clear + apply — no computation between, no flicker
-			// Collect elements that currently have icons
-			const elementsToClear: HTMLElement[] = [];
-			previewRoots.forEach(el => {
-				el.querySelectorAll('.external-links-icon-enabled').forEach(child => {
-					if (child.instanceOf(HTMLElement)) {
-						elementsToClear.push(child);
-					}
+			if (settingsOrThemeChanged) {
+				// Full refresh: use original atomic clear+apply approach
+				this.iconElementsByName.clear();
+
+				// Collect elements that currently have icons
+				const elementsToClear: HTMLElement[] = [];
+				previewRoots.forEach(el => {
+					el.querySelectorAll('.external-links-icon-enabled').forEach(child => {
+						if (child.instanceOf(HTMLElement)) {
+							elementsToClear.push(child);
+						}
+					});
 				});
-			});
 
-			// Clear old icons
-			for (const el of elementsToClear) {
-				el.classList.remove('external-links-icon-enabled');
-				el.classList.remove('external-links-icon-hide-suffix');
-				el.style.removeProperty('--external-link-icon-image');
-			}
+				// Clear old icons
+				for (const el of elementsToClear) {
+					el.classList.remove('external-links-icon-enabled');
+					el.classList.remove('external-links-icon-hide-suffix');
+					el.style.removeProperty('--external-link-icon-image');
+				}
 
-			// Apply new icons immediately after clear — browser won't render between these
-			for (const { el, iconId, image, hideSuffix } of pendingUpdates) {
-				try {
-					el.style.setProperty('--external-link-icon-image', `url("${image}")`);
-					el.classList.add('external-links-icon-enabled');
-					if (hideSuffix) {
-						el.classList.add('external-links-icon-hide-suffix');
+				// Apply new icons immediately after clear
+				for (const update of elementsToUpdate) {
+					if (update.shouldHaveIcon && update.iconId && update.image) {
+						try {
+							update.el.style.setProperty('--external-link-icon-image', `url("${update.image}")`);
+							update.el.classList.add('external-links-icon-enabled');
+							if (update.hideSuffix) {
+								update.el.classList.add('external-links-icon-hide-suffix');
+							}
+
+							let set = this.iconElementsByName.get(update.iconId);
+							if (!set) {
+								set = new Set<HTMLElement>();
+								this.iconElementsByName.set(update.iconId, set);
+							}
+							set.add(update.el);
+						} catch (err) {
+							console.warn('Failed to apply icon style for', update.iconId, err);
+						}
 					}
+				}
+			} else {
+				// Incremental update: only update elements that actually changed
+				let hasChanges = false;
 
-					let set = this.iconElementsByName.get(iconId);
-					if (!set) {
-						set = new Set<HTMLElement>();
-						this.iconElementsByName.set(iconId, set);
+				for (const update of elementsToUpdate) {
+					const el = update.el;
+					const hasIcon = el.classList.contains('external-links-icon-enabled');
+					const currentImage = el.style.getPropertyValue('--external-link-icon-image');
+					const currentHideSuffix = el.classList.contains('external-links-icon-hide-suffix');
+
+					if (update.shouldHaveIcon) {
+						const expectedImage = `url("${update.image}")`;
+						const expectedHideSuffix = update.hideSuffix;
+
+						if (!hasIcon || currentImage !== expectedImage || currentHideSuffix !== expectedHideSuffix) {
+							// Need to update this element
+							el.style.setProperty('--external-link-icon-image', expectedImage);
+							el.classList.add('external-links-icon-enabled');
+							if (expectedHideSuffix) {
+								el.classList.add('external-links-icon-hide-suffix');
+							} else {
+								el.classList.remove('external-links-icon-hide-suffix');
+							}
+							hasChanges = true;
+						}
+					} else {
+						if (hasIcon) {
+							// Need to remove the icon
+							el.classList.remove('external-links-icon-enabled');
+							el.classList.remove('external-links-icon-hide-suffix');
+							el.style.removeProperty('--external-link-icon-image');
+							hasChanges = true;
+						}
 					}
-					set.add(el);
-				} catch (err) {
-					console.warn('Failed to apply icon style for', iconId, err);
+				}
+
+				if (hasChanges) {
+					this.iconElementsByName = newIconElementsByName;
 				}
 			}
+
+			this.lastSettingsVersion = settingsVersion;
+			this.lastPreferDark = preferDark;
 		} catch (e) {
 			console.error('Failed to scan and annotate links for icons:', e);
 		}
