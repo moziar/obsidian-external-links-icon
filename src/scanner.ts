@@ -67,17 +67,10 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 				} catch { /* skip failed icons */ }
 				if (!image) continue;
 
-				const hideSuffix = chosen.linkType === 'scheme' &&
-					(Boolean((DEFAULT_SETTINGS.icons || {})[chosen.id]) ||
-						Boolean(settings?.customIcons?.[chosen.id]));
-
 				el.style.setProperty('--external-link-icon-image', `url("${image}")`);
-				el.classList.add('external-links-icon-enabled');
-				if (hideSuffix) {
-					el.classList.add('external-links-icon-hide-suffix');
-				}
+			el.classList.add('external-links-icon-enabled');
 
-				this.managedElements.add(el);
+			this.managedElements.add(el);
 				this.scanner.registerIconElement(chosen.id, el);
 			}
 		} catch (e) {
@@ -89,7 +82,6 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 		for (const el of this.managedElements) {
 			try {
 				el.classList.remove('external-links-icon-enabled');
-				el.classList.remove('external-links-icon-hide-suffix');
 				el.style.removeProperty('--external-link-icon-image');
 			} catch { /* element may already be detached */ }
 			this.scanner.unregisterIconElement(el);
@@ -229,7 +221,7 @@ export class Scanner {
 			const rootSources = (this.observedRoots && this.observedRoots.length) ? this.observedRoots : Array.from(previewRoots);
 
 			// Track elements that need icon changes
-			const elementsToUpdate: Array<{ el: HTMLElement; shouldHaveIcon: boolean; iconId?: string; image?: string; hideSuffix?: boolean }> = [];
+			const elementsToUpdate: Array<{ el: HTMLElement; shouldHaveIcon: boolean; iconId?: string; image?: string }> = [];
 			const processedElements = new Set<Element>();
 
 			for (const root of rootSources) {
@@ -261,85 +253,66 @@ export class Scanner {
 					}
 
 					if (chosen) {
-						const image = iconImages.get(chosen.id);
-						if (image) {
-							const hideSuffix = chosen.linkType === 'scheme' &&
-								(Boolean((DEFAULT_SETTINGS.icons || {})[chosen.id]) ||
-									Boolean(settings?.customIcons?.[chosen.id]));
-
-							elementsToUpdate.push({
-								el,
-								shouldHaveIcon: true,
-								iconId: chosen.id,
-								image,
-								hideSuffix
-							});
-						} else {
-							elementsToUpdate.push({ el, shouldHaveIcon: false });
-						}
+					const image = iconImages.get(chosen.id);
+					if (image) {
+						elementsToUpdate.push({
+							el,
+							shouldHaveIcon: true,
+							iconId: chosen.id,
+							image,
+						});
 					} else {
 						elementsToUpdate.push({ el, shouldHaveIcon: false });
 					}
+				} else {
+					elementsToUpdate.push({ el, shouldHaveIcon: false });
+				}
 				}
 			}
 
 			if (settingsOrThemeChanged) {
-			// Full refresh: settings or theme changed. IconLinkRenderChild manages element
-			// registration via its own onload/onunload, so we only need to update styles
-			// on already-annotated elements here. Don't clear iconElementsByName — children
-			// own its contents.
-			for (const update of elementsToUpdate) {
-				if (update.shouldHaveIcon && update.iconId && update.image) {
-					try {
-						update.el.style.setProperty('--external-link-icon-image', `url("${update.image}")`);
-						if (update.hideSuffix) {
-							update.el.classList.add('external-links-icon-hide-suffix');
-						} else {
-							update.el.classList.remove('external-links-icon-hide-suffix');
-						}
-					} catch (err) {
-						console.warn('Failed to apply icon style for', update.iconId, err);
-					}
-				} else if (!update.shouldHaveIcon) {
-					// Element lost its icon (e.g., link type no longer matches)
-					update.el.classList.remove('external-links-icon-enabled');
-					update.el.classList.remove('external-links-icon-hide-suffix');
-					update.el.style.removeProperty('--external-link-icon-image');
-					this.unregisterIconElement(update.el);
+		// Full refresh: settings or theme changed. IconLinkRenderChild manages element
+		// registration via its own onload/onunload, so we only need to update styles
+		// on already-annotated elements here. Don't clear iconElementsByName — children
+		// own its contents.
+		for (const update of elementsToUpdate) {
+			if (update.shouldHaveIcon && update.iconId && update.image) {
+				try {
+					update.el.style.setProperty('--external-link-icon-image', `url("${update.image}")`);
+				} catch (err) {
+					console.warn('Failed to apply icon style for', update.iconId, err);
 				}
+			} else if (!update.shouldHaveIcon) {
+				// Element lost its icon (e.g., link type no longer matches)
+				update.el.classList.remove('external-links-icon-enabled');
+				update.el.style.removeProperty('--external-link-icon-image');
+				this.unregisterIconElement(update.el);
 			}
-		} else {
-			// Incremental update: only update elements whose icon actually changed.
-			// IconLinkRenderChild owns iconElementsByName; we just refresh styles here.
-			for (const update of elementsToUpdate) {
-				const el = update.el;
-				const hasIcon = el.classList.contains('external-links-icon-enabled');
-				const currentImage = el.style.getPropertyValue('--external-link-icon-image');
-				const currentHideSuffix = el.classList.contains('external-links-icon-hide-suffix');
+		}
+	} else {
+		// Incremental update: only update elements whose icon actually changed.
+		// IconLinkRenderChild owns iconElementsByName; we just refresh styles here.
+		for (const update of elementsToUpdate) {
+			const el = update.el;
+			const hasIcon = el.classList.contains('external-links-icon-enabled');
+			const currentImage = el.style.getPropertyValue('--external-link-icon-image');
 
-				if (update.shouldHaveIcon) {
-					const expectedImage = `url("${update.image}")`;
-					const expectedHideSuffix = update.hideSuffix;
+			if (update.shouldHaveIcon) {
+				const expectedImage = `url("${update.image}")`;
 
-					if (!hasIcon || currentImage !== expectedImage || currentHideSuffix !== expectedHideSuffix) {
-						el.style.setProperty('--external-link-icon-image', expectedImage);
-						el.classList.add('external-links-icon-enabled');
-						if (expectedHideSuffix) {
-							el.classList.add('external-links-icon-hide-suffix');
-						} else {
-							el.classList.remove('external-links-icon-hide-suffix');
-						}
-					}
-				} else {
-					if (hasIcon) {
-						el.classList.remove('external-links-icon-enabled');
-						el.classList.remove('external-links-icon-hide-suffix');
-						el.style.removeProperty('--external-link-icon-image');
-						this.unregisterIconElement(el);
-					}
+				if (!hasIcon || currentImage !== expectedImage) {
+					el.style.setProperty('--external-link-icon-image', expectedImage);
+					el.classList.add('external-links-icon-enabled');
+				}
+			} else {
+				if (hasIcon) {
+					el.classList.remove('external-links-icon-enabled');
+					el.style.removeProperty('--external-link-icon-image');
+					this.unregisterIconElement(el);
 				}
 			}
 		}
+	}
 
 		this.lastSettingsVersion = settingsVersion;
 		this.lastPreferDark = preferDark;
