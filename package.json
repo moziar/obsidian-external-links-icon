@@ -28,7 +28,7 @@
 		"eslint-plugin-obsidianmd": "^0.3.0",
 		"globals": "^17.0.0",
 		"obsidian": "^1.13.0",
-		"svgo": "^4.0.0",
+		"svgo": "^4.0.2",
 		"tslib": "2.4.0",
 		"typescript": "^5.0.0",
 		"typescript-eslint": "^8.53.0"
