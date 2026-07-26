@@ -5,7 +5,6 @@ import {
 	type PluginValue,
 	ViewPlugin, type ViewUpdate, WidgetType
 } from '@codemirror/view';
-import { DEFAULT_SETTINGS } from './constants';
 import { getCachedIconImage } from './utils';
 import { preferDarkThemeFromDocument } from './svg';
 import { matchIcon } from './icon-matcher';
@@ -16,26 +15,24 @@ export const settingsVersionFacet = Facet.define<number, number>({
 });
 
 class IconWidget extends WidgetType {
-	constructor(readonly iconImage: string, readonly hideSuffix: boolean, readonly isBefore: boolean) { super(); }
+	constructor(readonly iconImage: string, readonly isBefore: boolean) { super(); }
 
 	toDOM(_view: EditorView): HTMLElement {
 		const span = createSpan();
 		span.className = 'external-links-icon-inline'
-			+ (this.hideSuffix ? ' external-links-icon-hide-suffix' : '')
 			+ (this.isBefore ? ' external-links-icon-position-before' : '');
 		span.style.setProperty('--external-link-icon-image', `url("${this.iconImage}")`);
 		return span;
 	}
 
 	eq(other: IconWidget): boolean {
-		return this.iconImage === other.iconImage && this.hideSuffix === other.hideSuffix && this.isBefore === other.isBefore;
+		return this.iconImage === other.iconImage && this.isBefore === other.isBefore;
 	}
 
 	ignoreEvent(): boolean { return true; }
 }
 
 const linkMarkDecoration = Decoration.mark({ class: 'external-links-icon-enabled' });
-const linkMarkHideSuffixDecoration = Decoration.mark({ class: 'external-links-icon-enabled external-links-icon-hide-suffix' });
 
 function isStringUrlNode(name: string): boolean {
 	if (name.startsWith('formatting_')) return false;
@@ -141,32 +138,28 @@ class LivePreviewIconPlugin implements PluginValue {
 						if (linkLine.number === cursorLine) return;
 
 						const chosen = matchIcon(info.href, true, false, settings, settingsVersion);
-						if (!chosen) return;
+					if (!chosen) return;
 
-						let image: string | undefined;
-						try {
-							image = getCachedIconImage(chosen.id, chosen.svgData, chosen.themeDarkSvgData, preferDark);
-						} catch { /* skip failed icons */ }
-						if (!image) return;
+					let image: string | undefined;
+					try {
+						image = getCachedIconImage(chosen.id, chosen.svgData, chosen.themeDarkSvgData, preferDark);
+					} catch { /* skip failed icons */ }
+					if (!image) return;
 
-						const hideSuffix = chosen.linkType === 'scheme' &&
-							(Boolean((DEFAULT_SETTINGS.icons || {})[chosen.id]) ||
-								Boolean(settings?.customIcons?.[chosen.id]));
+					decoItems.push({
+						from: isBefore ? info.linkFrom : info.linkTo,
+						to: isBefore ? info.linkFrom : info.linkTo,
+						decoration: Decoration.widget({
+							widget: new IconWidget(image, isBefore),
+							side: isBefore ? -1 : 1
+						})
+					});
 
-						decoItems.push({
-							from: isBefore ? info.linkFrom : info.linkTo,
-							to: isBefore ? info.linkFrom : info.linkTo,
-							decoration: Decoration.widget({
-								widget: new IconWidget(image, hideSuffix, isBefore),
-								side: isBefore ? -1 : 1
-							})
-						});
-
-						decoItems.push({
-							from: info.linkFrom,
-							to: info.linkTo,
-							decoration: hideSuffix ? linkMarkHideSuffixDecoration : linkMarkDecoration
-						});
+					decoItems.push({
+						from: info.linkFrom,
+						to: info.linkTo,
+						decoration: linkMarkDecoration
+					});
 					} else if (isInternalLinkNode(node.name)) {
 						const linkFrom = node.from;
 						const linkLine = view.state.doc.lineAt(linkFrom);
@@ -200,7 +193,7 @@ class LivePreviewIconPlugin implements PluginValue {
 							from: isBefore ? markFrom : markTo,
 							to: isBefore ? markFrom : markTo,
 							decoration: Decoration.widget({
-								widget: new IconWidget(image, false, isBefore),
+								widget: new IconWidget(image, isBefore),
 								side: isBefore ? -1 : 1
 							})
 						});
