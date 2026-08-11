@@ -171,7 +171,9 @@ export default class ExternalLinksIcon extends Plugin {
 	}
 
 	async saveSettings(): Promise<void> {
-		await this.saveData(this.settings);
+		// builtin icons will load from DEFAULT_SETTINGS dynamically, do not persist to data.json
+		const { icons, ...dataToSave } = this.settings;
+		await this.saveData(dataToSave);
 		this.scanner?.scheduleScan();
 		this.settingsVersion++;
 		this.app.workspace.updateOptions();
