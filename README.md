@@ -1,15 +1,14 @@
-<div align="center">
-    <h1>External links icon</h1>
-    <p>
-        <img alt="GitHub Release" src="https://img.shields.io/github/v/release/moziar/obsidian-external-links-icon?label=Release">
-		<img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24%5B%22external-links-icon%22%5D.downloads&logo=obsidian&label=Downloads&color=%238a5cf5">
-        <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/moziar/obsidian-external-links-icon/total?label=Total%20Downloads">
-        <img alt="GitHub Downloads (all assets, latest release)" src="https://img.shields.io/github/downloads/moziar/obsidian-external-links-icon/latest/total?label=Latest%20Downloads">
-        <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/moziar/obsidian-external-links-icon">
-    </p >
-    <p>[ English | <a href="https://github.com/moziar/obsidian-external-links-icon/blob/master/docs/README_zh.md">简体中文</a > ]</p >
-    <p>A simple plugin that automatically adds icons to the external and internal links, designed to work seamlessly in your local environment.</p >
-</div>
+# External links icon
+
+<img alt="GitHub Release" src="https://img.shields.io/github/v/release/moziar/obsidian-external-links-icon?label=Release">
+<img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24%5B%22external-links-icon%22%5D.downloads&logo=obsidian&label=Downloads&color=%238a5cf5">
+<img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/moziar/obsidian-external-links-icon/total?label=Total%20Downloads">
+<img alt="GitHub Downloads (all assets, latest release)" src="https://img.shields.io/github/downloads/moziar/obsidian-external-links-icon/latest/total?label=Latest%20Downloads">
+<img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/moziar/obsidian-external-links-icon">
+
+[ English | <a href="https://github.com/moziar/obsidian-external-links-icon/blob/master/docs/README_zh.md">简体中文</a > ]
+
+A simple plugin that automatically adds icons to the external and internal links, designed to work seamlessly in your local environment.
 
 ![demo.png](demo.png)
 
