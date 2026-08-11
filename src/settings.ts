@@ -196,6 +196,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			name: t('Built-in icons'),
 			render: (setting) => {
 				setting.settingEl.classList.add('builtin-list-row');
+				// update() will call render, so remove the old details element first to avoid duplicates
+				setting.settingEl.querySelector('details.builtin-list')?.remove();
 				const builtinsDetails = setting.settingEl.createEl('details', { cls: 'builtin-list' });
 				builtinsDetails.createEl('summary', { text: t('Built-in icons') });
 				const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
@@ -233,6 +235,8 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 			name: t('Built-in icons'),
 			render: (setting) => {
 				setting.settingEl.classList.add('builtin-list-row');
+				// update() will call render, so remove the old details element first to avoid duplicates
+				setting.settingEl.querySelector('details.builtin-list')?.remove();
 				const builtinsDetails = setting.settingEl.createEl('details', { cls: 'builtin-list' });
 				builtinsDetails.createEl('summary', { text: t('Built-in icons') });
 				const builtinRow = builtinsDetails.createDiv({ cls: 'builtin-row' });
