@@ -16,6 +16,7 @@ export interface ExternalLinksIconSettings {
 	language: 'auto' | 'en' | 'zh-cn';
 	fancyUrlScheme: boolean;
 	fancyWebLink: boolean;
+	fancyPropertyLink: boolean;
 	fancyObsidianWebLink: boolean;
 	fancyObsidianNoteLink: 'none' | 'internal' | 'external' | 'both';
 	fancyAdvancedUriLink: boolean;

@@ -134,6 +134,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				items: [
 					{ name: t('Fancy url scheme'), desc: t('Enable icons for url schemes.'), control: { type: 'toggle', key: 'fancyUrlScheme' } },
 					{ name: t('Fancy web link'), desc: t('Enable icons for web page links.'), control: { type: 'toggle', key: 'fancyWebLink' } },
+					{ name: t('Fancy property link'), desc: t('Enable icons for links in properties. Icons follow the other link settings.'), control: { type: 'toggle', key: 'fancyPropertyLink' } },
 					{ name: t('Fancy obsidian web link'), desc: t('Enable icons for Obsidian website links. Turn this off if you find the icons confusing with Fancy obsidian note link.'), control: { type: 'toggle', key: 'fancyObsidianWebLink' } },
 					{
 						name: t('Fancy obsidian note link'),

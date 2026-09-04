@@ -105,6 +105,8 @@ export default {
 	'Enable icons for url schemes.': 'Enable icons for url schemes.',
 	'Fancy web link': 'Fancy web link',
 	'Enable icons for web page links.': 'Enable icons for web page links.',
+	'Fancy property link': 'Fancy property link',
+	'Enable icons for links in properties. Icons follow the other link settings.': 'Enable icons for links in properties. Icons follow the other link settings.',
 	'Fancy obsidian web link': 'Fancy obsidian web link',
 	'Enable icons for Obsidian website links. Turn this off if you find the icons confusing with Fancy obsidian note link.': 'Enable icons for Obsidian website links. Turn this off if you find the icons confusing with Fancy obsidian note link.',
 	'Fancy obsidian note link': 'Fancy obsidian note link',

@@ -115,6 +115,7 @@ export default class ExternalLinksIcon extends Plugin {
 			language,
 			fancyUrlScheme: typeof loaded?.fancyUrlScheme === 'boolean' ? loaded.fancyUrlScheme : DEFAULT_SETTINGS.fancyUrlScheme,
 			fancyWebLink: typeof loaded?.fancyWebLink === 'boolean' ? loaded.fancyWebLink : DEFAULT_SETTINGS.fancyWebLink,
+			fancyPropertyLink: typeof loaded?.fancyPropertyLink === 'boolean' ? loaded.fancyPropertyLink : DEFAULT_SETTINGS.fancyPropertyLink,
 			fancyObsidianWebLink: typeof loaded?.fancyObsidianWebLink === 'boolean' ? loaded.fancyObsidianWebLink : DEFAULT_SETTINGS.fancyObsidianWebLink,
 			fancyObsidianNoteLink: ['none', 'internal', 'external', 'both'].includes(loaded?.fancyObsidianNoteLink as string)
 				? loaded?.fancyObsidianNoteLink as ExternalLinksIconSettings['fancyObsidianNoteLink']

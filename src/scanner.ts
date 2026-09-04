@@ -41,7 +41,10 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 			for (const el of Array.from(links)) {
 				if (!el.instanceOf(HTMLElement)) continue;
 
-				const href = el.getAttribute('href') || '';
+				// property 链接（properties 面板内的 .metadata-link-inner）受独立开关控制
+				if (el.closest('.metadata-container') && !settings.fancyPropertyLink) continue;
+
+				const href = el.getAttribute('href') || el.getAttribute('data-href') || '';
 				const isExternal = el.classList.contains('external-link');
 				const isInternal = el.classList.contains('internal-link');
 
@@ -234,7 +237,14 @@ export class Scanner {
 
 					processedElements.add(el);
 
-					const href = el.getAttribute('href') || '';
+					// property 链接（properties 面板内的 .metadata-link-inner）受独立开关控制：
+					// 开关关闭时标记为移除图标，由下方清理分支统一移除 class 与 style
+					if (el.closest('.metadata-container') && !settings.fancyPropertyLink) {
+						elementsToUpdate.push({ el, shouldHaveIcon: false });
+						continue;
+					}
+
+					const href = el.getAttribute('href') || el.getAttribute('data-href') || '';
 					const isExternal = el.classList.contains('external-link');
 					const isInternal = el.classList.contains('internal-link');
 

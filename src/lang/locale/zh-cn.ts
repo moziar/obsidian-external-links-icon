@@ -105,6 +105,8 @@ export default {
 	'Enable icons for url schemes.': '显示 URL scheme 链接图标。',
 	'Fancy web link': '网页链接',
 	'Enable icons for web page links.': '显示网页链接图标。',
+	'Fancy property link': '属性链接',
+	'Enable icons for links in properties. Icons follow the other link settings.': '为属性面板中的链接启用图标。图标显示受其他链接设置约束。',
 	'Fancy obsidian web link': 'Obsidian 网站链接',
 	'Enable icons for Obsidian website links. Turn this off if you find the icons confusing with Fancy obsidian note link.': '显示 Obsidian 网站链接图标。如果与 Obsidian 笔记链接图标混淆，可以关闭此选项。',
 	'Fancy obsidian note link': 'Obsidian 笔记链接',
