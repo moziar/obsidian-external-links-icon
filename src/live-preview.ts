@@ -34,6 +34,11 @@ class IconWidget extends WidgetType {
 
 const linkMarkDecoration = Decoration.mark({ class: 'external-links-icon-enabled' });
 
+// URI scheme 检测（RFC 3986 scheme = 字母开头，后接字母/数字/+/-/.）
+const URI_SCHEME_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
+// 向后搜索 `]]` 的窗口上限，防止异常文档（如缺失闭合符）时全量扫描
+const ALIAS_END_SEARCH_LIMIT = 500;
+
 function isStringUrlNode(name: string): boolean {
 	if (name.startsWith('formatting_')) return false;
 	return name === 'string_url' || name.endsWith('_string_url');
@@ -198,7 +203,7 @@ class LivePreviewIconPlugin implements PluginValue {
 						const markFrom = node.from - 2;
 						let markTo = node.to + 2;
 						if (node.name.endsWith('_link-has-alias')) {
-							const rest = view.state.doc.sliceString(node.to, Math.min(node.to + 500, view.state.doc.length));
+							const rest = view.state.doc.sliceString(node.to, Math.min(node.to + ALIAS_END_SEARCH_LIMIT, view.state.doc.length));
 							const close = rest.indexOf(']]');
 							if (close < 0) return;
 							markTo = node.to + close + 2;
