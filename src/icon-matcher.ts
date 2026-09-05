@@ -6,6 +6,7 @@ let cachedVersion: number = -1;
 
 export interface MatchContext {
 	href: string;
+	hrefLower: string;
 	isExternal: boolean;
 	isInternal: boolean;
 	fancyUrlScheme: boolean;
@@ -50,6 +51,7 @@ export function getMatchContext(
 	const isNoteLink = isInternal && isNoteHref(href);
 	return {
 		href,
+		hrefLower: href.toLowerCase(),
 		isExternal,
 		isInternal,
 		fancyUrlScheme,
@@ -62,7 +64,7 @@ export function getMatchContext(
 }
 
 function matchSpecialIcon(icon: IconItem, ctx: MatchContext): boolean | null {
-	const hrefLower = ctx.href.toLowerCase();
+	const hrefLower = ctx.hrefLower;
 
 	switch (icon.id) {
 		case 'obsidianweb': {
@@ -97,7 +99,7 @@ function matchSpecialIcon(icon: IconItem, ctx: MatchContext): boolean | null {
 }
 
 function matchGenericIcon(icon: IconItem, ctx: MatchContext): boolean {
-	const hrefLower = ctx.href.toLowerCase();
+	const hrefLower = ctx.hrefLower;
 
 	if (icon.linkType === 'scheme') {
 		if (!ctx.fancyUrlScheme) return false;
