@@ -33,8 +33,12 @@ function getLinkExtension(href: string): string {
 	return file.slice(dot + 1).toLowerCase();
 }
 
-/** 判断内部链接是否指向 Obsidian 原生文档（无扩展名的 wikilink、md 或 canvas 文件）。 */
+/**
+ * 判断内部链接是否指向 Obsidian 原生文档（无扩展名的 wikilink、md 或 canvas 文件）。
+ * 以 `/` 结尾的是文件夹链接（Folder Links 插件约定，如 `[[MyFolder/]]`），不算文档，不显示图标。
+ */
 function isNoteHref(href: string): boolean {
+	if (href.split('|')[0].endsWith('/')) return false;
 	const ext = getLinkExtension(href);
 	return ext === '' || ext === 'md' || ext === 'canvas';
 }
