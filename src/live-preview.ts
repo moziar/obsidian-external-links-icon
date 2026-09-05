@@ -34,6 +34,8 @@ const linkMarkDecoration = Decoration.mark({ class: 'external-links-icon-enabled
 const URI_SCHEME_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 // 向后搜索 `]]` 的窗口上限，防止异常文档（如缺失闭合符）时全量扫描
 const ALIAS_END_SEARCH_LIMIT = 500;
+// 向前搜索 `[` 的窗口上限，同上
+const OPEN_BRACKET_SEARCH_LIMIT = 200;
 
 function isStringUrlNode(name: string): boolean {
 	if (name.startsWith('formatting_')) return false;
@@ -77,7 +79,7 @@ function findLinkInfoForStringUrl(view: EditorView, stringUrlNode: { from: numbe
 	const linkTo = closeParenPos;
 
 	let openBracketPos = -1;
-	const searchStart = Math.max(0, stringUrlNode.from - 200);
+	const searchStart = Math.max(0, stringUrlNode.from - OPEN_BRACKET_SEARCH_LIMIT);
 	const textBefore = view.state.doc.sliceString(searchStart, stringUrlNode.from);
 	const lastOpenBracket = textBefore.lastIndexOf('[');
 	if (lastOpenBracket >= 0) {
@@ -144,7 +146,7 @@ class LivePreviewIconPlugin implements PluginValue {
 						if (linkLine.number === cursorLine) return;
 
 						// 无 URI scheme 的 markdown link（相对/绝对路径）指向库内文件，按内部链接匹配
-						const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(info.href);
+						const hasScheme = URI_SCHEME_RE.test(info.href);
 						const chosen = matchIcon(info.href, hasScheme, !hasScheme, settings, settingsVersion);
 						if (!chosen) return;
 

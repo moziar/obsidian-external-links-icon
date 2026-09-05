@@ -2,7 +2,7 @@ import type { ExternalLinksIconSettings, IconItem } from './types';
 import { DEFAULT_SETTINGS } from './constants';
 import { getCachedIconImage } from './utils';
 import { preferDarkThemeFromDocument } from './svg';
-import { getMatchContext, iconMatchesContext, getAllIconsSorted } from './icon-matcher';
+import { matchIcon, getAllIconsSorted } from './icon-matcher';
 import { MarkdownRenderChild } from 'obsidian';
 
 
@@ -51,15 +51,7 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 				const isExternal = el.classList.contains('external-link');
 				const isInternal = el.classList.contains('internal-link');
 
-				let chosen: IconItem | null = null;
-				const ctx = getMatchContext(href, isExternal, isInternal, settings);
-				for (const icon of icons) {
-					if (iconMatchesContext(icon, ctx)) {
-						chosen = icon;
-						break;
-					}
-				}
-
+				let chosen = matchIcon(href, isExternal, isInternal, settings, settingsVersion);
 				const dataIcon = el.getAttribute('data-icon') || '';
 				if (!chosen && dataIcon) {
 					chosen = icons.find(icon => icon.id === dataIcon) || null;
@@ -74,9 +66,9 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 				if (!image) continue;
 
 				el.style.setProperty('--external-link-icon-image', `url("${image}")`);
-			el.classList.add('external-links-icon-enabled');
+				el.classList.add('external-links-icon-enabled');
 
-			this.managedElements.add(el);
+				this.managedElements.add(el);
 				this.scanner.registerIconElement(chosen.id, el);
 			}
 		} catch (e) {
@@ -106,11 +98,11 @@ const CM_LINKISH_SELECTOR = '.internal-link, .external-link, .markdown-embed';
  */
 function isIgnorableMutationBatch(mutations: MutationRecord[]): boolean {
 	const hasLinkish = (n: Node): boolean =>
-		n instanceof Element
+		n.instanceOf(Element)
 		&& (n.matches(CM_LINKISH_SELECTOR) || n.querySelector(CM_LINKISH_SELECTOR) !== null);
 
 	return mutations.every(m => {
-		const target = m.target instanceof Element ? m.target : m.target.parentElement;
+		const target = m.target.instanceOf(Element) ? m.target : m.target.parentElement;
 		if (!target || !target.closest('.cm-editor')) return false;
 		return !Array.from(m.addedNodes).some(hasLinkish)
 			&& !Array.from(m.removedNodes).some(hasLinkish);
@@ -247,35 +239,27 @@ export class Scanner {
 					const isExternal = el.classList.contains('external-link');
 					const isInternal = el.classList.contains('internal-link');
 
-					let chosen: IconItem | null = null;
-					const ctx = getMatchContext(href, isExternal, isInternal, settings);
-					for (const icon of icons) {
-						if (iconMatchesContext(icon, ctx)) {
-							chosen = icon;
-							break;
-						}
-					}
-
+					let chosen = matchIcon(href, isExternal, isInternal, settings, settingsVersion);
 					const dataIcon = el.getAttribute('data-icon') || '';
 					if (!chosen && dataIcon) {
 						chosen = icons.find(icon => icon.id === dataIcon) || null;
 					}
 
 					if (chosen) {
-					const image = iconImages.get(chosen.id);
-					if (image) {
-						elementsToUpdate.push({
-							el,
-							shouldHaveIcon: true,
-							iconId: chosen.id,
-							image,
-						});
+						const image = iconImages.get(chosen.id);
+						if (image) {
+							elementsToUpdate.push({
+								el,
+								shouldHaveIcon: true,
+								iconId: chosen.id,
+								image,
+							});
+						} else {
+							elementsToUpdate.push({ el, shouldHaveIcon: false });
+						}
 					} else {
 						elementsToUpdate.push({ el, shouldHaveIcon: false });
 					}
-				} else {
-					elementsToUpdate.push({ el, shouldHaveIcon: false });
-				}
 				}
 			}
 
