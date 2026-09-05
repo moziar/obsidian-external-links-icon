@@ -46,11 +46,9 @@ function isStringUrlNode(name: string): boolean {
 
 function isInternalLinkNode(name: string): boolean {
 	if (name.startsWith('formatting_')) return false;
-	// embed（![[...]]）不是链接，跳过以对齐 Reading View 行为
-	if (name.startsWith('hmd-embed')) return false;
+	// 精确匹配 target 节点；天然排除 embed（hmd-embed_*）与 alias/pipe 子类型节点。
 	// 光标不在行上时，带 alias 的 wikilink 被拆为兄弟节点：
 	//   [[target|alias]] → hmd-internal-link_link-has-alias(target) + _link-alias-pipe + _link-alias(alias)
-	// 只有 target 节点携带链接目标；alias/pipe 子类型节点跳过，避免重复渲染图标
 	return name === 'hmd-internal-link' || name === 'hmd-internal-link_link-has-alias';
 }
 
