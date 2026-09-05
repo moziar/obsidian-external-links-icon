@@ -48,8 +48,9 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 					&& (!settings.fancyPropertyLink || el.closest('.custom-status-icon-pill'))) continue;
 
 				// Folder Links 插件对已解析的文件夹链接会剥掉 href/data-href，只留 data-folder-link；
-				// 读不到 href 时链接目标会被误判为空（无扩展名 = 笔记），需把 data-folder-link 纳入回退链
-				const href = el.getAttribute('href') || el.getAttribute('data-href') || el.getAttribute('data-folder-link') || '';
+				// property 面板的链接 pill 目标只存在 data-property-pill-value。
+				// 读不到 href 时链接目标会被误判为空（无扩展名 = 笔记），需把这些属性纳入回退链
+				const href = el.getAttribute('href') || el.getAttribute('data-href') || el.getAttribute('data-folder-link') || el.getAttribute('data-property-pill-value') || '';
 				const isExternal = el.classList.contains('external-link');
 				const isInternal = el.classList.contains('internal-link');
 
@@ -238,8 +239,9 @@ export class Scanner {
 					}
 
 					// Folder Links 插件对已解析的文件夹链接会剥掉 href/data-href，只留 data-folder-link；
-					// 读不到 href 时链接目标会被误判为空（无扩展名 = 笔记），需把 data-folder-link 纳入回退链
-					const href = el.getAttribute('href') || el.getAttribute('data-href') || el.getAttribute('data-folder-link') || '';
+					// property 面板的链接 pill 目标只存在 data-property-pill-value。
+					// 读不到 href 时链接目标会被误判为空（无扩展名 = 笔记），需把这些属性纳入回退链
+					const href = el.getAttribute('href') || el.getAttribute('data-href') || el.getAttribute('data-folder-link') || el.getAttribute('data-property-pill-value') || '';
 					const isExternal = el.classList.contains('external-link');
 					const isInternal = el.classList.contains('internal-link');
 
