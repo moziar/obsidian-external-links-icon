@@ -13,6 +13,27 @@ export interface MatchContext {
 	fancyObsidianWeb: boolean;
 	fancyAdvancedUri: boolean;
 	obsidianNoteMode: 'none' | 'internal' | 'external' | 'both';
+	isNoteLink: boolean;
+}
+
+/**
+ * 提取链接目标的文件扩展名（小写、不带点），无扩展名返回 ''。
+ * 兼容 `[[note|alias]]`、`[[note#heading]]`、`[text](path/file.md)` 及 URL 编码路径。
+ */
+function getLinkExtension(href: string): string {
+	let h = href.split('|')[0].split('#')[0];
+	try { h = decodeURIComponent(h); } catch { /* keep raw on malformed encoding */ }
+	const lastSlash = Math.max(h.lastIndexOf('/'), h.lastIndexOf('\\'));
+	const file = lastSlash >= 0 ? h.slice(lastSlash + 1) : h;
+	const dot = file.lastIndexOf('.');
+	if (dot <= 0 || dot === file.length - 1) return '';
+	return file.slice(dot + 1).toLowerCase();
+}
+
+/** 判断内部链接是否指向笔记（无扩展名的 wikilink 或 .md 文件）。 */
+function isNoteHref(href: string): boolean {
+	const ext = getLinkExtension(href);
+	return ext === '' || ext === 'md';
 }
 
 export function getMatchContext(
@@ -26,6 +47,7 @@ export function getMatchContext(
 	const fancyObsidianWeb = settings.fancyObsidianWebLink;
 	const fancyAdvancedUri = settings.fancyAdvancedUriLink;
 	const obsidianNoteMode = settings.fancyObsidianNoteLink;
+	const isNoteLink = isInternal && isNoteHref(href);
 	return {
 		href,
 		isExternal,
@@ -34,7 +56,8 @@ export function getMatchContext(
 		fancyWebLink,
 		fancyObsidianWeb,
 		fancyAdvancedUri,
-		obsidianNoteMode
+		obsidianNoteMode,
+		isNoteLink
 	};
 }
 
@@ -51,6 +74,8 @@ function matchSpecialIcon(icon: IconItem, ctx: MatchContext): boolean | null {
 		case 'obsidiannote': {
 			if (ctx.obsidianNoteMode === 'none') return false;
 			if (ctx.isInternal) {
+				// 只匹配笔记链接；指向图片等非笔记文件（如 cover 属性里的 png）不显示图标
+				if (!ctx.isNoteLink) return false;
 				return ctx.obsidianNoteMode === 'internal' || ctx.obsidianNoteMode === 'both';
 			}
 			if (ctx.isExternal && (ctx.obsidianNoteMode === 'external' || ctx.obsidianNoteMode === 'both')) {

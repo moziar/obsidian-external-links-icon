@@ -141,7 +141,7 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 							{ name: t('Fancy obsidian web link'), desc: t('Enable icons for Obsidian website links. Turn this off if you find the icons confusing with Fancy obsidian note link.'), control: { type: 'toggle', key: 'fancyObsidianWebLink' } },
 							{
 								name: t('Fancy obsidian note link'),
-								desc: t('Enable internal links or external vault links icon.'),
+								desc: t('Enable internal links or external vault links icon. Only note files are matched.'),
 								control: {
 									type: 'dropdown',
 									key: 'fancyObsidianNoteLink',

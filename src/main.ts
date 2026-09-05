@@ -118,8 +118,8 @@ export default class ExternalLinksIcon extends Plugin {
 			fancyPropertyLink: typeof loaded?.fancyPropertyLink === 'boolean' ? loaded.fancyPropertyLink : DEFAULT_SETTINGS.fancyPropertyLink,
 			fancyObsidianWebLink: typeof loaded?.fancyObsidianWebLink === 'boolean' ? loaded.fancyObsidianWebLink : DEFAULT_SETTINGS.fancyObsidianWebLink,
 			fancyObsidianNoteLink: ['none', 'internal', 'external', 'both'].includes(loaded?.fancyObsidianNoteLink as string)
-				? loaded?.fancyObsidianNoteLink as ExternalLinksIconSettings['fancyObsidianNoteLink']
-				: DEFAULT_SETTINGS.fancyObsidianNoteLink,
+					? loaded?.fancyObsidianNoteLink as ExternalLinksIconSettings['fancyObsidianNoteLink']
+					: DEFAULT_SETTINGS.fancyObsidianNoteLink,
 			fancyAdvancedUriLink: typeof loaded?.fancyAdvancedUriLink === 'boolean' ? loaded.fancyAdvancedUriLink : DEFAULT_SETTINGS.fancyAdvancedUriLink,
 			iconPosition: ['after', 'before'].includes(loaded?.iconPosition as string)
 				? loaded?.iconPosition as ExternalLinksIconSettings['iconPosition']
@@ -171,10 +171,22 @@ export default class ExternalLinksIcon extends Plugin {
 		setLanguage(this.settings.language || 'auto');
 	}
 
+	/**
+	 * 内置图标从 DEFAULT_SETTINGS 动态读取，任何持久化路径都不写入 icons 字段。
+	 * 声明式设置 control 保存时会直接调用 saveData()（绕过 saveSettings），
+	 * 因此在这里统一拦截剥离，防止 data.json 再次膨胀出冗余的内置图标。
+	 */
+	async saveData(data: unknown): Promise<void> {
+		if (data && typeof data === 'object' && 'icons' in (data as Record<string, unknown>)) {
+			const { icons, ...rest } = data as Record<string, unknown>;
+			await super.saveData(rest);
+			return;
+		}
+		await super.saveData(data);
+	}
+
 	async saveSettings(): Promise<void> {
-		// builtin icons will load from DEFAULT_SETTINGS dynamically, do not persist to data.json
-		const { icons, ...dataToSave } = this.settings;
-		await this.saveData(dataToSave);
+		await this.saveData(this.settings);
 		this.scanner?.scheduleScan();
 		this.settingsVersion++;
 		this.app.workspace.updateOptions();

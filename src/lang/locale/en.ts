@@ -113,7 +113,7 @@ export default {
 	'Fancy obsidian web link': 'Fancy obsidian web link',
 	'Enable icons for Obsidian website links. Turn this off if you find the icons confusing with Fancy obsidian note link.': 'Enable icons for Obsidian website links. Turn this off if you find the icons confusing with Fancy obsidian note link.',
 	'Fancy obsidian note link': 'Fancy obsidian note link',
-	'Enable internal links or external vault links icon.': 'Enable internal links ([[note]]) or external vault links (obsidian://vault) icon.',
+	'Enable internal links or external vault links icon. Only note files are matched.': 'Enable internal links ([[note]]) or external vault links (obsidian://vault) icon. Only note files are matched; links to images or other attachments are ignored.',
 	'Fancy advanced uri link': 'Fancy advanced uri link',
 	'Enable icons for advanced uri links.': 'Enable icons for advanced uri links (obsidian://adv-uri).',
 	'None': 'None',
