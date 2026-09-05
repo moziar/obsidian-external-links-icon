@@ -147,6 +147,7 @@ export class Scanner {
 			this.mutationObserver = null;
 		}
 		this.observedRoots = [];
+		this.iconElementsByName.clear();
 		if (this.scanTimerId) {
 			window.clearTimeout(this.scanTimerId);
 			this.scanTimerId = null;
@@ -287,59 +288,67 @@ export class Scanner {
 			}
 
 			if (settingsOrThemeChanged) {
-		// Full refresh: settings or theme changed. IconLinkRenderChild manages element
-		// registration via its own onload/onunload, so we only need to update styles
-		// on already-annotated elements here. Don't clear iconElementsByName — children
-		// own its contents.
-		for (const update of elementsToUpdate) {
-			if (update.shouldHaveIcon && update.iconId && update.image) {
-				try {
-					update.el.style.setProperty('--external-link-icon-image', `url("${update.image}")`);
-					// Elements that newly acquired an icon (e.g., property links, links newly matched after settings change)
-					// need both the class added to display and registration for theme-switch refresh
-					update.el.classList.add('external-links-icon-enabled');
-					this.registerIconElement(update.iconId, update.el);
-				} catch (err) {
-					console.warn('Failed to apply icon style for', update.iconId, err);
-				}
-			} else if (!update.shouldHaveIcon) {
-				// Element lost its icon (e.g., link type no longer matches)
-				update.el.classList.remove('external-links-icon-enabled');
-				update.el.style.removeProperty('--external-link-icon-image');
-				this.unregisterIconElement(update.el);
-			}
-		}
-	} else {
-		// Incremental update: only update elements whose icon actually changed.
-		for (const update of elementsToUpdate) {
-			const el = update.el;
-			const hasIcon = el.classList.contains('external-links-icon-enabled');
-			const currentImage = el.style.getPropertyValue('--external-link-icon-image');
-
-			if (update.shouldHaveIcon) {
-				const expectedImage = `url("${update.image}")`;
-
-				if (!hasIcon || currentImage !== expectedImage) {
-					el.style.setProperty('--external-link-icon-image', expectedImage);
-					el.classList.add('external-links-icon-enabled');
-					if (update.iconId) this.registerIconElement(update.iconId, el);
+				// Full refresh: settings or theme changed. IconLinkRenderChild manages element
+				// registration via its own onload/onunload, so we only need to update styles
+				// on already-annotated elements here. Don't clear iconElementsByName — children
+				// own its contents.
+				for (const update of elementsToUpdate) {
+					if (update.shouldHaveIcon && update.iconId && update.image) {
+						try {
+							update.el.style.setProperty('--external-link-icon-image', `url("${update.image}")`);
+							// Elements that newly acquired an icon (e.g., property links, links newly matched after settings change)
+							// need both the class added to display and registration for theme-switch refresh
+							update.el.classList.add('external-links-icon-enabled');
+							this.registerIconElement(update.iconId, update.el);
+						} catch (err) {
+							console.warn('Failed to apply icon style for', update.iconId, err);
+						}
+					} else if (!update.shouldHaveIcon) {
+						// Element lost its icon (e.g., link type no longer matches)
+						update.el.classList.remove('external-links-icon-enabled');
+						update.el.style.removeProperty('--external-link-icon-image');
+						this.unregisterIconElement(update.el);
+					}
 				}
 			} else {
-				if (hasIcon) {
-					el.classList.remove('external-links-icon-enabled');
-					el.style.removeProperty('--external-link-icon-image');
-					this.unregisterIconElement(el);
+				// Incremental update: only update elements whose icon actually changed.
+				for (const update of elementsToUpdate) {
+					const el = update.el;
+					const hasIcon = el.classList.contains('external-links-icon-enabled');
+					const currentImage = el.style.getPropertyValue('--external-link-icon-image');
+
+					if (update.shouldHaveIcon) {
+						const expectedImage = `url("${update.image}")`;
+
+						if (!hasIcon || currentImage !== expectedImage) {
+							el.style.setProperty('--external-link-icon-image', expectedImage);
+							el.classList.add('external-links-icon-enabled');
+							if (update.iconId) this.registerIconElement(update.iconId, el);
+						}
+					} else {
+						if (hasIcon) {
+							el.classList.remove('external-links-icon-enabled');
+							el.style.removeProperty('--external-link-icon-image');
+							this.unregisterIconElement(el);
+						}
+					}
 				}
 			}
+
+			// 清理已脱离 DOM 的元素：scan 路径注册的元素（如 property 链接）在
+			// 面板重渲染后不会触发 unregister，若不清理会持续持有 detached DOM 子树
+			for (const elements of this.iconElementsByName.values()) {
+				for (const el of Array.from(elements)) {
+					if (!el.isConnected) elements.delete(el);
+				}
+			}
+
+			this.lastSettingsVersion = settingsVersion;
+			this.lastPreferDark = preferDark;
+		} catch (e) {
+			console.error('Failed to scan and annotate links for icons:', e);
 		}
 	}
-
-		this.lastSettingsVersion = settingsVersion;
-		this.lastPreferDark = preferDark;
-	} catch (e) {
-		console.error('Failed to scan and annotate links for icons:', e);
-	}
-}
 
 	reobserveIfChanged(): void {
 		const doc = activeDocument;
