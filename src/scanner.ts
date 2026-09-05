@@ -194,10 +194,13 @@ export class Scanner {
 			const settingsVersion = this.getSettingsVersion();
 			const icons: IconItem[] = getAllIconsSorted(settings, settingsVersion);
 
-			// Update icon position body class
-			doc.body.classList.remove('external-links-icon-position-before');
-			if (settings.iconPosition === 'before') {
-				doc.body.classList.add('external-links-icon-position-before');
+			// Update icon position body class. Must only write when the state actually
+			// differs: the MutationObserver watches body class changes, so an
+			// unconditional remove+add here re-triggers a scan on every pass and
+			// creates a self-sustaining scan loop (idle CPU + forced reflows).
+			const wantBefore = settings.iconPosition === 'before';
+			if (doc.body.classList.contains('external-links-icon-position-before') !== wantBefore) {
+				doc.body.classList.toggle('external-links-icon-position-before', wantBefore);
 			}
 
 			const previewRoots = doc.querySelectorAll('.markdown-preview-view');
