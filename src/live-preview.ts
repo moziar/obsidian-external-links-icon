@@ -41,6 +41,8 @@ function isStringUrlNode(name: string): boolean {
 
 function isInternalLinkNode(name: string): boolean {
 	if (name.startsWith('formatting_')) return false;
+	// embed（![[...]]）不是链接，跳过以对齐 Reading View 行为
+	if (name.startsWith('hmd-embed')) return false;
 	return name === 'hmd-internal-link' || name.includes('hmd-internal-link');
 }
 
