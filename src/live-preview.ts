@@ -1,5 +1,5 @@
 import { syntaxTree } from '@codemirror/language';
-import { Facet, RangeSetBuilder, type Extension } from '@codemirror/state';
+import { RangeSetBuilder, type Extension } from '@codemirror/state';
 import {
 	Decoration, type DecorationSet, EditorView,
 	type PluginValue,
@@ -8,11 +8,7 @@ import {
 import { getCachedIconImage } from './utils';
 import { preferDarkThemeFromDocument } from './svg';
 import { matchIcon } from './icon-matcher';
-import type { GetSettingsFn } from './scanner';
-
-export const settingsVersionFacet = Facet.define<number, number>({
-	combine: (values) => values[0] ?? 0
-});
+import type { GetSettingsFn, GetSettingsVersionFn } from './scanner';
 
 class IconWidget extends WidgetType {
 	constructor(readonly iconImage: string, readonly isBefore: boolean) { super(); }
@@ -97,16 +93,18 @@ function findLinkInfoForStringUrl(view: EditorView, stringUrlNode: { from: numbe
 class LivePreviewIconPlugin implements PluginValue {
 	decorations: DecorationSet = Decoration.none;
 	private getSettings: GetSettingsFn;
+	private getSettingsVersion: GetSettingsVersionFn;
 	private lastSettingsVersion = 0;
 	private lastCursorLine = -1;
 
-	constructor(view: EditorView, getSettings: GetSettingsFn) {
+	constructor(view: EditorView, getSettings: GetSettingsFn, getSettingsVersion: GetSettingsVersionFn) {
 		this.getSettings = getSettings;
+		this.getSettingsVersion = getSettingsVersion;
 		this.decorations = this.buildDecorations(view);
 	}
 
 	update(update: ViewUpdate): void {
-		const newVersion = update.state.facet(settingsVersionFacet);
+		const newVersion = this.getSettingsVersion();
 		const versionChanged = newVersion !== this.lastSettingsVersion;
 
 		const cursorPos = update.state.selection.main.head;
@@ -125,7 +123,7 @@ class LivePreviewIconPlugin implements PluginValue {
 	buildDecorations(view: EditorView): DecorationSet {
 		const builder = new RangeSetBuilder<Decoration>();
 		const settings = this.getSettings();
-		const settingsVersion = view.state.facet(settingsVersionFacet);
+		const settingsVersion = this.getSettingsVersion();
 		const preferDark = preferDarkThemeFromDocument();
 		const cursorPos = view.state.selection.main.head;
 		const cursorLine = view.state.doc.lineAt(cursorPos).number;
@@ -235,13 +233,12 @@ class LivePreviewIconPlugin implements PluginValue {
 	}
 }
 
-export function createLivePreviewExtension(getSettings: GetSettingsFn): Extension[] {
+export function createLivePreviewExtension(getSettings: GetSettingsFn, getSettingsVersion: GetSettingsVersionFn): Extension[] {
 	return [
-		settingsVersionFacet.of(0),
 		ViewPlugin.fromClass(
 			class extends LivePreviewIconPlugin {
 				constructor(view: EditorView) {
-					super(view, getSettings);
+					super(view, getSettings, getSettingsVersion);
 				}
 			},
 			{

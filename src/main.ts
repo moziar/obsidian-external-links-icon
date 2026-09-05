@@ -20,7 +20,7 @@ export default class ExternalLinksIcon extends Plugin {
 		await this.loadSettings();
 		this.addSettingTab(new ExternalLinksIconSettingTab(this.app, this));
 
-		this.registerEditorExtension(createLivePreviewExtension(() => this.settings));
+		this.registerEditorExtension(createLivePreviewExtension(() => this.settings, () => this.settingsVersion));
 
 		if (process.env.NODE_ENV === 'development') {
 			this.addCommand({
