@@ -5,7 +5,6 @@ let cachedIcons: IconItem[] | null = null;
 let cachedVersion: number = -1;
 
 export interface MatchContext {
-	href: string;
 	hrefLower: string;
 	isExternal: boolean;
 	isInternal: boolean;
@@ -53,7 +52,6 @@ export function getMatchContext(
 	const obsidianNoteMode = settings.fancyObsidianNoteLink;
 	const isNoteLink = isInternal && isNoteHref(href);
 	return {
-		href,
 		hrefLower: href.toLowerCase(),
 		isExternal,
 		isInternal,
