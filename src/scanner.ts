@@ -289,6 +289,10 @@ export class Scanner {
 			if (update.shouldHaveIcon && update.iconId && update.image) {
 				try {
 					update.el.style.setProperty('--external-link-icon-image', `url("${update.image}")`);
+					// Elements that newly acquired an icon (e.g., property links, links newly matched after settings change)
+					// need both the class added to display and registration for theme-switch refresh
+					update.el.classList.add('external-links-icon-enabled');
+					this.registerIconElement(update.iconId, update.el);
 				} catch (err) {
 					console.warn('Failed to apply icon style for', update.iconId, err);
 				}
@@ -301,7 +305,6 @@ export class Scanner {
 		}
 	} else {
 		// Incremental update: only update elements whose icon actually changed.
-		// IconLinkRenderChild owns iconElementsByName; we just refresh styles here.
 		for (const update of elementsToUpdate) {
 			const el = update.el;
 			const hasIcon = el.classList.contains('external-links-icon-enabled');
@@ -313,6 +316,7 @@ export class Scanner {
 				if (!hasIcon || currentImage !== expectedImage) {
 					el.style.setProperty('--external-link-icon-image', expectedImage);
 					el.classList.add('external-links-icon-enabled');
+					if (update.iconId) this.registerIconElement(update.iconId, el);
 				}
 			} else {
 				if (hasIcon) {
