@@ -41,6 +41,10 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 			for (const el of Array.from(links)) {
 				if (!el.instanceOf(HTMLElement)) continue;
 
+				// 嵌套链接只标最内层：frontmatter-markdown-links 等插件会在 pill 内再渲染一层
+				// 真正承载 data-href 的链接元素。图标标在内层，装不装该插件显示位置都一致
+				if (el.querySelector('.external-link, .internal-link')) continue;
+
 				// property 链接（properties 面板内的 .metadata-link-inner）受独立开关控制；
 				// 被 Typify 等插件渲染为状态按钮（custom-status-icon-pill）的链接跳过，
 				// 与 scan() 中的判断保持一致，避免先加图标再被清掉的闪烁
@@ -227,6 +231,14 @@ export class Scanner {
 					if (!el.instanceOf(HTMLElement)) continue;
 
 					processedElements.add(el);
+
+					// 嵌套链接只标最内层：frontmatter-markdown-links 等插件会在 pill 内再渲染一层
+					// 真正承载 data-href 的链接元素。图标标在内层，装不装该插件显示位置都一致；
+					// 外层标记移除并跳过匹配，避免双图标
+					if (el.querySelector('.external-link, .internal-link')) {
+						elementsToUpdate.push({ el, shouldHaveIcon: false });
+						continue;
+					}
 
 					// property 链接（properties 面板内的 .metadata-link-inner）受独立开关控制：
 					// 开关关闭时标记为移除图标，由下方清理分支统一移除 class 与 style；
