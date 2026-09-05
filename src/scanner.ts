@@ -238,10 +238,13 @@ export class Scanner {
 					processedElements.add(el);
 
 					// property 链接（properties 面板内的 .metadata-link-inner）受独立开关控制：
-					// 开关关闭时标记为移除图标，由下方清理分支统一移除 class 与 style
-					if (el.closest('.metadata-container') && !settings.fancyPropertyLink) {
-						elementsToUpdate.push({ el, shouldHaveIcon: false });
-						continue;
+					// 开关关闭时标记为移除图标，由下方清理分支统一移除 class 与 style；
+					// 被 Typify 等插件渲染为状态按钮（custom-status-icon-pill）的链接同样跳过并清理
+					if (el.closest('.metadata-container')) {
+						if (!settings.fancyPropertyLink || el.closest('.custom-status-icon-pill')) {
+							elementsToUpdate.push({ el, shouldHaveIcon: false });
+							continue;
+						}
 					}
 
 					const href = el.getAttribute('href') || el.getAttribute('data-href') || '';
