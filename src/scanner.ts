@@ -96,6 +96,27 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 	}
 }
 
+// CM 编辑器内需要放行的变动：涉及链接或嵌入节点（LP 嵌入渲染在 .cm-editor 内部）
+const CM_LINKISH_SELECTOR = '.internal-link, .external-link, .markdown-embed';
+
+/**
+ * 判断一批 mutation 是否全部来自 CM 编辑器内的纯文本变动（键入、decoration 更新）。
+ * 这类变动不会新增链接节点，跳过可避免每次键入都触发全量重扫；
+ * 嵌入渲染等涉及链接/嵌入节点的变动、以及 CM 之外的变动（阅读态 DOM、属性面板、body class）仍会放行。
+ */
+function isIgnorableMutationBatch(mutations: MutationRecord[]): boolean {
+	const hasLinkish = (n: Node): boolean =>
+		n instanceof Element
+		&& (n.matches(CM_LINKISH_SELECTOR) || n.querySelector(CM_LINKISH_SELECTOR) !== null);
+
+	return mutations.every(m => {
+		const target = m.target instanceof Element ? m.target : m.target.parentElement;
+		if (!target || !target.closest('.cm-editor')) return false;
+		return !Array.from(m.addedNodes).some(hasLinkish)
+			&& !Array.from(m.removedNodes).some(hasLinkish);
+	});
+}
+
 export class Scanner {
 	getSettings: GetSettingsFn;
 	getSettingsVersion: GetSettingsVersionFn;
@@ -115,7 +136,7 @@ export class Scanner {
 
 	start(): void {
 		this.mutationObserver = new MutationObserver((mutations) => {
-			if (this.isOwnMutation(mutations)) return;
+			if (isIgnorableMutationBatch(mutations)) return;
 			// Fallback for dynamic DOM changes post-render (embeds, etc.). Initial render
 			// is handled by registerMarkdownPostProcessor in main.ts, so no delay needed here.
 			window.requestAnimationFrame(() => this.scheduleScan(0));
@@ -163,35 +184,6 @@ export class Scanner {
 			this.scanTimerId = null;
 			this.scanAndAnnotateLinks();
 		}, delay);
-	}
-
-	private isOwnMutation(mutations: MutationRecord[]): boolean {
-		for (const m of mutations) {
-			if (m.type === 'attributes' && m.attributeName === 'class') {
-				return false;
-			}
-			if (m.type === 'childList') {
-				for (const n of Array.from(m.addedNodes)) {
-					if (n.nodeType !== Node.ELEMENT_NODE) return false;
-					const el = n as Element;
-					if (el.matches && (el.matches('.external-links-icon-inline') || el.querySelector('.external-links-icon-inline'))) {
-						continue;
-					}
-					return false;
-				}
-				for (const n of Array.from(m.removedNodes)) {
-					if (n.nodeType !== Node.ELEMENT_NODE) return false;
-					const el = n as Element;
-					if (el.matches && (el.matches('.external-links-icon-inline') || el.querySelector('.external-links-icon-inline'))) {
-						continue;
-					}
-					return false;
-				}
-			} else {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	scanAndAnnotateLinks(): void {
