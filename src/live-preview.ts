@@ -43,7 +43,10 @@ function isInternalLinkNode(name: string): boolean {
 	if (name.startsWith('formatting_')) return false;
 	// embed（![[...]]）不是链接，跳过以对齐 Reading View 行为
 	if (name.startsWith('hmd-embed')) return false;
-	return name === 'hmd-internal-link' || name.includes('hmd-internal-link');
+	// 光标不在行上时，带 alias 的 wikilink 被拆为兄弟节点：
+	//   [[target|alias]] → hmd-internal-link_link-has-alias(target) + _link-alias-pipe + _link-alias(alias)
+	// 只有 target 节点携带链接目标；alias/pipe 子类型节点跳过，避免重复渲染图标
+	return name === 'hmd-internal-link' || name === 'hmd-internal-link_link-has-alias';
 }
 
 interface LinkInfo {
@@ -188,8 +191,16 @@ class LivePreviewIconPlugin implements PluginValue {
 						} catch { /* skip failed icons */ }
 						if (!image) return;
 
+						// wikilink 边界：`[[` 在 target 节点前 2 字符处；
+						// 带 alias 时 target 之后还有 `|alias`，需向后搜索 `]]` 才是真正的链接结尾
 						const markFrom = node.from - 2;
-						const markTo = node.to + 2;
+						let markTo = node.to + 2;
+						if (node.name.endsWith('_link-has-alias')) {
+							const rest = view.state.doc.sliceString(node.to, Math.min(node.to + 500, view.state.doc.length));
+							const close = rest.indexOf(']]');
+							if (close < 0) return;
+							markTo = node.to + close + 2;
+						}
 
 						decoItems.push({
 							from: isBefore ? markFrom : markTo,
