@@ -142,29 +142,31 @@ class LivePreviewIconPlugin implements PluginValue {
 						const linkLine = view.state.doc.lineAt(info.linkFrom);
 						if (linkLine.number === cursorLine) return;
 
-						const chosen = matchIcon(info.href, true, false, settings, settingsVersion);
-					if (!chosen) return;
+						// 无 URI scheme 的 markdown link（相对/绝对路径）指向库内文件，按内部链接匹配
+						const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(info.href);
+						const chosen = matchIcon(info.href, hasScheme, !hasScheme, settings, settingsVersion);
+						if (!chosen) return;
 
-					let image: string | undefined;
-					try {
-						image = getCachedIconImage(chosen.id, chosen.svgData, chosen.themeDarkSvgData, preferDark);
-					} catch { /* skip failed icons */ }
-					if (!image) return;
+						let image: string | undefined;
+						try {
+							image = getCachedIconImage(chosen.id, chosen.svgData, chosen.themeDarkSvgData, preferDark);
+						} catch { /* skip failed icons */ }
+						if (!image) return;
 
-					decoItems.push({
-						from: isBefore ? info.linkFrom : info.linkTo,
-						to: isBefore ? info.linkFrom : info.linkTo,
-						decoration: Decoration.widget({
-							widget: new IconWidget(image, isBefore),
-							side: isBefore ? -1 : 1
-						})
-					});
+						decoItems.push({
+							from: isBefore ? info.linkFrom : info.linkTo,
+							to: isBefore ? info.linkFrom : info.linkTo,
+							decoration: Decoration.widget({
+								widget: new IconWidget(image, isBefore),
+								side: isBefore ? -1 : 1
+							})
+						});
 
-					decoItems.push({
-						from: info.linkFrom,
-						to: info.linkTo,
-						decoration: linkMarkDecoration
-					});
+						decoItems.push({
+							from: info.linkFrom,
+							to: info.linkTo,
+							decoration: linkMarkDecoration
+						});
 					} else if (isInternalLinkNode(node.name)) {
 						const linkFrom = node.from;
 						const linkLine = view.state.doc.lineAt(linkFrom);
