@@ -265,9 +265,8 @@ export class Scanner {
 
 			if (settingsOrThemeChanged) {
 				// Full refresh: settings or theme changed. IconLinkRenderChild manages element
-				// registration via its own onload/onunload, so we only need to update styles
-				// on already-annotated elements here. Don't clear iconElementsByName — children
-				// own its contents.
+				// registration via its own onload/onunload; scan-only registrations (property
+				// links, no owning child) are pruned by the isConnected pass at the end of scan.
 				for (const update of elementsToUpdate) {
 					if (update.shouldHaveIcon && update.iconId && update.image) {
 						try {

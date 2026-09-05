@@ -77,11 +77,12 @@ export default class ExternalLinksIcon extends Plugin {
 		this.registerEvent(this.app.workspace.on('active-leaf-change', () => { this.scanner?.reobserveIfChanged(); this.scanner?.scheduleScan(0); }));
 		this.registerEvent(this.app.workspace.on('layout-change', () => { this.scanner?.reobserveIfChanged(); this.scanner?.scheduleScan(40); }));
 		this.registerEvent(this.app.workspace.on('css-change', () => this.scanner?.handleCssChange()));
-		// Reading mode: each rendered section gets its own IconLinkRenderChild.
-		// The child's onload/onunload follows the section's DOM lifecycle, so when
-		// core post-processors (callouts, task lists) rebuild the DOM, icons are
-		// cleanly removed and re-applied without flicker. This is the officially
-		// recommended pattern per MarkdownPostProcessor docs.
+		// Reading mode: each rendered section gets its own IconLinkRenderChild whose
+		// onload/onunload follows the section's DOM lifecycle — icons are cleanly
+		// removed and re-applied when core post-processors (callouts, task lists)
+		// rebuild the DOM. Recommended pattern per MarkdownPostProcessor docs.
+		// Paths outside markdown sections (property panel, embeds) don't get a child;
+		// scanner's MutationObserver fallback covers those.
 		this.registerMarkdownPostProcessor((el, ctx) => {
 			ctx.addChild(new IconLinkRenderChild(el, this.scanner!));
 		});
