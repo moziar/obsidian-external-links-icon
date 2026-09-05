@@ -41,8 +41,11 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 			for (const el of Array.from(links)) {
 				if (!el.instanceOf(HTMLElement)) continue;
 
-				// property 链接（properties 面板内的 .metadata-link-inner）受独立开关控制
-				if (el.closest('.metadata-container') && !settings.fancyPropertyLink) continue;
+				// property 链接（properties 面板内的 .metadata-link-inner）受独立开关控制；
+				// 被 Typify 等插件渲染为状态按钮（custom-status-icon-pill）的链接跳过，
+				// 与 scan() 中的判断保持一致，避免先加图标再被清掉的闪烁
+				if (el.closest('.metadata-container')
+					&& (!settings.fancyPropertyLink || el.closest('.custom-status-icon-pill'))) continue;
 
 				const href = el.getAttribute('href') || el.getAttribute('data-href') || '';
 				const isExternal = el.classList.contains('external-link');
