@@ -41,7 +41,10 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 			for (const el of Array.from(links)) {
 				if (!el.instanceOf(HTMLElement)) continue;
 
-				const href = el.getAttribute('href') || '';
+				// property 链接（properties 面板内的 .metadata-link-inner）受独立开关控制
+				if (el.closest('.metadata-container') && !settings.fancyPropertyLink) continue;
+
+				const href = el.getAttribute('href') || el.getAttribute('data-href') || '';
 				const isExternal = el.classList.contains('external-link');
 				const isInternal = el.classList.contains('internal-link');
 
@@ -234,7 +237,17 @@ export class Scanner {
 
 					processedElements.add(el);
 
-					const href = el.getAttribute('href') || '';
+					// property 链接（properties 面板内的 .metadata-link-inner）受独立开关控制：
+					// 开关关闭时标记为移除图标，由下方清理分支统一移除 class 与 style；
+					// 被 Typify 等插件渲染为状态按钮（custom-status-icon-pill）的链接同样跳过并清理
+					if (el.closest('.metadata-container')) {
+						if (!settings.fancyPropertyLink || el.closest('.custom-status-icon-pill')) {
+							elementsToUpdate.push({ el, shouldHaveIcon: false });
+							continue;
+						}
+					}
+
+					const href = el.getAttribute('href') || el.getAttribute('data-href') || '';
 					const isExternal = el.classList.contains('external-link');
 					const isInternal = el.classList.contains('internal-link');
 
@@ -279,6 +292,10 @@ export class Scanner {
 			if (update.shouldHaveIcon && update.iconId && update.image) {
 				try {
 					update.el.style.setProperty('--external-link-icon-image', `url("${update.image}")`);
+					// Elements that newly acquired an icon (e.g., property links, links newly matched after settings change)
+					// need both the class added to display and registration for theme-switch refresh
+					update.el.classList.add('external-links-icon-enabled');
+					this.registerIconElement(update.iconId, update.el);
 				} catch (err) {
 					console.warn('Failed to apply icon style for', update.iconId, err);
 				}
@@ -291,7 +308,6 @@ export class Scanner {
 		}
 	} else {
 		// Incremental update: only update elements whose icon actually changed.
-		// IconLinkRenderChild owns iconElementsByName; we just refresh styles here.
 		for (const update of elementsToUpdate) {
 			const el = update.el;
 			const hasIcon = el.classList.contains('external-links-icon-enabled');
@@ -303,6 +319,7 @@ export class Scanner {
 				if (!hasIcon || currentImage !== expectedImage) {
 					el.style.setProperty('--external-link-icon-image', expectedImage);
 					el.classList.add('external-links-icon-enabled');
+					if (update.iconId) this.registerIconElement(update.iconId, el);
 				}
 			} else {
 				if (hasIcon) {

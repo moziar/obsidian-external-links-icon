@@ -22,6 +22,7 @@ export const DEFAULT_SETTINGS: ExternalLinksIconSettings = {
 	language: 'auto',
 	fancyUrlScheme: true,
 	fancyWebLink: true,
+	fancyPropertyLink: false,
 	fancyObsidianWebLink: true,
 	fancyObsidianNoteLink: 'none',
 	fancyAdvancedUriLink: true,

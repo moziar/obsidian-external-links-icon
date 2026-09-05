@@ -132,49 +132,68 @@ export class ExternalLinksIconSettingTab extends PluginSettingTab {
 				type: 'page',
 				name: t('Appearance'),
 				items: [
-					{ name: t('Fancy url scheme'), desc: t('Enable icons for url schemes.'), control: { type: 'toggle', key: 'fancyUrlScheme' } },
-					{ name: t('Fancy web link'), desc: t('Enable icons for web page links.'), control: { type: 'toggle', key: 'fancyWebLink' } },
-					{ name: t('Fancy obsidian web link'), desc: t('Enable icons for Obsidian website links. Turn this off if you find the icons confusing with Fancy obsidian note link.'), control: { type: 'toggle', key: 'fancyObsidianWebLink' } },
 					{
-						name: t('Fancy obsidian note link'),
-						desc: t('Enable internal links or external vault links icon.'),
-						control: {
-							type: 'dropdown',
-							key: 'fancyObsidianNoteLink',
-							defaultValue: 'none',
-							options: {
-								none: t('None'),
-								internal: t('Internal'),
-								external: t('External'),
-								both: t('Both'),
+						type: 'group',
+						heading: t('Link types'),
+						items: [
+							{ name: t('Fancy url scheme'), desc: t('Enable icons for url schemes.'), control: { type: 'toggle', key: 'fancyUrlScheme' } },
+							{ name: t('Fancy web link'), desc: t('Enable icons for web page links.'), control: { type: 'toggle', key: 'fancyWebLink' } },
+							{ name: t('Fancy obsidian web link'), desc: t('Enable icons for Obsidian website links. Turn this off if you find the icons confusing with Fancy obsidian note link.'), control: { type: 'toggle', key: 'fancyObsidianWebLink' } },
+							{
+								name: t('Fancy obsidian note link'),
+								desc: t('Enable internal links or external vault links icon. Only note files are matched.'),
+								control: {
+									type: 'dropdown',
+									key: 'fancyObsidianNoteLink',
+									defaultValue: 'none',
+									options: {
+										none: t('None'),
+										internal: t('Internal'),
+										external: t('External'),
+										both: t('Both'),
+									},
+								},
 							},
-						},
+							{ name: t('Fancy advanced uri link'), desc: t('Enable icons for advanced uri links.'), control: { type: 'toggle', key: 'fancyAdvancedUriLink' } },
+						],
 					},
-					{ name: t('Fancy advanced uri link'), desc: t('Enable icons for advanced uri links.'), control: { type: 'toggle', key: 'fancyAdvancedUriLink' } },
 					{
-					name: t('Icon position'),
-					desc: t('Choose whether the icon appears before or after the link text.'),
-					control: {
-						type: 'dropdown',
-						key: 'iconPosition',
-						defaultValue: 'after',
-						options: {
-							before: t('Before link'),
-							after: t('After link'),
-						},
+						type: 'group',
+						heading: t('Display scope'),
+						items: [
+							{ name: t('Fancy property link'), desc: t('Enable icons for links in properties. Icons follow the other link settings.'), control: { type: 'toggle', key: 'fancyPropertyLink' } },
+						],
 					},
-				},
-				{
-				name: t('Auto-remove icon background'),
-				desc: t('Automatically detect and remove solid background color from uploaded SVG icons.'),
-				control: { type: 'toggle', key: 'autoRemoveBackground' },
-			},
-			{
-				name: t('Auto-adjust icon size'),
-				desc: t('Automatically resize SVG viewBox to fit the icon content.'),
-				control: { type: 'toggle', key: 'autoFitIcon' },
-			},
-			],
+					{
+						type: 'group',
+						heading: t('Icon style'),
+						items: [
+							{
+								name: t('Icon position'),
+								desc: t('Choose whether the icon appears before or after the link text.'),
+								control: {
+									type: 'dropdown',
+									key: 'iconPosition',
+									defaultValue: 'after',
+									options: {
+										before: t('Before link'),
+										after: t('After link'),
+									},
+								},
+							},
+							{
+								name: t('Auto-remove icon background'),
+								desc: t('Automatically detect and remove solid background color from uploaded SVG icons.'),
+								control: { type: 'toggle', key: 'autoRemoveBackground' },
+							},
+							{
+								name: t('Auto-adjust icon size'),
+								desc: t('Automatically resize SVG viewBox to fit the icon content.'),
+								control: { type: 'toggle', key: 'autoFitIcon' },
+							},
+						],
+					},
+				],
 			},
 			{
 				type: 'group',
