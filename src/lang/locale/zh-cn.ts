@@ -113,7 +113,7 @@ export default {
 	'Fancy obsidian web link': 'Obsidian 网站链接',
 	'Enable icons for Obsidian website links. Turn this off if you find the icons confusing with Fancy obsidian note link.': '显示 Obsidian 网站链接图标。如果与 Obsidian 笔记链接图标混淆，可以关闭此选项。',
 	'Fancy obsidian note link': 'Obsidian 笔记链接',
-	'Enable internal links or external vault links icon. Only note files are matched.': '显示双向链接（[[笔记]]）或外部笔记库链接（obsidian://vault）图标。仅匹配笔记文件，指向图片等附件的链接不显示图标。',
+	'Enable internal links or external vault links icon. Only note files are matched.': '显示双向链接（[[笔记]]）或外部笔记库链接（obsidian://vault）图标。仅匹配笔记和 Canvas 文件，指向图片等附件的链接不显示图标。',
 	'Fancy advanced uri link': 'Advanced URI 链接',
 	'Enable icons for advanced uri links.': '显示 Advanced URI 链接（obsidian://adv-uri）图标。',
 	'None': '无',

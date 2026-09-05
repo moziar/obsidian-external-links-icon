@@ -30,10 +30,10 @@ function getLinkExtension(href: string): string {
 	return file.slice(dot + 1).toLowerCase();
 }
 
-/** 判断内部链接是否指向笔记（无扩展名的 wikilink 或 .md 文件）。 */
+/** 判断内部链接是否指向 Obsidian 原生文档（无扩展名的 wikilink、md 或 canvas 文件）。 */
 function isNoteHref(href: string): boolean {
 	const ext = getLinkExtension(href);
-	return ext === '' || ext === 'md';
+	return ext === '' || ext === 'md' || ext === 'canvas';
 }
 
 export function getMatchContext(
@@ -74,7 +74,7 @@ function matchSpecialIcon(icon: IconItem, ctx: MatchContext): boolean | null {
 		case 'obsidiannote': {
 			if (ctx.obsidianNoteMode === 'none') return false;
 			if (ctx.isInternal) {
-				// 只匹配笔记链接；指向图片等非笔记文件（如 cover 属性里的 png）不显示图标
+				// 只匹配原生文档（笔记/canvas）链接；指向图片等附件的内部链接不显示图标
 				if (!ctx.isNoteLink) return false;
 				return ctx.obsidianNoteMode === 'internal' || ctx.obsidianNoteMode === 'both';
 			}
