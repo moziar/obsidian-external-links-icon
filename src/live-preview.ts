@@ -44,10 +44,16 @@ function isStringUrlNode(name: string): boolean {
 
 function isInternalLinkNode(name: string): boolean {
 	if (name.startsWith('formatting_')) return false;
-	// 精确匹配 target 节点；天然排除 embed（hmd-embed_*）与 alias/pipe 子类型节点。
-	// 光标不在行上时，带 alias 的 wikilink 被拆为兄弟节点：
-	//   [[target|alias]] → hmd-internal-link_link-has-alias(target) + _link-alias-pipe + _link-alias(alias)
-	return name === 'hmd-internal-link' || name === 'hmd-internal-link_link-has-alias';
+	// 列表/任务行内节点名会带上下文后缀（如 hmd-internal-link_list-1），
+	// 因此按前缀匹配；alias/pipe 子节点（hmd-internal-link_link-alias*）需排除，
+	// 它们与 target 节点（hmd-internal-link[_link-has-alias][后缀]）是兄弟节点。
+	// embed 节点（hmd-embed_*）前缀不同，天然不会被匹配。
+	if (!name.startsWith('hmd-internal-link')) return false;
+	return !name.includes('_link-alias');
+}
+
+function isInternalLinkWithAliasNode(name: string): boolean {
+	return name.startsWith('hmd-internal-link') && name.includes('_link-has-alias');
 }
 
 interface LinkInfo {
@@ -200,7 +206,7 @@ class LivePreviewIconPlugin implements PluginValue {
 						// 带 alias 时 target 之后还有 `|alias`，需向后搜索 `]]` 才是真正的链接结尾
 						const markFrom = node.from - 2;
 						let markTo = node.to + 2;
-						if (node.name.endsWith('_link-has-alias')) {
+						if (isInternalLinkWithAliasNode(node.name)) {
 							const rest = view.state.doc.sliceString(node.to, Math.min(node.to + ALIAS_END_SEARCH_LIMIT, view.state.doc.length));
 							const close = rest.indexOf(']]');
 							if (close < 0) return;
