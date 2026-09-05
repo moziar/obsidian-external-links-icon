@@ -23,7 +23,10 @@ export interface MatchContext {
  */
 function getLinkExtension(href: string): string {
 	let h = href.split('|')[0].split('#')[0];
-	try { h = decodeURIComponent(h); } catch { /* keep raw on malformed encoding */ }
+	// 只有含 % 才可能是 URL 编码；纯 ASCII 路径直接跳过解码
+	if (h.indexOf('%') >= 0) {
+		try { h = decodeURIComponent(h); } catch { /* keep raw on malformed encoding */ }
+	}
 	const lastSlash = Math.max(h.lastIndexOf('/'), h.lastIndexOf('\\'));
 	const file = lastSlash >= 0 ? h.slice(lastSlash + 1) : h;
 	const dot = file.lastIndexOf('.');
