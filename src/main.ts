@@ -7,20 +7,21 @@ import { DEFAULT_SETTINGS } from './constants';
 import { isValidSvgData, clearIconCache } from './utils';
 import { ExternalLinksIconSettingTab } from './settings';
 import { createLivePreviewExtension } from './live-preview';
+import { Scanner, IconLinkRenderChild } from './scanner';
 import { setLanguage } from './lang/helper';
 
 declare const process: { env: { NODE_ENV?: string } };
 
 export default class ExternalLinksIcon extends Plugin {
 	settings!: ExternalLinksIconSettings;
-	private scanner: import('./scanner').Scanner | null = null;
+	private scanner: Scanner | null = null;
 	private settingsVersion = 0;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
 		this.addSettingTab(new ExternalLinksIconSettingTab(this.app, this));
 
-		this.registerEditorExtension(createLivePreviewExtension(() => this.settings));
+		this.registerEditorExtension(createLivePreviewExtension(() => this.settings, () => this.settingsVersion));
 
 		if (process.env.NODE_ENV === 'development') {
 			this.addCommand({
@@ -71,25 +72,20 @@ export default class ExternalLinksIcon extends Plugin {
 			});
 		}
 
-		try {
-			const Scanner = (await import('./scanner')).Scanner;
-			const { IconLinkRenderChild } = await import('./scanner');
-			this.scanner = new Scanner(() => this.settings, undefined, () => this.settingsVersion);
-			this.scanner.start();
-			this.registerEvent(this.app.workspace.on('active-leaf-change', () => { this.scanner?.reobserveIfChanged(); this.scanner?.scheduleScan(0); }));
-			this.registerEvent(this.app.workspace.on('layout-change', () => { this.scanner?.reobserveIfChanged(); this.scanner?.scheduleScan(40); }));
-			this.registerEvent(this.app.workspace.on('css-change', () => this.scanner?.handleCssChange()))
-			// Reading mode: each rendered section gets its own IconLinkRenderChild.
-			// The child's onload/onunload follows the section's DOM lifecycle, so when
-			// core post-processors (callouts, task lists) rebuild the DOM, icons are
-			// cleanly removed and re-applied without flicker. This is the officially
-			// recommended pattern per MarkdownPostProcessor docs.
-			this.registerMarkdownPostProcessor((el, ctx) => {
-				ctx.addChild(new IconLinkRenderChild(el, this.scanner!));
-			});
-		} catch {
-			this.scanner?.scanAndAnnotateLinks();
-		}
+		this.scanner = new Scanner(() => this.settings, undefined, () => this.settingsVersion);
+		this.scanner.start();
+		this.registerEvent(this.app.workspace.on('active-leaf-change', () => { this.scanner?.reobserveIfChanged(); this.scanner?.scheduleScan(0); }));
+		this.registerEvent(this.app.workspace.on('layout-change', () => { this.scanner?.reobserveIfChanged(); this.scanner?.scheduleScan(40); }));
+		this.registerEvent(this.app.workspace.on('css-change', () => this.scanner?.handleCssChange()));
+		// Reading mode: each rendered section gets its own IconLinkRenderChild whose
+		// onload/onunload follows the section's DOM lifecycle — icons are cleanly
+		// removed and re-applied when core post-processors (callouts, task lists)
+		// rebuild the DOM. Recommended pattern per MarkdownPostProcessor docs.
+		// Paths outside markdown sections (property panel, embeds) don't get a child;
+		// scanner's MutationObserver fallback covers those.
+		this.registerMarkdownPostProcessor((el, ctx) => {
+			ctx.addChild(new IconLinkRenderChild(el, this.scanner!));
+		});
 	}
 
 	onunload(): void {
@@ -178,7 +174,7 @@ export default class ExternalLinksIcon extends Plugin {
 	 */
 	async saveData(data: unknown): Promise<void> {
 		if (data && typeof data === 'object' && 'icons' in (data as Record<string, unknown>)) {
-			const { icons, ...rest } = data as Record<string, unknown>;
+			const { icons: _, ...rest } = data as Record<string, unknown>;
 			await super.saveData(rest);
 			return;
 		}

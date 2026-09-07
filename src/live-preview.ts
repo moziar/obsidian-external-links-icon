@@ -1,5 +1,5 @@
 import { syntaxTree } from '@codemirror/language';
-import { Facet, RangeSetBuilder, type Extension } from '@codemirror/state';
+import { RangeSetBuilder, type Extension } from '@codemirror/state';
 import {
 	Decoration, type DecorationSet, EditorView,
 	type PluginValue,
@@ -8,11 +8,7 @@ import {
 import { getCachedIconImage } from './utils';
 import { preferDarkThemeFromDocument } from './svg';
 import { matchIcon } from './icon-matcher';
-import type { GetSettingsFn } from './scanner';
-
-export const settingsVersionFacet = Facet.define<number, number>({
-	combine: (values) => values[0] ?? 0
-});
+import type { GetSettingsFn, GetSettingsVersionFn } from './scanner';
 
 class IconWidget extends WidgetType {
 	constructor(readonly iconImage: string, readonly isBefore: boolean) { super(); }
@@ -34,6 +30,13 @@ class IconWidget extends WidgetType {
 
 const linkMarkDecoration = Decoration.mark({ class: 'external-links-icon-enabled' });
 
+// URI scheme 检测（RFC 3986 scheme = 字母开头，后接字母/数字/+/-/.）
+const URI_SCHEME_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
+// 向后搜索 `]]` 的窗口上限，防止异常文档（如缺失闭合符）时全量扫描
+const ALIAS_END_SEARCH_LIMIT = 500;
+// 向前搜索 `[` 的窗口上限，同上
+const OPEN_BRACKET_SEARCH_LIMIT = 200;
+
 function isStringUrlNode(name: string): boolean {
 	if (name.startsWith('formatting_')) return false;
 	return name === 'string_url' || name.endsWith('_string_url');
@@ -41,12 +44,16 @@ function isStringUrlNode(name: string): boolean {
 
 function isInternalLinkNode(name: string): boolean {
 	if (name.startsWith('formatting_')) return false;
-	// embed（![[...]]）不是链接，跳过以对齐 Reading View 行为
-	if (name.startsWith('hmd-embed')) return false;
-	// 光标不在行上时，带 alias 的 wikilink 被拆为兄弟节点：
-	//   [[target|alias]] → hmd-internal-link_link-has-alias(target) + _link-alias-pipe + _link-alias(alias)
-	// 只有 target 节点携带链接目标；alias/pipe 子类型节点跳过，避免重复渲染图标
-	return name === 'hmd-internal-link' || name === 'hmd-internal-link_link-has-alias';
+	// 列表/任务行内节点名会带上下文后缀（如 hmd-internal-link_list-1），
+	// 因此按前缀匹配；alias/pipe 子节点（hmd-internal-link_link-alias*）需排除，
+	// 它们与 target 节点（hmd-internal-link[_link-has-alias][后缀]）是兄弟节点。
+	// embed 节点（hmd-embed_*）前缀不同，天然不会被匹配。
+	if (!name.startsWith('hmd-internal-link')) return false;
+	return !name.includes('_link-alias');
+}
+
+function isInternalLinkWithAliasNode(name: string): boolean {
+	return name.startsWith('hmd-internal-link') && name.includes('_link-has-alias');
 }
 
 interface LinkInfo {
@@ -78,7 +85,7 @@ function findLinkInfoForStringUrl(view: EditorView, stringUrlNode: { from: numbe
 	const linkTo = closeParenPos;
 
 	let openBracketPos = -1;
-	const searchStart = Math.max(0, stringUrlNode.from - 200);
+	const searchStart = Math.max(0, stringUrlNode.from - OPEN_BRACKET_SEARCH_LIMIT);
 	const textBefore = view.state.doc.sliceString(searchStart, stringUrlNode.from);
 	const lastOpenBracket = textBefore.lastIndexOf('[');
 	if (lastOpenBracket >= 0) {
@@ -94,16 +101,18 @@ function findLinkInfoForStringUrl(view: EditorView, stringUrlNode: { from: numbe
 class LivePreviewIconPlugin implements PluginValue {
 	decorations: DecorationSet = Decoration.none;
 	private getSettings: GetSettingsFn;
+	private getSettingsVersion: GetSettingsVersionFn;
 	private lastSettingsVersion = 0;
 	private lastCursorLine = -1;
 
-	constructor(view: EditorView, getSettings: GetSettingsFn) {
+	constructor(view: EditorView, getSettings: GetSettingsFn, getSettingsVersion: GetSettingsVersionFn) {
 		this.getSettings = getSettings;
+		this.getSettingsVersion = getSettingsVersion;
 		this.decorations = this.buildDecorations(view);
 	}
 
 	update(update: ViewUpdate): void {
-		const newVersion = update.state.facet(settingsVersionFacet);
+		const newVersion = this.getSettingsVersion();
 		const versionChanged = newVersion !== this.lastSettingsVersion;
 
 		const cursorPos = update.state.selection.main.head;
@@ -122,7 +131,7 @@ class LivePreviewIconPlugin implements PluginValue {
 	buildDecorations(view: EditorView): DecorationSet {
 		const builder = new RangeSetBuilder<Decoration>();
 		const settings = this.getSettings();
-		const settingsVersion = view.state.facet(settingsVersionFacet);
+		const settingsVersion = this.getSettingsVersion();
 		const preferDark = preferDarkThemeFromDocument();
 		const cursorPos = view.state.selection.main.head;
 		const cursorLine = view.state.doc.lineAt(cursorPos).number;
@@ -143,7 +152,7 @@ class LivePreviewIconPlugin implements PluginValue {
 						if (linkLine.number === cursorLine) return;
 
 						// 无 URI scheme 的 markdown link（相对/绝对路径）指向库内文件，按内部链接匹配
-						const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(info.href);
+						const hasScheme = URI_SCHEME_RE.test(info.href);
 						const chosen = matchIcon(info.href, hasScheme, !hasScheme, settings, settingsVersion);
 						if (!chosen) return;
 
@@ -197,8 +206,8 @@ class LivePreviewIconPlugin implements PluginValue {
 						// 带 alias 时 target 之后还有 `|alias`，需向后搜索 `]]` 才是真正的链接结尾
 						const markFrom = node.from - 2;
 						let markTo = node.to + 2;
-						if (node.name.endsWith('_link-has-alias')) {
-							const rest = view.state.doc.sliceString(node.to, Math.min(node.to + 500, view.state.doc.length));
+						if (isInternalLinkWithAliasNode(node.name)) {
+							const rest = view.state.doc.sliceString(node.to, Math.min(node.to + ALIAS_END_SEARCH_LIMIT, view.state.doc.length));
 							const close = rest.indexOf(']]');
 							if (close < 0) return;
 							markTo = node.to + close + 2;
@@ -232,13 +241,12 @@ class LivePreviewIconPlugin implements PluginValue {
 	}
 }
 
-export function createLivePreviewExtension(getSettings: GetSettingsFn): Extension[] {
+export function createLivePreviewExtension(getSettings: GetSettingsFn, getSettingsVersion: GetSettingsVersionFn): Extension[] {
 	return [
-		settingsVersionFacet.of(0),
 		ViewPlugin.fromClass(
 			class extends LivePreviewIconPlugin {
 				constructor(view: EditorView) {
-					super(view, getSettings);
+					super(view, getSettings, getSettingsVersion);
 				}
 			},
 			{

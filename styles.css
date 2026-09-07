@@ -362,8 +362,6 @@ body.theme-dark .external-links-icon-badge-dark {
 
 .external-links-icon-hidden-input { display: none; }
 
-.external-links-icon-desc { margin-bottom: 10px; }
-
 .external-links-icon-upload-columns {
 	display: flex;
 	gap: 16px;
@@ -382,13 +380,6 @@ body.theme-dark .external-links-icon-badge-dark {
 	font-weight: 600;
 	margin-bottom: 8px;
 	color: var(--text-normal);
-}
-
-.external-links-icon-upload-hint {
-	color: var(--text-muted);
-	font-size: 12px;
-	margin-top: 4px;
-	font-style: italic;
 }
 
 .external-links-icon-remove-indicator {

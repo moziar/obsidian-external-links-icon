@@ -2,7 +2,7 @@ import type { ExternalLinksIconSettings, IconItem } from './types';
 import { DEFAULT_SETTINGS } from './constants';
 import { getCachedIconImage } from './utils';
 import { preferDarkThemeFromDocument } from './svg';
-import { getMatchContext, iconMatchesContext, getAllIconsSorted } from './icon-matcher';
+import { matchIcon, getAllIconsSorted } from './icon-matcher';
 import { MarkdownRenderChild } from 'obsidian';
 
 
@@ -41,22 +41,24 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 			for (const el of Array.from(links)) {
 				if (!el.instanceOf(HTMLElement)) continue;
 
-				// property 链接（properties 面板内的 .metadata-link-inner）受独立开关控制
-				if (el.closest('.metadata-container') && !settings.fancyPropertyLink) continue;
+				// 嵌套链接只标最内层：frontmatter-markdown-links 等插件会在 pill 内再渲染一层
+				// 真正承载 data-href 的链接元素。图标标在内层，装不装该插件显示位置都一致
+				if (el.querySelector('.external-link, .internal-link')) continue;
 
-				const href = el.getAttribute('href') || el.getAttribute('data-href') || '';
+				// property 链接（properties 面板内的 .metadata-link-inner）受独立开关控制；
+				// 被 Typify 等插件渲染为状态按钮（custom-status-icon-pill）的链接跳过，
+				// 与 scan() 中的判断保持一致，避免先加图标再被清掉的闪烁
+				if (el.closest('.metadata-container')
+					&& (!settings.fancyPropertyLink || el.closest('.custom-status-icon-pill'))) continue;
+
+				// Folder Links 插件对已解析的文件夹链接会剥掉 href/data-href，只留 data-folder-link；
+				// property 面板的链接 pill 目标只存在 data-property-pill-value。
+				// 读不到 href 时链接目标会被误判为空（无扩展名 = 笔记），需把这些属性纳入回退链
+				const href = el.getAttribute('href') || el.getAttribute('data-href') || el.getAttribute('data-folder-link') || el.getAttribute('data-property-pill-value') || '';
 				const isExternal = el.classList.contains('external-link');
 				const isInternal = el.classList.contains('internal-link');
 
-				let chosen: IconItem | null = null;
-				const ctx = getMatchContext(href, isExternal, isInternal, settings);
-				for (const icon of icons) {
-					if (iconMatchesContext(icon, ctx)) {
-						chosen = icon;
-						break;
-					}
-				}
-
+				let chosen = matchIcon(href, isExternal, isInternal, settings, settingsVersion);
 				const dataIcon = el.getAttribute('data-icon') || '';
 				if (!chosen && dataIcon) {
 					chosen = icons.find(icon => icon.id === dataIcon) || null;
@@ -71,9 +73,9 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 				if (!image) continue;
 
 				el.style.setProperty('--external-link-icon-image', `url("${image}")`);
-			el.classList.add('external-links-icon-enabled');
+				el.classList.add('external-links-icon-enabled');
 
-			this.managedElements.add(el);
+				this.managedElements.add(el);
 				this.scanner.registerIconElement(chosen.id, el);
 			}
 		} catch (e) {
@@ -91,6 +93,27 @@ export class IconLinkRenderChild extends MarkdownRenderChild {
 		}
 		this.managedElements.clear();
 	}
+}
+
+// CM 编辑器内需要放行的变动：涉及链接或嵌入节点（LP 嵌入渲染在 .cm-editor 内部）
+const CM_LINKISH_SELECTOR = '.internal-link, .external-link, .markdown-embed';
+
+/**
+ * 判断一批 mutation 是否全部来自 CM 编辑器内的纯文本变动（键入、decoration 更新）。
+ * 这类变动不会新增链接节点，跳过可避免每次键入都触发全量重扫；
+ * 嵌入渲染等涉及链接/嵌入节点的变动、以及 CM 之外的变动（阅读态 DOM、属性面板、body class）仍会放行。
+ */
+function isIgnorableMutationBatch(mutations: MutationRecord[]): boolean {
+	const hasLinkish = (n: Node): boolean =>
+		n.instanceOf(Element)
+		&& (n.matches(CM_LINKISH_SELECTOR) || n.querySelector(CM_LINKISH_SELECTOR) !== null);
+
+	return mutations.every(m => {
+		const target = m.target.instanceOf(Element) ? m.target : m.target.parentElement;
+		if (!target || !target.closest('.cm-editor')) return false;
+		return !Array.from(m.addedNodes).some(hasLinkish)
+			&& !Array.from(m.removedNodes).some(hasLinkish);
+	});
 }
 
 export class Scanner {
@@ -112,7 +135,7 @@ export class Scanner {
 
 	start(): void {
 		this.mutationObserver = new MutationObserver((mutations) => {
-			if (this.isOwnMutation(mutations)) return;
+			if (isIgnorableMutationBatch(mutations)) return;
 			// Fallback for dynamic DOM changes post-render (embeds, etc.). Initial render
 			// is handled by registerMarkdownPostProcessor in main.ts, so no delay needed here.
 			window.requestAnimationFrame(() => this.scheduleScan(0));
@@ -144,6 +167,7 @@ export class Scanner {
 			this.mutationObserver = null;
 		}
 		this.observedRoots = [];
+		this.iconElementsByName.clear();
 		if (this.scanTimerId) {
 			window.clearTimeout(this.scanTimerId);
 			this.scanTimerId = null;
@@ -161,35 +185,6 @@ export class Scanner {
 		}, delay);
 	}
 
-	private isOwnMutation(mutations: MutationRecord[]): boolean {
-		for (const m of mutations) {
-			if (m.type === 'attributes' && m.attributeName === 'class') {
-				return false;
-			}
-			if (m.type === 'childList') {
-				for (const n of Array.from(m.addedNodes)) {
-					if (n.nodeType !== Node.ELEMENT_NODE) return false;
-					const el = n as Element;
-					if (el.matches && (el.matches('.external-links-icon-inline') || el.querySelector('.external-links-icon-inline'))) {
-						continue;
-					}
-					return false;
-				}
-				for (const n of Array.from(m.removedNodes)) {
-					if (n.nodeType !== Node.ELEMENT_NODE) return false;
-					const el = n as Element;
-					if (el.matches && (el.matches('.external-links-icon-inline') || el.querySelector('.external-links-icon-inline'))) {
-						continue;
-					}
-					return false;
-				}
-			} else {
-				return false;
-			}
-		}
-		return true;
-	}
-
 	scanAndAnnotateLinks(): void {
 		try {
 			const preferDark = preferDarkThemeFromDocument();
@@ -199,10 +194,13 @@ export class Scanner {
 			const settingsVersion = this.getSettingsVersion();
 			const icons: IconItem[] = getAllIconsSorted(settings, settingsVersion);
 
-			// Update icon position body class
-			doc.body.classList.remove('external-links-icon-position-before');
-			if (settings.iconPosition === 'before') {
-				doc.body.classList.add('external-links-icon-position-before');
+			// Update icon position body class. Must only write when the state actually
+			// differs: the MutationObserver watches body class changes, so an
+			// unconditional remove+add here re-triggers a scan on every pass and
+			// creates a self-sustaining scan loop (idle CPU + forced reflows).
+			const wantBefore = settings.iconPosition === 'before';
+			if (doc.body.classList.contains('external-links-icon-position-before') !== wantBefore) {
+				doc.body.classList.toggle('external-links-icon-position-before', wantBefore);
 			}
 
 			const previewRoots = doc.querySelectorAll('.markdown-preview-view');
@@ -237,6 +235,14 @@ export class Scanner {
 
 					processedElements.add(el);
 
+					// 嵌套链接只标最内层：frontmatter-markdown-links 等插件会在 pill 内再渲染一层
+					// 真正承载 data-href 的链接元素。图标标在内层，装不装该插件显示位置都一致；
+					// 外层标记移除并跳过匹配，避免双图标
+					if (el.querySelector('.external-link, .internal-link')) {
+						elementsToUpdate.push({ el, shouldHaveIcon: false });
+						continue;
+					}
+
 					// property 链接（properties 面板内的 .metadata-link-inner）受独立开关控制：
 					// 开关关闭时标记为移除图标，由下方清理分支统一移除 class 与 style；
 					// 被 Typify 等插件渲染为状态按钮（custom-status-icon-pill）的链接同样跳过并清理
@@ -247,96 +253,98 @@ export class Scanner {
 						}
 					}
 
-					const href = el.getAttribute('href') || el.getAttribute('data-href') || '';
+					// Folder Links 插件对已解析的文件夹链接会剥掉 href/data-href，只留 data-folder-link；
+					// property 面板的链接 pill 目标只存在 data-property-pill-value。
+					// 读不到 href 时链接目标会被误判为空（无扩展名 = 笔记），需把这些属性纳入回退链
+					const href = el.getAttribute('href') || el.getAttribute('data-href') || el.getAttribute('data-folder-link') || el.getAttribute('data-property-pill-value') || '';
 					const isExternal = el.classList.contains('external-link');
 					const isInternal = el.classList.contains('internal-link');
 
-					let chosen: IconItem | null = null;
-					const ctx = getMatchContext(href, isExternal, isInternal, settings);
-					for (const icon of icons) {
-						if (iconMatchesContext(icon, ctx)) {
-							chosen = icon;
-							break;
-						}
-					}
-
+					let chosen = matchIcon(href, isExternal, isInternal, settings, settingsVersion);
 					const dataIcon = el.getAttribute('data-icon') || '';
 					if (!chosen && dataIcon) {
 						chosen = icons.find(icon => icon.id === dataIcon) || null;
 					}
 
 					if (chosen) {
-					const image = iconImages.get(chosen.id);
-					if (image) {
-						elementsToUpdate.push({
-							el,
-							shouldHaveIcon: true,
-							iconId: chosen.id,
-							image,
-						});
+						const image = iconImages.get(chosen.id);
+						if (image) {
+							elementsToUpdate.push({
+								el,
+								shouldHaveIcon: true,
+								iconId: chosen.id,
+								image,
+							});
+						} else {
+							elementsToUpdate.push({ el, shouldHaveIcon: false });
+						}
 					} else {
 						elementsToUpdate.push({ el, shouldHaveIcon: false });
 					}
-				} else {
-					elementsToUpdate.push({ el, shouldHaveIcon: false });
-				}
 				}
 			}
 
 			if (settingsOrThemeChanged) {
-		// Full refresh: settings or theme changed. IconLinkRenderChild manages element
-		// registration via its own onload/onunload, so we only need to update styles
-		// on already-annotated elements here. Don't clear iconElementsByName — children
-		// own its contents.
-		for (const update of elementsToUpdate) {
-			if (update.shouldHaveIcon && update.iconId && update.image) {
-				try {
-					update.el.style.setProperty('--external-link-icon-image', `url("${update.image}")`);
-					// Elements that newly acquired an icon (e.g., property links, links newly matched after settings change)
-					// need both the class added to display and registration for theme-switch refresh
-					update.el.classList.add('external-links-icon-enabled');
-					this.registerIconElement(update.iconId, update.el);
-				} catch (err) {
-					console.warn('Failed to apply icon style for', update.iconId, err);
-				}
-			} else if (!update.shouldHaveIcon) {
-				// Element lost its icon (e.g., link type no longer matches)
-				update.el.classList.remove('external-links-icon-enabled');
-				update.el.style.removeProperty('--external-link-icon-image');
-				this.unregisterIconElement(update.el);
-			}
-		}
-	} else {
-		// Incremental update: only update elements whose icon actually changed.
-		for (const update of elementsToUpdate) {
-			const el = update.el;
-			const hasIcon = el.classList.contains('external-links-icon-enabled');
-			const currentImage = el.style.getPropertyValue('--external-link-icon-image');
-
-			if (update.shouldHaveIcon) {
-				const expectedImage = `url("${update.image}")`;
-
-				if (!hasIcon || currentImage !== expectedImage) {
-					el.style.setProperty('--external-link-icon-image', expectedImage);
-					el.classList.add('external-links-icon-enabled');
-					if (update.iconId) this.registerIconElement(update.iconId, el);
+				// Full refresh: settings or theme changed. IconLinkRenderChild manages element
+				// registration via its own onload/onunload; scan-only registrations (property
+				// links, no owning child) are pruned by the isConnected pass at the end of scan.
+				for (const update of elementsToUpdate) {
+					if (update.shouldHaveIcon && update.iconId && update.image) {
+						try {
+							update.el.style.setProperty('--external-link-icon-image', `url("${update.image}")`);
+							// Elements that newly acquired an icon (e.g., property links, links newly matched after settings change)
+							// need both the class added to display and registration for theme-switch refresh
+							update.el.classList.add('external-links-icon-enabled');
+							this.registerIconElement(update.iconId, update.el);
+						} catch (err) {
+							console.warn('Failed to apply icon style for', update.iconId, err);
+						}
+					} else if (!update.shouldHaveIcon) {
+						// Element lost its icon (e.g., link type no longer matches)
+						update.el.classList.remove('external-links-icon-enabled');
+						update.el.style.removeProperty('--external-link-icon-image');
+						this.unregisterIconElement(update.el);
+					}
 				}
 			} else {
-				if (hasIcon) {
-					el.classList.remove('external-links-icon-enabled');
-					el.style.removeProperty('--external-link-icon-image');
-					this.unregisterIconElement(el);
+				// Incremental update: only update elements whose icon actually changed.
+				for (const update of elementsToUpdate) {
+					const el = update.el;
+					const hasIcon = el.classList.contains('external-links-icon-enabled');
+					const currentImage = el.style.getPropertyValue('--external-link-icon-image');
+
+					if (update.shouldHaveIcon) {
+						const expectedImage = `url("${update.image}")`;
+
+						if (!hasIcon || currentImage !== expectedImage) {
+							el.style.setProperty('--external-link-icon-image', expectedImage);
+							el.classList.add('external-links-icon-enabled');
+							if (update.iconId) this.registerIconElement(update.iconId, el);
+						}
+					} else {
+						if (hasIcon) {
+							el.classList.remove('external-links-icon-enabled');
+							el.style.removeProperty('--external-link-icon-image');
+							this.unregisterIconElement(el);
+						}
+					}
 				}
 			}
+
+			// 清理已脱离 DOM 的元素：scan 路径注册的元素（如 property 链接）在
+			// 面板重渲染后不会触发 unregister，若不清理会持续持有 detached DOM 子树
+			for (const elements of this.iconElementsByName.values()) {
+				for (const el of Array.from(elements)) {
+					if (!el.isConnected) elements.delete(el);
+				}
+			}
+
+			this.lastSettingsVersion = settingsVersion;
+			this.lastPreferDark = preferDark;
+		} catch (e) {
+			console.error('Failed to scan and annotate links for icons:', e);
 		}
 	}
-
-		this.lastSettingsVersion = settingsVersion;
-		this.lastPreferDark = preferDark;
-	} catch (e) {
-		console.error('Failed to scan and annotate links for icons:', e);
-	}
-}
 
 	reobserveIfChanged(): void {
 		const doc = activeDocument;

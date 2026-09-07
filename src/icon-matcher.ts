@@ -5,7 +5,7 @@ let cachedIcons: IconItem[] | null = null;
 let cachedVersion: number = -1;
 
 export interface MatchContext {
-	href: string;
+	hrefLower: string;
 	isExternal: boolean;
 	isInternal: boolean;
 	fancyUrlScheme: boolean;
@@ -22,7 +22,10 @@ export interface MatchContext {
  */
 function getLinkExtension(href: string): string {
 	let h = href.split('|')[0].split('#')[0];
-	try { h = decodeURIComponent(h); } catch { /* keep raw on malformed encoding */ }
+	// 只有含 % 才可能是 URL 编码；纯 ASCII 路径直接跳过解码
+	if (h.indexOf('%') >= 0) {
+		try { h = decodeURIComponent(h); } catch { /* keep raw on malformed encoding */ }
+	}
 	const lastSlash = Math.max(h.lastIndexOf('/'), h.lastIndexOf('\\'));
 	const file = lastSlash >= 0 ? h.slice(lastSlash + 1) : h;
 	const dot = file.lastIndexOf('.');
@@ -30,8 +33,12 @@ function getLinkExtension(href: string): string {
 	return file.slice(dot + 1).toLowerCase();
 }
 
-/** 判断内部链接是否指向 Obsidian 原生文档（无扩展名的 wikilink、md 或 canvas 文件）。 */
+/**
+ * 判断内部链接是否指向 Obsidian 原生文档（无扩展名的 wikilink、md 或 canvas 文件）。
+ * 以 `/` 结尾的是文件夹链接（Folder Links 插件约定，如 `[[MyFolder/]]`），不算文档，不显示图标。
+ */
 function isNoteHref(href: string): boolean {
+	if (href.split('|')[0].endsWith('/')) return false;
 	const ext = getLinkExtension(href);
 	return ext === '' || ext === 'md' || ext === 'canvas';
 }
@@ -49,7 +56,7 @@ export function getMatchContext(
 	const obsidianNoteMode = settings.fancyObsidianNoteLink;
 	const isNoteLink = isInternal && isNoteHref(href);
 	return {
-		href,
+		hrefLower: href.toLowerCase(),
 		isExternal,
 		isInternal,
 		fancyUrlScheme,
@@ -62,7 +69,7 @@ export function getMatchContext(
 }
 
 function matchSpecialIcon(icon: IconItem, ctx: MatchContext): boolean | null {
-	const hrefLower = ctx.href.toLowerCase();
+	const hrefLower = ctx.hrefLower;
 
 	switch (icon.id) {
 		case 'obsidianweb': {
@@ -97,7 +104,7 @@ function matchSpecialIcon(icon: IconItem, ctx: MatchContext): boolean | null {
 }
 
 function matchGenericIcon(icon: IconItem, ctx: MatchContext): boolean {
-	const hrefLower = ctx.href.toLowerCase();
+	const hrefLower = ctx.hrefLower;
 
 	if (icon.linkType === 'scheme') {
 		if (!ctx.fancyUrlScheme) return false;
