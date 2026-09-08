@@ -59,6 +59,10 @@
 	display: none;
 }
 
+.multi-select-pill-content.external-links-icon-enabled > span {
+	display: inline;
+}
+
 /***
 Live Preview 图标样式
 ***/
