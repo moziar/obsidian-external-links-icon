@@ -1,75 +1,128 @@
 import type { IconItem } from './types';
 
-export function minifySvg(svgData: string): string {
-	if (!svgData) return '';
-	return svgData
-		.replace(/[\n\r\t]/g, ' ') // Replace newlines and tabs with space
-		.replace(/\s+/g, ' ') // Collapse spaces
-		.replace(/>\s+</g, '><') // Remove spaces between tags
-		.replace(/<!--[\s\S]*?-->/g, '') // Remove comments
-		.replace(/\s*xmlns:v="[^"]*"/g, '') // Remove Vecta namespace
-		.trim();
+// ─── SVG parsing, sanitization & serialization (DOM-based) ────────────────────
+
+/**
+ * Parse an SVG string into an XML document. Returns null when the input is
+ * not well-formed XML or the root element is not <svg>.
+ */
+function parseSvgDocument(svgString: string): Document | null {
+	try {
+		const doc = new DOMParser().parseFromString(svgString, 'image/svg+xml');
+		if (doc.querySelector('parsererror')) return null;
+		const root = doc.documentElement;
+		if (!root || root.tagName.toLowerCase() !== 'svg') return null;
+		return doc;
+	} catch {
+		return null;
+	}
 }
 
-export function sanitizeSvg(svg: string): string {
-	let s = svg.trim();
-	// remove xml prolog and doctype
-	s = s.replace(/<\?xml[\s\S]*?\?>/i, '');
-	s = s.replace(/<!DOCTYPE[\s\S]*?>/i, '');
-	// remove script/style
-	s = s.replace(/<script[\s\S]*?<\/script>/gi, '');
-	s = s.replace(/<style[\s\S]*?<\/style>/gi, '');
-	// Remove SVG <filter> definitions and any inline filter references
-	s = s.replace(/<filter[\s\S]*?<\/filter>/gi, '');
-	s = s.replace(/<feDropShadow[\s\S]*?>/gi, '');
-	s = s.replace(/\sfilter=(?:"|')[^"']*(?:"|')/gi, '');
-	s = s.replace(/filter:\s*[^;"']+;?/gi, '');
-	// ensure xmlns
-	if (!/<svg[^>]*xmlns=/.test(s)) {
-		s = s.replace(/<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+/** Remove comments and inter-tag formatting whitespace; collapse runs of spaces inside text. */
+function compactWhitespace(node: Node): void {
+	for (const child of Array.from(node.childNodes)) {
+		if (child.nodeType === Node.COMMENT_NODE) {
+			child.remove();
+		} else if (child.nodeType === Node.TEXT_NODE) {
+			const collapsed = (child.nodeValue || '').replace(/\s+/g, ' ');
+			if (collapsed.trim() === '') {
+				child.remove();
+			} else {
+				child.nodeValue = collapsed.trim();
+			}
+		} else if (child.nodeType === Node.ELEMENT_NODE) {
+			compactWhitespace(child);
+		}
 	}
-	// ensure viewBox if possible
-	const svgTagMatch = s.match(/<svg([^>]*)>/);
-	if (svgTagMatch) {
-		const attrs = svgTagMatch[1];
-		if (!/viewBox=/i.test(attrs)) {
-			const widthMatch = attrs.match(/width=["']?([0-9.]+)(px)?["']?/i);
-			const heightMatch = attrs.match(/height=["']?([0-9.]+)(px)?["']?/i);
-			if (widthMatch && heightMatch) {
-				const w = parseFloat(widthMatch[1]);
-				const h = parseFloat(heightMatch[1]);
-				s = s.replace(/<svg([^>]*)>/, `<svg$1 viewBox="0 0 ${w} ${h}">`);
+}
+
+/** Elements stripped entirely: unsafe (script/style) or heavy (filters). */
+const STRIP_ELEMENTS = new Set(['script', 'style', 'filter', 'fedropshadow']);
+
+const FILTER_STYLE_PROP_RE = /(^|;)\s*filter\s*:[^;]*;?/gi;
+
+/**
+ * Sanitize in place: remove <script>/<style>/<filter>/<feDropShadow> elements,
+ * `filter` attributes and CSS filter properties, and derive a viewBox from
+ * width/height when missing.
+ */
+function sanitizeSvgElement(svg: Element): void {
+	svg.querySelectorAll('*').forEach(el => {
+		if (STRIP_ELEMENTS.has(el.tagName.toLowerCase())) el.remove();
+	});
+	svg.querySelectorAll('[filter]').forEach(el => el.removeAttribute('filter'));
+	svg.querySelectorAll('[style]').forEach(el => {
+		const style = el.getAttribute('style') || '';
+		const next = style.replace(FILTER_STYLE_PROP_RE, '').trim();
+		if (next !== style) {
+			if (next) el.setAttribute('style', next);
+			else el.removeAttribute('style');
+		}
+	});
+
+	if (!svg.getAttribute('viewBox')) {
+		const w = parseFloat(svg.getAttribute('width') || '');
+		const h = parseFloat(svg.getAttribute('height') || '');
+		if (!isNaN(w) && !isNaN(h)) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+	}
+}
+
+const CSS_VAR_RE = /var\(--([a-zA-Z0-9-_]+)\s*(?:,\s*([^)]+))?\)/g;
+
+/**
+ * Prepare a stored SVG for settings-preview rendering: sanitize, resolve
+ * currentColor and CSS variables against the container's computed style,
+ * compact, and serialize.
+ *
+ * Malformed input (not well-formed XML) falls back to the trimmed raw string —
+ * the link-render path consumes raw stored data the same way.
+ */
+export function prepareSvgForSettings(svg: string, container: HTMLElement): string {
+	if (!svg) return '';
+	const doc = parseSvgDocument(svg);
+	if (!doc) return svg.trim();
+
+	const svgEl = doc.documentElement;
+	sanitizeSvgElement(svgEl);
+
+	try {
+		const containerStyle = activeWindow.getComputedStyle(container);
+		const rootStyle = activeWindow.getComputedStyle(activeDocument.documentElement);
+		const color = containerStyle.color ? containerStyle.color.trim() : '';
+		const varValues = new Map<string, string>();
+
+		const resolveVar = (name: string): string => {
+			if (!varValues.has(name)) {
+				const value = (containerStyle.getPropertyValue(`--${name}`)
+					|| rootStyle.getPropertyValue(`--${name}`) || '').trim();
+				varValues.set(name, value);
+			}
+			return varValues.get(name) || '';
+		};
+
+		const transformAttrValue = (value: string): string => {
+			let next = value;
+			if (color) next = next.split('currentColor').join(color);
+			return next.replace(CSS_VAR_RE, (match, varName: string, fallback?: string) => {
+				const resolved = resolveVar(varName);
+				if (resolved) return resolved;
+				if (fallback !== undefined) return fallback.trim();
+				return match;
+			});
+		};
+
+		for (const el of [svgEl, ...Array.from(svgEl.querySelectorAll('*'))]) {
+			for (const attr of Array.from(el.attributes)) {
+				const next = transformAttrValue(attr.value);
+				if (next !== attr.value) el.setAttribute(attr.name, next);
 			}
 		}
-	}
-	return minifySvg(s);
-}
-
-export function prepareSvgForSettings(svg: string, container: HTMLElement): string {
-	let s = sanitizeSvg(svg);
-	try {
-		// Remove embedded media queries that react to system prefers-color-scheme
-		s = s.replace(/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{[\s\S]*?\}/gi, '');
-
-		const comp = activeWindow.getComputedStyle(container);
-		const color = comp && comp.color ? comp.color.trim() : '';
-
-		if (color) {
-			// replace occurrences of currentColor in attributes and inline styles
-			s = s.replace(/currentColor/g, color);
-		}
-
-		// replace CSS variables used inside svg e.g. var(--accent)
-		s = s.replace(/var\(--([a-zA-Z0-9-_]+)\)/g, (m, varName) => {
-			const val1 = activeWindow.getComputedStyle(container).getPropertyValue(`--${varName}`) || '';
-			const val2 = activeWindow.getComputedStyle(activeDocument.documentElement).getPropertyValue(`--${varName}`) || '';
-			const val = (val1 || val2).trim();
-			return val || m;
-		});
 	} catch {
-		// ignore
+		// unresolved colors are fine — the preview still renders
 	}
-	return s;
+
+	compactWhitespace(svgEl);
+	return new XMLSerializer().serializeToString(svgEl);
 }
 
 export function preferDarkThemeFromDocument(): boolean {
@@ -266,15 +319,9 @@ function pathBBox(d: string): { x: number; y: number; w: number; h: number } | n
  * that covers the entire viewBox with a solid opaque fill. Synchronous, fast.
  */
 function detectBackgroundByStructure(svgString: string): { color: string; element: Element; doc: Document } | null {
-	let doc: Document;
-	try {
-		doc = new DOMParser().parseFromString(svgString, 'image/svg+xml');
-	} catch {
-		return null;
-	}
-	if (doc.querySelector('parsererror')) return null;
+	const doc = parseSvgDocument(svgString);
+	if (!doc) return null;
 	const svg = doc.documentElement;
-	if (!svg || svg.tagName.toLowerCase() !== 'svg') return null;
 
 	const viewBox = getViewBox(svg);
 	if (!viewBox) return null;
@@ -361,15 +408,9 @@ export function fitSvgToContent(
 	paddingRatio = 0.025,
 	minFillRatio = 0.9
 ): { svg: string; refit: boolean } {
-	let doc: Document;
-	try {
-		doc = new DOMParser().parseFromString(svgString, 'image/svg+xml');
-	} catch {
-		return { svg: svgString, refit: false };
-	}
-	if (doc.querySelector('parsererror')) return { svg: svgString, refit: false };
+	const doc = parseSvgDocument(svgString);
+	if (!doc) return { svg: svgString, refit: false };
 	const svg = doc.documentElement;
-	if (!svg || svg.tagName.toLowerCase() !== 'svg') return { svg: svgString, refit: false };
 
 	const viewBox = getViewBox(svg);
 	if (!viewBox) return { svg: svgString, refit: false };
